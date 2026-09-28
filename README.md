@@ -2,7 +2,7 @@
 
 A guitar fretboard trainer that runs as a single page: intervals, scales and modes, positions, and chord-aware drills with a metronome.
 
-**Live:** https://YOUR-USERNAME.github.io/fretmap/
+**Live:** https://ergooding.github.io/fretmap/
 
 ## Modes
 
