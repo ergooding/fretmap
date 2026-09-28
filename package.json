@@ -1,0 +1,13 @@
+{
+  "name": "fretmap",
+  "private": true,
+  "description": "Guitar fretboard trainer: intervals, scales, modes, positions, and chord-aware drills.",
+  "scripts": {
+    "test": "node tests/tips.js && node tests/audit.js",
+    "test:tips": "node tests/tips.js",
+    "test:audit": "node tests/audit.js"
+  },
+  "devDependencies": {
+    "jsdom": "^24.0.0"
+  }
+}
