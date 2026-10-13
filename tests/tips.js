@@ -18,7 +18,7 @@ async function run(wide){
    // untipped interactive controls
    [...d.querySelectorAll('button,select')].filter(e=>!e.closest('[hidden]')&&!e.matches(X.TIP_SEL)&&!e.closest(X.TIP_SEL)).forEach(e=>{console.log('NO TIP',label,e.outerHTML.slice(0,90));bad++;});
  };
- for(const m of ['explore','name','find','drill','practice']){
+ for(const m of ['explore','name','find','drill','practice','songs']){
    goMode(d,click,m); check(m);
    if(m==='name'){click(d.querySelector('[data-act=answer]')); check('name answered');}
    if(m==='drill'){click(d.querySelector('.cell[data-s="0"][data-f="5"]')); check('drill box');
@@ -27,9 +27,15 @@ async function run(wide){
      click(d.querySelector('[data-act=chord][aria-pressed=true]')); check('drill chord heard');
      X.F.pos=-1; X.refresh(); click(d.querySelector('[data-mode=explore]')); click(d.querySelector('[data-mode=drill]')); check('drill pick');}
    if(m==='practice'){d.querySelector('.psync').open=true; check('path sync open');
-     click(d.querySelector('[data-act=songform]')); check('path song form');
-     d.getElementById('sgName').value='Wish You Were Here'; d.getElementById('sgLink').value='https://www.songsterr.com/x'; click(d.querySelector('[data-act=songadd]')); check('path song added');
-     click(d.querySelector('[data-act=rate][data-v="3"]')); check('path song rated');
+     click(d.querySelector('[data-act=songform]')); check('song form');
+     d.getElementById('sgName').value='Wish You Were Here'; d.getElementById('sgLink').value='https://www.songsterr.com/x'; d.getElementById('sgChords').value='C D Am G'; click(d.querySelector('[data-act=songadd]')); check('song added');
+     click(d.querySelector('[data-act=rate][data-v="3"]')); check('song rated');
+     click(d.querySelector('[data-act=vpick]')); check('song voicing picker');
+     click(d.querySelector('[data-act=vset]')); check('song voicing set');
+     click(d.querySelector('[data-act=partadd]')); check('song part added');
+     click(d.querySelector('[data-act=sgstep][data-i="1"]')); check('song strum custom');
+     click(d.querySelector('[data-act=songform]')); check('second song form');
+     goMode(d,click,'practice'); check('path with song');
      click(d.querySelector('.pnext [data-act=step]')); check('drill from path');
      click(d.querySelector('[data-act=topath]')); check('back to path');
      click(d.querySelector('[data-act=step][data-id=r3]')); check('rhythm step from path');

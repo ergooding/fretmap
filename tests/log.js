@@ -104,17 +104,22 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(X.stepWhat(X.STEP_BY.r1)==='C F, a bar each. Keep the hand moving down and up.','rhythm-what',X.stepWhat(X.STEP_BY.r1));
   ok(X.stepState(X.STEP_BY.r5).done&&!X.stepState(X.PATH[0].steps[0]).done,'done-per-focus');
   click(d.querySelector('.pnext [data-act=step]')); ok(X.F.key===0&&X.F.fam==='major'&&X.F.mode===0,'step-keeps-focus');
-  // songs: add from the form, rate, and play its changes
-  mode('practice'); click(d.querySelector('[data-act=songform]'));
+  // songs: add in the Songs tab, rate, and play its changes
+  const setF=(sel,v)=>{const e=d.querySelector(sel); e.value=v; e.dispatchEvent(new w.Event('change',{bubbles:true}));};
+  mode('practice'); click(d.querySelector('[data-act=songform]')); ok(X.st.mode==='songs'&&d.getElementById('sgName'),'path-add-opens-songs');
   d.getElementById('sgName').value='Wish You Were Here'; d.getElementById('sgArtist').value='Pink Floyd';
-  d.getElementById('sgLink').value='https://www.songsterr.com/a/wsa/pink-floyd-wish-you-were-here-tab-s49'; d.getElementById('sgKey').value='7'; d.getElementById('sgProg').value='145';
+  d.getElementById('sgLink').value='https://www.songsterr.com/a/wsa/pink-floyd-wish-you-were-here-tab-s49';
   click(d.querySelector('[data-act=songadd]'));
+  setF('[data-sf=key]','7'); setF('[data-sf=prog]','145');
   const song=Object.entries(X.LOG.skills).find(([id,s])=>s.kind==='song'); ok(song&&song[1].link.startsWith('https://www.songsterr.com')&&song[1].key===7&&song[1].prog==='145','song',JSON.stringify(song));
   click(d.querySelector('[data-act=songform]')); d.getElementById('sgName').value='Bad link'; d.getElementById('sgLink').value='javascript:alert(1)'; click(d.querySelector('[data-act=songadd]'));
+  setF('[data-sf=link]','javascript:alert(2)'); ok(/needs to start with https/.test(d.getElementById('sfMsg').textContent),'link-refused');
   ok(!Object.values(X.LOG.skills).some(s=>s.link&&!s.link.startsWith('https://')),'link-sanitized');
+  click(d.querySelector(`[data-act=songopen][data-id="${song[0]}"]`));
   click(d.querySelector(`[data-act=rate][data-id="${song[0]}"][data-v="4"]`)); ok(X.LOG.skills[song[0]].rating===4,'song-rated');
   const older={v:1,sessions:[],skills:{[song[0]]:{...X.LOG.skills[song[0]],rating:2,updated:1}}};
   ok(X.mergeLogs(X.LOG,older).skills[song[0]].rating===4,'older-rating-loses');
+  mode('practice'); ok(d.querySelector(`.path [data-act=songopen][data-id="${song[0]}"]`)&&/★★★★☆/.test(d.querySelector('.path').textContent),'song-on-path');
   click(d.querySelector(`[data-act=songplay][data-id="${song[0]}"]`));
   ok(X.st.mode==='drill'&&X.F.key===7&&X.F.mode===0&&X.D.line==='prog'&&X.D.prog==='145'&&X.F.pos===0,'song-play',[X.F.key,X.F.mode,X.D.prog,X.F.pos].join(' '));
   ok(/Wish You Were Here: play the changes/.test(d.getElementById('sheet').textContent),'song-path-note');
@@ -122,33 +127,35 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   const pc=X.parseChords('(A, E6, Dmaj7) x 2, A, E6, D, A');
   ok(pc.chords.join(' ')==='A E6 Dmaj7 A E6 Dmaj7 A E6 D A'&&!pc.bad.length,'parse-chords',JSON.stringify(pc));
   ok(X.parseChords('F#m7 Bb C/G Gsus4 x2 Bm7b5').chords.join(' ')==='F♯m7 B♭ C Gsus4 Gsus4 Bm7♭5','parse-chords-2',X.parseChords('F#m7 Bb C/G Gsus4 x2 Bm7b5').chords.join(' '));
-  mode('practice'); click(d.querySelector('[data-act=songform]'));
+  mode('songs'); click(d.querySelector('[data-act=songform]'));
   d.getElementById('sgName').value='Here'; d.getElementById('sgArtist').value='Pavement'; d.getElementById('sgChords').value='(A, E6, Dmaj7) x2, A, Q7, D, A';
-  click(d.querySelector('[data-act=songadd]')); ok(/can't read “Q7”/.test(d.querySelector('.path').textContent)&&!X.LOG.skills['song:here-pavement'],'chords-bad-token');
+  click(d.querySelector('[data-act=songadd]')); ok(/can't read “Q7”/.test(d.getElementById('sgMsg').textContent)&&!X.LOG.skills['song:here-pavement'],'chords-bad-token');
   d.getElementById('sgChords').value='(A, E6, Dmaj7) x2, A, E6, D, A'; click(d.querySelector('[data-act=songadd]'));
-  const here=X.LOG.skills['song:here-pavement']; ok(here&&here.key===9&&!here.minor&&here.chords.length===10,'song-chords',JSON.stringify(here));
+  const here=X.LOG.skills['song:here-pavement']; ok(here&&here.key===9&&!here.minor&&here.chords.length===10&&X.st.song==='song:here-pavement','song-chords',JSON.stringify(here));
+  ok([...d.querySelectorAll('#cchips0 .cchip b')].map(e=>e.textContent).join(' ')==='A E6 Dmaj7 D','song-chord-chips');
   click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]'));
   ok(X.D.prog==='song:here-pavement'&&X.F.key===9&&X.cur.prog.length===10&&X.cur.prog.map(p=>p.ch.roman).slice(0,3).join(' ')==='I V6 IVmaj7'&&X.cur.prog.every(p=>p.voicing),'song-chords-drill',X.cur.prog.map(p=>p.ch.roman+(p.voicing?'':'!')).join(' '));
   ok(d.querySelector('[data-set=prog] option[value="song:here-pavement"]').textContent==='Here'&&[...d.querySelectorAll('.sh-bars .nm')].slice(0,3).map(e=>e.textContent).join(' ')==='A E6 Dmaj7','song-in-prog-menu');
   ok(d.querySelectorAll('.sh-bars .bar').length===10,'song-sheet-tiles');
   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(30); click(d.querySelector('[data-act=play]'));
   ok(entries(X).slice(-1)[0].skill.includes(':song:here-pavement:'),'song-chords-logged',entries(X).slice(-1)[0].skill);
-  // edit keeps it in place
-  mode('practice'); click(d.querySelector('[data-act=songedit][data-id="song:here-pavement"]'));
-  ok(d.getElementById('sgChords').value==='(A, E6, Dmaj7) x2, A, E6, D, A','song-edit-prefill');
-  d.getElementById('sgChords').value='A E6 Dmaj7'; click(d.querySelector('[data-act=songadd]'));
-  ok(X.LOG.skills['song:here-pavement'].chords.length===3&&!d.getElementById('sgChords'),'song-edit-saved');
-  // a song can set its own voicing for a chord
-  click(d.querySelector('[data-act=songedit][data-id="song:here-pavement"]'));
-  const vin=d.querySelector('[data-voice="Dmaj7"]'); ok(vin&&vin.placeholder==='xx0222','voicing-row',vin&&vin.placeholder);
-  const ta=d.getElementById('sgChords'); ta.value='A E6 Dmaj7 Bm'; ta.dispatchEvent(new w.Event('input',{bubbles:true}));
-  ok(d.querySelector('[data-voice="Bm"]')&&d.querySelector('[data-voice="Dmaj7"]'),'voicing-rows-follow');
-  d.querySelector('[data-voice="Dmaj7"]').value='0 0 0 2 2 1 9'; click(d.querySelector('[data-act=songadd]'));
-  ok(/needs six strings/.test(d.getElementById('sgMsg').textContent),'voicing-bad');
-  d.querySelector('[data-voice="Dmaj7"]').value='000220'; click(d.querySelector('[data-act=songadd]'));
-  ok(X.LOG.skills['song:here-pavement'].voicings.Dmaj7==='000220','voicing-saved',JSON.stringify(X.LOG.skills['song:here-pavement'].voicings));
+  // parts: edit the verse in place, add a chorus; the song plays them one after another
+  mode('songs'); ok(d.querySelector('textarea[data-part="0"]').value==='(A, E6, Dmaj7) x2, A, E6, D, A','song-edit-prefill');
+  setF('textarea[data-part="0"]','A E6 Q9'); ok(/can't read “Q9”/.test(d.getElementById('pbad0').textContent)&&X.LOG.skills['song:here-pavement'].chords.length===10,'part-bad-kept');
+  setF('textarea[data-part="0"]','A E6 Dmaj7'); ok(X.LOG.skills['song:here-pavement'].chords.length===3,'song-edit-saved');
+  click(d.querySelector('[data-act=partadd]')); setF('textarea[data-part="1"]','D A G A');
+  const hp=X.LOG.skills['song:here-pavement']; ok(hp.parts.length===2&&hp.parts[1].name==='Chorus'&&hp.chords.join(' ')==='A E6 Dmaj7 D A G A'&&hp.key===9,'song-parts',JSON.stringify(hp.parts));
+  click(d.querySelector('[data-act=partdel][data-part="1"]')); ok(X.LOG.skills['song:here-pavement'].chords.length===3,'part-removed');
+  // a song can set its own voicing for a chord: pick a shape, or type one
+  click(d.querySelector('[data-act=vpick][data-n="Dmaj7"]'));
+  const shapes=[...d.querySelectorAll('.vpop [data-act=vset]')].map(b=>b.dataset.f); ok(shapes[0]==='xx0222'&&shapes.length>=2,'voicing-shapes',shapes.join(' '));
+  d.getElementById('vType').value='0 0 0 2 2 1 9'; click(d.querySelector('[data-act=vtype]'));
+  ok(/needs six strings/.test(d.getElementById('vMsg').textContent)&&!(X.LOG.skills['song:here-pavement'].voicings||{}).Dmaj7,'voicing-bad');
+  click(d.querySelector(`.vpop [data-act=vset][data-f="${shapes[1]}"]`)); ok(X.LOG.skills['song:here-pavement'].voicings.Dmaj7===shapes[1],'voicing-picked');
+  d.getElementById('vType').value='000220'; click(d.querySelector('[data-act=vtype]'));
+  ok(X.LOG.skills['song:here-pavement'].voicings.Dmaj7==='000220'&&d.querySelector('[data-act=vpick][data-n="Dmaj7"]').classList.contains('own'),'voicing-saved',JSON.stringify(X.LOG.skills['song:here-pavement'].voicings));
   click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]'));
-  const dm=X.cur.prog.find(p=>p.ch.name==='Dmaj7'); ok(dm&&dm.voicing.own&&dm.voicing.frets.join()==='0,0,0,2,2,0','voicing-in-drill',dm&&JSON.stringify(dm.voicing));
+  const dm=X.cur.prog.find(p=>p.ch.name==='Dmaj7'); ok(dm&&dm.voicing.own&&dm.voicing.frets.join()==='0,0,0,2,2,0'&&d.querySelector('.sh-bars .bar.own'),'voicing-in-drill',dm&&JSON.stringify(dm.voicing));
   // the strum pattern edited while playing a song is kept with the song
   ok(/Saved with Here/.test(d.getElementById('panel').textContent),'song-strum-hint');
   click(d.querySelector('[data-act=rstep][data-i="1"]'));
@@ -157,6 +164,12 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   mode('practice'); click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]'));
   ok(X.R.pat==='custom'&&X.R.custom.steps===stepsNow,'song-strum-restored',X.R.pat+' '+X.R.custom.steps+' want '+stepsNow+' saved '+JSON.stringify(X.LOG.skills['song:here-pavement'].strum));
   ok(/Here: play the changes/.test(d.getElementById('sheet').textContent),'song-strum-pathnote');
+  // ...and edited in the Songs tab, which Drill then plays
+  mode('songs'); ok(d.querySelector('.sbox [data-act=sgstep]')&&d.querySelectorAll('.sbox [data-act=sgstep]').length===X.R.custom.steps.length,'songs-strum-grid');
+  click(d.querySelector('.sbox [data-act=sgstep][data-i="0"]')); const sp2=X.LOG.skills['song:here-pavement'].strum;
+  ok(sp2.custom.steps[0]!==stepsNow[0]&&X.R.custom.steps===sp2.custom.steps,'songs-strum-edit',JSON.stringify(sp2));
+  setF('[data-sg=pat]','shuffle'); ok(X.LOG.skills['song:here-pavement'].strum.pat==='shuffle'&&X.R.pat==='shuffle'&&X.R.swing,'songs-strum-menu');
+  click(d.querySelector('[data-act=sgswing]')); ok(X.LOG.skills['song:here-pavement'].strum.swing===false&&!X.R.swing,'songs-strum-swing');
   // stored under its own key
   ok(JSON.parse(w.localStorage.getItem(X.LOG_KEY)).sessions.length===X.LOG.sessions.length,'stored');
   // merge: union, idempotent

@@ -286,8 +286,6 @@ html.wide{font-size:19px}
 .ptext{display:flex;flex-direction:column;gap:2px;min-width:0;font-size:.9rem;line-height:1.35}
 .ptext small{color:var(--muted);font-size:.8rem}
 .ptext a{color:inherit}
-.psong{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 12px}
-.psong-act{display:flex;gap:8px;align-items:center}
 .stars{display:inline-flex}
 .stars button{border:0;background:none;font-size:1.25rem;padding:0 2px;cursor:pointer;color:var(--line)}
 .stars button[aria-pressed="true"]{color:var(--gold)}
@@ -376,6 +374,58 @@ html.land{font-size:15px}
 .app.wide .pbar{max-width:900px;padding-top:10px}
 .app.land .song-sheet{grid-area:prompt;padding:6px 8px;gap:5px}
 .app.land .bar{padding:3px 7px}
+/* Songs tab */
+.app.wide.m-songs{grid-template-areas:"head head" "goal goal" "panel panel" "panel panel"}
+.app.wide.m-songs .side{display:none}
+.app.land.m-songs .prompt{display:none}
+.songs{display:flex;flex-direction:column;gap:12px}
+.songlist{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;align-items:stretch}
+.songlist .st-lab{display:none}
+.sl-item{flex:none;display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:.9rem;line-height:1.3}
+.sl-item small{color:var(--muted);font-size:.76rem}
+.sl-item[aria-pressed="true"]{border-color:var(--wood);box-shadow:inset 0 0 0 1px var(--wood)}
+.sl-add{color:var(--muted);justify-content:center}
+.song-ed{display:flex;flex-direction:column;gap:10px;min-width:0}
+.app.wide .songs{display:grid;grid-template-columns:240px minmax(0,1fr);gap:24px;align-items:start}
+.app.wide .songlist{flex-direction:column;overflow:visible}
+.app.wide .songlist .st-lab{display:block;margin-top:0!important}
+.app.wide.m-songs .panel>*{max-width:1300px}
+.se-head,.se-meta{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:3px;font-size:.74rem;color:var(--muted);min-width:0;flex:1 1 140px}
+.field.grow{flex:2 1 220px}
+.se-meta .field{flex:0 1 auto}
+.field input,.field select,.sbox textarea,.vp-type input{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 8px;min-width:0}
+.se-go{flex:0 0 auto;padding:10px 20px}
+.se-link{color:inherit;font-size:.85rem;align-self:center}
+.sbox{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px}
+.sb-top{display:flex;align-items:baseline;gap:10px}
+.sb-top small{color:var(--muted);font-size:.78rem}
+.sb-top .chip{margin-left:auto;padding:4px 10px}
+.pname{font:inherit;font-weight:700;font-size:1rem;color:var(--ink);background:none;border:0;border-bottom:1px dashed var(--muted);padding:1px 0;width:8em;min-width:0}
+.sbox textarea{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;resize:vertical}
+.hint.bad{color:var(--bad)}
+.hint.bad:empty{display:none}
+.cchips{display:flex;flex-wrap:wrap;gap:6px}
+.cchip{display:flex;flex-direction:column;align-items:flex-start;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:4px 10px;cursor:pointer;line-height:1.2}
+.cchip small{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.74rem;color:var(--muted)}
+.cchip.own small{color:color-mix(in srgb,var(--gold) 72%,var(--ink));font-weight:700}
+.cchip[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.vpop{border:1px solid var(--gold);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.vp-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.shapes{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.shape{display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 4px;cursor:pointer;color:var(--ink);font-size:.72rem;text-align:center}
+.shape svg{width:100%;max-width:92px;height:auto}
+.shape code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;letter-spacing:.04em}
+.shape span{color:var(--muted)}
+.shape[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);background:color-mix(in srgb,var(--gold) 14%,var(--surface))}
+.vp-type{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.vp-type input{flex:1 1 8em;font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em}
+.vp-type .btn{flex:none;padding:8px 14px}
+.se-prog{max-width:420px}
+.sbox .rgrid{border:0;padding:2px 0;background:none;max-width:none}
+.psong{display:flex;gap:8px;align-items:center}
+.psong .pstep{flex:1;min-width:0}
+.pstars{color:var(--gold);letter-spacing:.05em;white-space:nowrap}
 /* Drill settings sheet */
 .sets-wrap{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.42);display:flex;align-items:center;justify-content:center;padding:env(safe-area-inset-top,0px) 12px env(safe-area-inset-bottom,0px)}
 .sets{background:var(--surface);color:var(--ink);border-radius:16px;width:min(460px,100%);max-height:calc(100% - 24px);overflow:auto;padding:12px 16px 16px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
@@ -421,6 +471,7 @@ html.land{font-size:15px}
     <button data-mode="quiz">Quiz</button>
     <button data-mode="drill">Drill</button>
     <button data-mode="practice">Path</button>
+    <button data-mode="songs">Songs</button>
   </nav>
   <aside class="side">
   <div class="prompt" id="prompt" aria-live="polite"></div>
@@ -1281,7 +1332,7 @@ function renderStats(){
 }
 function render(){
   document.querySelectorAll('#modes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===st.mode||(b.dataset.mode==='quiz'&&(st.mode==='name'||st.mode==='find'))));
-  appEl.classList.toggle('m-practice',st.mode==='practice'); appEl.classList.toggle('m-drill',st.mode==='drill');
+  appEl.classList.toggle('m-practice',st.mode==='practice'||st.mode==='songs'); appEl.classList.toggle('m-songs',st.mode==='songs'); appEl.classList.toggle('m-drill',st.mode==='drill');
   renderStats(); focusText(); renderBoard(); renderPrompt(); renderPanel(); renderSheet(); renderVoice(); updateLive();
 }
 const picking=()=>st.mode==='drill'&&(st.picking||cur.whole);
@@ -1293,7 +1344,7 @@ function drillLabel(p){
 }
 function renderBoard(){
   const q=st.q;
-  if(st.mode==='practice') return; // the neck is hidden
+  if(st.mode==='practice'||st.mode==='songs') return; // the neck is hidden
   if(st.mode==='drill'&&!picking()&&!wide) setZoom(Math.max(0,cur.lo-1),Math.min(12,cur.hi+1)); else setZoom(0,12);
   const nowN=(st.playing||st.paused)&&st.idx>=0?st.seq[st.idx]:null;
   const nextN=nowN?st.seq[(st.idx+1)%st.seq.length]:null;
@@ -1344,6 +1395,7 @@ function renderPrompt(){
   const q=st.q;
   promptEl.hidden=false;
   if(st.mode==='practice'){practicePrompt(); return;}
+  if(st.mode==='songs'){promptEl.hidden=true; return;}
   if(st.mode==='drill'){
     if(picking()){promptEl.innerHTML=`<span class="big">☝</span><span>Tap where your index finger sits. The drill uses the 5 frets from there.</span>`;return;}
     promptEl.hidden=true; updateLive(); return; // the song sheet and the practice bar say what's playing
@@ -1483,11 +1535,11 @@ function updateTab(){
 const quizSeg=()=>`<div class="row">${seg('Quiz','quiz',[['name','Name it'],['find','Find it']],st.mode)}</div>`;
 function seg(label,act,list,v){return `<div class="segw" role="group" aria-label="${label}"><span class="seglab">${label}</span><div class="seg">`+list.map(([k,l])=>`<button data-act="${act}" data-v="${k}" aria-pressed="${k===v}">${l}</button>`).join('')+'</div></div>';}
 function opts(list,v){return list.map(([k,l])=>`<option value="${k}"${String(k)===String(v)?' selected':''}>${l}</option>`).join('');}
-function rgridHTML(P){
+function rgridHTML(P,act='rstep'){
   const per=P.res/4, L=countLabels(P.res);
   return P.steps.split('').map((c,k)=>{
     const cls=(k%per===0?' beat onbeat':'')+({'.':' ghost',m:' mute','>':' acc'}[c]||'');
-    return `<button class="rstep${cls}" data-act="rstep" data-i="${k}" aria-label="${L[k]}, ${k%2?'up':'down'}: ${STEP_NAME[c]}"><b>${c==='m'?'×':k%2?'↑':'↓'}</b><small>${L[k]}</small></button>`;
+    return `<button class="rstep${cls}" data-act="${act}" data-i="${k}" aria-label="${L[k]}, ${k%2?'up':'down'}: ${STEP_NAME[c]}"><b>${c==='m'?'×':k%2?'↑':'↓'}</b><small>${L[k]}</small></button>`;
   }).join('');
 }
 function markProgChord(){
@@ -1610,39 +1662,111 @@ function stepRow(s,isNext){
     <span class="pmark" aria-hidden="true">${done?'✓':isNext?'▶':''}</span>
     <span class="ptext"><b>${s.title}</b><small>${goalText(s)}</small></span></button></li>`;
 }
-function voicingRows(text,saved,key){
-  // one row per chord in the song: the shape Fretmap would use, or the one you type (low E to high E)
-  const names=[...new Set(parseChords(text).chords)]; if(!names.length) return '';
-  if(key<0) key=parseChord(names[0]).root;
-  return `<p class="st-lab">Voicings, low E to high E</p><div class="voic">${names.map(n=>{const a=autoVoicing(n,key);
-    return `<label><b>${esc(n)}</b><input data-voice="${esc(n)}" value="${saved[n]?esc(saved[n]):''}" placeholder="${a?fretText(a):'x x x x x x'}" inputmode="text" autocomplete="off" spellcheck="false" aria-label="${esc(n)} voicing, low E to high E"></label>`;}).join('')}</div>
-    <p class="hint">Leave a box empty to use the shape shown. Type x for a muted string.</p>`;
-}
 function songsHTML(){
-  const list=songSteps();
-  const rows=list.map(({id,s})=>{
-    const set=songSetup(s,id), {done}=stepState(set), learned=(s.rating||0)>=4;
-    const rate=[1,2,3,4,5].map(r=>`<button data-act="rate" data-id="${esc(id)}" data-v="${r}" aria-pressed="${(s.rating||0)>=r}" aria-label="${r} of 5">★</button>`).join('');
-    return `<li class="psong"><div class="ptext"><b>${learned&&done?'✓ ':''}${s.link?`<a href="${esc(s.link)}" target="_blank" rel="noopener" data-tip="Open in Songsterr">${esc(s.name)} ↗</a>`:esc(s.name)}</b>
-      <small>${s.artist?esc(s.artist)+'. ':''}${s.chords&&s.chords.length?`${esc(s.chordText||s.chords.join(' '))}, in ${NOTES[set.key]}`:`${NOTES[set.key]} ${s.minor?'minor':'major'}, ${progLabel(set.prog).replace(/:.*/,'')}`}. ${learned?'Learned.':'Learn it in Songsterr, then rate how well you play it.'}</small></div>
-      <div class="psong-act"><span class="stars" role="group" aria-label="How well you play it">${rate}</span><button class="chip" data-act="songedit" data-id="${esc(id)}">Edit</button><button class="chip" data-act="songplay" data-id="${esc(id)}">Play the changes</button></div></li>`;
+  const rows=songSteps().map(({id,s})=>{
+    const set=songSetup(s,id), {done}=stepState(set), r=s.rating||0;
+    return `<li class="psong"><button class="pstep${done?' done':''}" data-act="songplay" data-id="${esc(id)}"><span class="pmark" aria-hidden="true">${done?'✓':''}</span>
+      <span class="ptext"><b>${esc(s.name)}${s.artist?', '+esc(s.artist):''}</b><small>${goalText(set)} <span class="pstars" aria-label="Rated ${r} of 5">${'★'.repeat(r)}${'☆'.repeat(5-r)}</span></small></span></button>
+      <button class="chip" data-act="songopen" data-id="${esc(id)}">Open</button></li>`;
   }).join('');
-  const E=st.editSong&&LOG.skills[st.editSong]||null, v=x=>E&&E[x]!=null?esc(String(E[x])):'';
-  const keyOpts='<option value="-1">Key: first chord</option>'+NOTES.map((n,i)=>`<option value="${i}"${E&&!E.chords&&E.key===i?' selected':''}>${n}</option>`).join('');
-  const progOpts=PROGS.map(([id,name])=>`<option value="${id}"${id===(E?E.prog:'pop')?' selected':''}>${name}</option>`).join('');
-  const form=st.addSong?`<div class="lg-add">
-      <input id="sgName" placeholder="Song title" aria-label="Song title" value="${v('name')}"><input id="sgArtist" placeholder="Artist" aria-label="Artist" value="${v('artist')}">
-      <input id="sgLink" placeholder="Songsterr link (optional)" aria-label="Songsterr link" inputmode="url" value="${v('link')}">
-      <label class="st-lab" for="sgChords">Chords, a bar each</label>
-      <textarea id="sgChords" rows="2" placeholder="(A, E6, Dmaj7) x2, A, E6, D, A" aria-describedby="sgChordsHint">${v('chordText')}</textarea>
-      <p class="hint" id="sgChordsHint">Write a chord twice to hold it for two bars. Put brackets round a part and add x2 to repeat it. Leave this empty to pick a common progression instead.</p>
-      <div id="sgVoic">${voicingRows(E?E.chordText:'',E&&E.voicings||{},E&&E.chords?E.key:-1)}</div>
-      <div class="drow"><select id="sgKey" aria-label="Key">${keyOpts}</select><select id="sgMinor" aria-label="Major or minor"><option value="0">Major</option><option value="1"${E&&E.minor?' selected':''}>Minor</option></select></div>
-      <div class="drow"><select id="sgProg" aria-label="Closest progression, if no chords are typed">${progOpts}</select></div>
-      <div class="actions"><button class="btn" data-act="songcancel">Cancel</button><button class="btn primary" data-act="songadd">${E?'Save song':'Add song'}</button></div>
-      <p class="hint" id="sgMsg" role="status" style="color:var(--bad)"></p></div>`:`<button class="chip" data-act="songform">+ Add a song</button>`;
-  return `<section class="pstage"><h3>Songs <small>Learn it in Songsterr, then play its changes here</small></h3>
-    ${rows?`<ol class="psteps">${rows}</ol>`:'<p class="hint">Add a song you want to learn. Its key and progression set up Drill, so you can practice its chords and strumming here.</p>'}${form}</section>`;
+  return `<section class="pstage"><h3>Songs <small>from your Songs tab</small></h3>
+    ${rows?`<ol class="psteps">${rows}</ol>`:'<p class="hint">Add a song you want to learn. Its chords and strum pattern set up Drill, so you can practice the changes here.</p>'}<button class="chip" data-act="songform">+ Add a song</button></section>`;
+}
+// ---------- songs tab ----------
+// A list of your songs, and the open song: its details, its chords split into parts, a voicing for each chord, and its strum pattern.
+function songParts(sk){ return sk.parts&&sk.parts.length?sk.parts:[{name:'Verse',text:sk.chordText||''}]; }
+function saveParts(id,parts){
+  const sk=LOG.skills[id]; if(!sk) return;
+  const chords=parts.flatMap(p=>parseChords(p.text).chords);
+  const patch={parts:parts.map(p=>({name:String(p.name||'Part').trim().slice(0,40)||'Part',text:String(p.text||'').trim().slice(0,400)}))};
+  if(chords.length){
+    if(!sk.chords||!sk.chords.length){const f=parseChord(chords[0]); patch.key=f.root; patch.minor=f.rel.includes(3)&&!f.rel.includes(4);} // the key starts from the first chord
+    patch.chords=chords; patch.chordText=patch.parts.map(p=>p.text).filter(Boolean).join(' | ').slice(0,400);
+  }else{delete sk.chords; delete sk.chordText;}
+  setSong(id,patch);
+}
+function songPat(sk){const sp=sk.strum; return sp&&sp.pat==='custom'&&sp.custom?{id:'custom',name:'Your pattern',res:sp.custom.res,steps:sp.custom.steps}:RPAT[sp&&RPAT[sp.pat]?sp.pat:'faithful'];}
+function setSongStrum(id,strum){
+  setSong(id,{strum});
+  if(D.line==='prog'&&D.prog===id){R.pat=strum.pat; if(strum.custom) R.custom={...strum.custom}; R.swing=!!strum.swing; save();} // Drill plays the song's own pattern
+}
+function voicingChoices(name,key){
+  // a few playable shapes up the neck, from the same search Drill uses for a box
+  const c=chordIn(name,key), keep={chord:cur.chord,chordPcs:cur.chordPcs,lo:cur.lo,hi:cur.hi}, out=[];
+  Object.assign(cur,{chord:c,chordPcs:new Set(c.tones.map(t=>(key+t)%12))});
+  for(const lo of [0,1,2,3,4,5,6,7,8,9,10]){
+    Object.assign(cur,{lo,hi:lo+4}); let v=null; try{v=findVoicing();}catch(e){}
+    if(v&&!out.some(o=>fretText(o.frets)===fretText(v.frets))){
+      const fr=v.frets.filter(f=>f), low=fr.length?Math.min(...fr):0, open=v.frets.includes(0)&&low<=4;
+      out.push({name:open?'Open position':`${/shape/.test(v.name)?v.name:'Shape'}, fret ${low}`,frets:v.frets});
+    }
+    if(out.length>=4) break;
+  }
+  Object.assign(cur,keep); return out;
+}
+function chordChips(sk,k,text){
+  const key=sk.key??0, names=[...new Set(parseChords(text).chords)];
+  return names.map(n=>{const own=sk.voicings&&sk.voicings[n], f=own?parseFrets(own):autoVoicing(n,key), on=!!(st.vpick&&st.vpick.n===n&&st.vpick.part===k);
+    return `<button class="cchip${own?' own':''}" data-act="vpick" data-n="${esc(n)}" data-part="${k}" aria-pressed="${on}"><b>${esc(n)}</b><small>${f?fretText(f):'no shape'}</small></button>`;}).join('');
+}
+function vpickHTML(sk,n){
+  const key=sk.key??0, c=chordIn(n,key), own=sk.voicings&&sk.voicings[n], ownF=own&&parseFrets(own), list=voicingChoices(n,key);
+  if(ownF&&!list.some(v=>fretText(v.frets)===fretText(ownF))) list.push({name:'Yours',frets:ownF});
+  const now_=ownF?fretText(ownF):(list[0]?fretText(list[0].frets):'');
+  return `<div class="vpop" role="group" aria-label="Voicing for ${esc(n)}"><div class="vp-top"><b>${esc(n)} in this song</b>${own?`<button class="chip" data-act="vclear" data-n="${esc(n)}">Let Fretmap choose</button>`:''}</div>
+    <div class="shapes">${list.map(v=>{const t=fretText(v.frets); return `<button class="shape" data-act="vset" data-n="${esc(n)}" data-f="${t}" aria-pressed="${t===now_}" aria-label="${esc(v.name)}, ${t}">${voiceSVG(v,c.root)}<code>${t}</code><span>${esc(t===fretText(ownF||[])?'Yours':v.name)}</span></button>`;}).join('')}</div>
+    <div class="vp-type"><label class="seglab" for="vType">Or type</label><input id="vType" value="${own?esc(own):''}" placeholder="${now_||'x02220'}" autocomplete="off" spellcheck="false" aria-label="${esc(n)} voicing, low E to high E"><button class="btn" data-act="vtype" data-n="${esc(n)}">Use it</button><button class="btn" data-act="vhear" data-n="${esc(n)}">Hear it</button></div>
+    <p class="hint" id="vMsg" role="status">Frets from low E to high E. x mutes a string.</p></div>`;
+}
+function songEditor(id){
+  const sk=LOG.skills[id], parts=songParts(sk), key=sk.key??0, r=sk.rating||0;
+  const rate=[1,2,3,4,5].map(x=>`<button data-act="rate" data-id="${esc(id)}" data-v="${x}" aria-pressed="${r>=x}" aria-label="${x} of 5">★</button>`).join('');
+  const head=`<div class="se-head">
+      <label class="field">Title<input data-sf="name" value="${esc(sk.name)}" autocomplete="off"></label>
+      <label class="field">Artist<input data-sf="artist" value="${esc(sk.artist||'')}" autocomplete="off"></label>
+      <label class="field grow">Songsterr link<input data-sf="link" inputmode="url" value="${esc(sk.link||'')}" placeholder="https://www.songsterr.com/…" autocomplete="off"></label>
+      <button class="btn primary se-go" data-act="songplay" data-id="${esc(id)}">▶ Practice</button></div>
+    <p class="hint bad" id="sfMsg" role="status"></p>
+    <div class="se-meta"><label class="field">Key<select data-sf="key">${NOTES.map((x,i)=>`<option value="${i}"${i===key?' selected':''}>${x}</option>`).join('')}</select></label>
+      <label class="field">Major or minor<select data-sf="minor"><option value="0">Major</option><option value="1"${sk.minor?' selected':''}>Minor</option></select></label>
+      <span class="field">How well you play it<span class="stars" role="group" aria-label="How well you play it">${rate}</span></span>
+      ${sk.link?`<a class="se-link" href="${esc(sk.link)}" target="_blank" rel="noopener" data-tip="Open the tab in Songsterr">Open in Songsterr ↗</a>`:''}</div>`;
+  const partsHTML=parts.map((p,k)=>{
+    const pc=parseChords(p.text), n=pc.chords.length;
+    return `<section class="sbox"><div class="sb-top"><input class="pname" data-part-name="${k}" value="${esc(p.name)}" aria-label="Part name" autocomplete="off"><small id="pbars${k}">${n?`${n} bar${n>1?'s':''}`:'type its chords'}</small>${parts.length>1?`<button class="chip" data-act="partdel" data-part="${k}">Remove</button>`:''}</div>
+      <textarea data-part="${k}" rows="2" placeholder="(A, E6, Dmaj7) x2, A, E6, D, A" aria-label="${esc(p.name)} chords, a bar each" spellcheck="false">${esc(p.text)}</textarea>
+      <p class="hint bad" id="pbad${k}">${pc.bad.length?`Fretmap can't read ${pc.bad.slice(0,4).map(x=>`“${esc(x)}”`).join(', ')}. Write chords like A, E6, Dmaj7, F#m or Bb7.`:''}</p>
+      <div class="cchips" id="cchips${k}" role="group" aria-label="Chords in ${esc(p.name)}, tap one to pick its voicing">${chordChips(sk,k,p.text)}</div>
+      ${st.vpick&&st.vpick.part===k&&pc.chords.includes(st.vpick.n)?vpickHTML(sk,st.vpick.n):''}</section>`;
+  }).join('');
+  const P=songPat(sk), sp=sk.strum||{}, swing=sp.pat?!!sp.swing:!!P.swing;
+  const groups=RPATS.map(([g,list])=>`<optgroup label="${g}">${list.map(x=>`<option value="${x[0]}"${x[0]===P.id?' selected':''}>${x[1]}</option>`).join('')}</optgroup>`).join('')
+    +`<optgroup label="Edit the grid to make your own"><option value="custom"${P.id==='custom'?' selected':''}>Your pattern</option></optgroup>`;
+  const strumBox=`<section class="sbox"><div class="sb-top"><b>Strum pattern</b><small>used whenever you practice this song</small></div>
+    <div class="row"><select data-sg="pat" aria-label="Song strum pattern">${groups}</select>${P.id==='custom'?seg('Grid','sgres',[['8','8ths'],['16','16ths']],String(P.res)):''}<button class="chip tog" data-act="sgswing" aria-pressed="${swing}">Shuffle feel</button></div>
+    <div class="rgrid r${P.res}" style="--n:${P.res}">${rgridHTML(P,'sgstep')}</div><p class="hint">Count: ${counting(P)}</p></section>`;
+  const noChords=!parts.some(p=>parseChords(p.text).chords.length);
+  const progPick=noChords?`<label class="field se-prog">Until you type chords, practice<select data-sf="prog">${PROGS.map(([pid,name])=>`<option value="${pid}"${pid===sk.prog?' selected':''}>${name}</option>`).join('')}</select></label>`:'';
+  return `${head}${partsHTML}<div class="row"><button class="chip" data-act="partadd">+ Add a part</button></div>
+    <p class="hint">Each bar is one chord, so write a chord twice to hold it for two bars. Brackets with x2 repeat a phrase. Parts play one after another when you practice.</p>${progPick}${strumBox}`;
+}
+function newSongHTML(){
+  const any=songSteps().length;
+  return `<div class="lg-add"><p class="st-lab">Add a song</p>
+    <input id="sgName" placeholder="Song title" aria-label="Song title"><input id="sgArtist" placeholder="Artist" aria-label="Artist">
+    <input id="sgLink" placeholder="Songsterr link (optional)" aria-label="Songsterr link" inputmode="url">
+    <label class="st-lab" for="sgChords">Verse chords, a bar each (optional)</label>
+    <textarea id="sgChords" rows="2" placeholder="(A, E6, Dmaj7) x2, A, E6, D, A" spellcheck="false"></textarea>
+    <div class="actions">${any?'<button class="btn" data-act="songcancel">Cancel</button>':''}<button class="btn primary" data-act="songadd">Add song</button></div>
+    <p class="hint" id="sgMsg" role="status" style="color:var(--bad)"></p></div>`;
+}
+function songsPage(){
+  const list=songSteps();
+  if(st.song&&!(LOG.skills[st.song]&&!LOG.skills[st.song].gone)) st.song=null;
+  if(!st.song&&!st.newSong&&list.length) st.song=list[0].id;
+  const items=list.map(({id,s})=>`<button class="sl-item" data-act="songopen" data-id="${esc(id)}" aria-pressed="${id===st.song&&!st.newSong}"><b>${esc(s.name)}</b><small>${[s.artist&&esc(s.artist),NOTES[s.key??0]+(s.minor?' minor':'')].filter(Boolean).join(' · ')}</small></button>`).join('');
+  return `<div class="songs"><nav class="songlist" aria-label="Your songs"><p class="st-lab">Your songs</p>${items}<button class="sl-item sl-add" data-act="songform" aria-pressed="${!!(st.newSong||!list.length)}">+ Add a song</button></nav>
+    <div class="song-ed">${st.newSong||!st.song?newSongHTML():songEditor(st.song)}</div></div>`;
 }
 function practiceHTML(){
   const n=nextStep();
@@ -1754,6 +1878,7 @@ function setsHTML(){
 function renderPanel(){
   const q=st.q;
   if(st.mode==='practice'){panel.innerHTML=practiceHTML(); return;}
+  if(st.mode==='songs'){panel.innerHTML=songsPage(); return;}
   if(st.mode==='drill'){
     if(picking()){
       panel.innerHTML=`<p class="hint">Scale notes for ${NOTES[cur.key]} ${F.fam==='chrom'?'':modeName()} are shown faintly. Pick a spot near the root to start.</p>
@@ -1788,7 +1913,7 @@ function setMode(m){
   if(m==='quiz') m=saved.quiz==='find'?'find':'name'; // Name it and Find it share the Quiz tab, which remembers the last one
   if(m==='name'||m==='find') saved.quiz=m;
   clearTimeout(st.timer); stopMet(); st.mode=m; st.q=null; st.sheet=false; panel.scrollTop=0;
-  if(st.mode==='explore'||st.mode==='practice') render();
+  if(st.mode==='explore'||st.mode==='practice'||st.mode==='songs') render();
   else if(st.mode==='drill'){st.picking=cur.whole; st.seq=genSeq(); render();}
   else newQuestion();
 }
@@ -1811,14 +1936,39 @@ neck.addEventListener('click',e=>{
     q.picked=p; q.answered=true; record(ivOf(p,q.key)===q.iv); render();
   }
 });
-panel.addEventListener('input',e=>{ // the voicing rows follow the chords as they're typed, keeping what's already entered
-  if(e.target.id!=='sgChords') return; const box=document.getElementById('sgVoic'); if(!box) return;
-  const kept={}; box.querySelectorAll('[data-voice]').forEach(el=>{if(el.value) kept[el.dataset.voice]=el.value;});
-  const k=+(document.getElementById('sgKey')||{}).value; box.innerHTML=voicingRows(e.target.value,kept,isNaN(k)?-1:k);
+panel.addEventListener('input',e=>{ // a part's chord chips follow the chords as they're typed
+  const k=e.target.dataset.part; if(k===undefined||e.target.tagName!=='TEXTAREA'||!st.song) return;
+  const sk=LOG.skills[st.song], box=document.getElementById('cchips'+k), pc=parseChords(e.target.value);
+  if(box) box.innerHTML=chordChips(sk,+k,e.target.value);
+  const nb=document.getElementById('pbars'+k); if(nb) nb.textContent=pc.chords.length?`${pc.chords.length} bar${pc.chords.length>1?'s':''}`:'type its chords';
 });
+function songChange(e){
+  // the open song saves as you go: each field when you leave it
+  const id=st.song, sk=id&&LOG.skills[id], t=e.target; if(!sk) return false;
+  if(t.dataset.sf){const f=t.dataset.sf, v=t.value.trim();
+    if(f==='name'){if(!v){render(); return true;} setSong(id,{name:v.slice(0,120)});}
+    else if(f==='artist') setSong(id,{artist:v.slice(0,120)});
+    else if(f==='link'){if(v&&!/^https:\/\//.test(v)){const m=document.getElementById('sfMsg'); if(m) m.textContent='A link needs to start with https://, so it wasn’t saved.'; return true;} if(v) setSong(id,{link:v}); else {delete sk.link; setSong(id,{});}}
+    else if(f==='key') setSong(id,{key:+v});
+    else if(f==='minor') setSong(id,{minor:v==='1'});
+    else if(f==='prog') setSong(id,{prog:PROG_BY[v]?v:'pop'});
+    if(D.line==='prog'&&D.prog===id) refresh();
+    render(); return true;}
+  if(t.dataset.part!==undefined||t.dataset.partName!==undefined){
+    const parts=songParts(sk).map(p=>({...p})), k=+(t.dataset.part??t.dataset.partName);
+    if(t.dataset.partName!==undefined) parts[k].name=t.value; else{
+      const bad=parseChords(t.value).bad, el=document.getElementById('pbad'+k);
+      if(bad.length){if(el) el.textContent=`Fretmap can't read ${bad.slice(0,4).map(x=>`“${x}”`).join(', ')}. Write chords like A, E6, Dmaj7, F#m or Bb7.`; return true;} // keep what's typed, don't save it yet
+      parts[k].text=t.value;}
+    saveParts(id,parts); if(D.line==='prog'&&D.prog===id) refresh(); render(); return true;}
+  if(t.dataset.sg==='pat'){const v=t.value, P=songPat(sk);
+    setSongStrum(id,v==='custom'?{pat:'custom',swing:!!(sk.strum&&sk.strum.swing),custom:{res:P.res,steps:P.steps}}:{pat:v,swing:!!RPAT[v].swing}); render(); return true;}
+  return false;
+}
 const onChange=e=>{
   if(e.target.id==='lgFile'){const f=e.target.files[0]; if(!f) return;
     f.text().then(t=>{const err=importLog(t); st.importMsg=err||`Imported ${f.name}.`; render();}); return;}
+  if(st.mode==='songs'&&songChange(e)) return;
   const k=e.target.dataset.set; if(!k) return;
   const v=e.target.value;
   if(k==='rpat'){R.pat=v; if(RPAT[v]) R.swing=RPAT[v].swing; save(); keepSongStrum(); regen(); return;}
@@ -1859,23 +2009,39 @@ const onClick=e=>{
     case 'clean': toggleClean(); return;
     case 'step': buildPath(); applySetup(STEP_BY[b.dataset.id]); return;
     case 'topath': document.querySelector('#modes [data-mode="practice"]').click(); return;
-    case 'songedit': st.addSong=true; st.editSong=b.dataset.id; st.addMsg=''; render(); return;
-    case 'songform': st.addSong=true; st.editSong=null; st.addMsg=''; render(); {const el=document.getElementById('sgName'); if(el) el.focus();} return;
-    case 'songcancel': st.addSong=false; st.editSong=null; st.addMsg=''; render(); return;
+    case 'songopen': st.song=b.dataset.id; st.newSong=false; st.vpick=null; if(st.mode!=='songs') setMode('songs'); else render(); return;
+    case 'songform': st.newSong=true; st.vpick=null; if(st.mode!=='songs') setMode('songs'); else render(); {const el=document.getElementById('sgName'); if(el) el.focus();} return;
+    case 'songcancel': st.newSong=false; render(); return;
     case 'songadd':{
       const val=id=>{const el=document.getElementById(id); return el?el.value:'';};
-      const bad=parseChords(val('sgChords')).bad;
-      // say what's wrong without redrawing the form, so nothing typed is lost
-      const say=m=>{const el=document.getElementById('sgMsg'); if(el) el.textContent=m;};
+      const say=m=>{const el=document.getElementById('sgMsg'); if(el) el.textContent=m;}; // nothing typed is lost
+      const text=val('sgChords'), bad=parseChords(text).bad;
+      if(!val('sgName').trim()){say('Give it a title first.'); return;}
       if(bad.length){say(`Fretmap can't read ${bad.slice(0,4).map(x=>`“${x}”`).join(', ')}. Write chords like A, E6, Dmaj7, F#m or Bb7.`); return;}
-      const vs={}, badV=[]; document.querySelectorAll('[data-voice]').forEach(el=>{if(el.value.trim()){if(parseFrets(el.value)) vs[el.dataset.voice]=el.value; else badV.push(el.dataset.voice);}});
-      if(badV.length){say(`The ${badV.join(', ')} voicing needs six strings, low E to high E, such as 000220 or x02220.`); return;}
-      const old=st.editSong, id=addSong(val('sgName'),val('sgArtist'),val('sgLink'),val('sgKey'),val('sgMinor'),val('sgProg'),val('sgChords'),vs);
-      if(id){if(old&&old!==id) setSong(old,{gone:true}); st.addSong=false; st.editSong=null; st.addMsg='';}
-      else {say('Give it a title first.'); return;}
-      render(); return;}
+      const id=addSong(val('sgName'),val('sgArtist'),val('sgLink'),-1,0,'pop',text,{});
+      saveParts(id,[{name:'Verse',text}]); st.song=id; st.newSong=false; render(); return;}
     case 'rate':{const id=b.dataset.id, r=+b.dataset.v, sk=LOG.skills[id]; if(sk) setSong(id,{rating:sk.rating===r?r-1:r}); render(); return;}
     case 'songplay':{const sk=LOG.skills[b.dataset.id]; if(sk) applySetup(songSetup(sk,b.dataset.id)); return;}
+    case 'partadd':{const sk=LOG.skills[st.song]; if(!sk) return; const parts=songParts(sk).map(p=>({...p})), used=new Set(parts.map(p=>p.name));
+      parts.push({name:['Chorus','Bridge','Intro','Outro','Solo'].find(x=>!used.has(x))||`Part ${parts.length+1}`,text:''}); saveParts(st.song,parts); render();
+      {const ta=document.querySelector(`textarea[data-part="${parts.length-1}"]`); if(ta) ta.focus();} return;}
+    case 'partdel':{const sk=LOG.skills[st.song]; if(!sk) return; const parts=songParts(sk).filter((p,k)=>k!==+b.dataset.part); st.vpick=null; saveParts(st.song,parts); if(D.line==='prog'&&D.prog===st.song) refresh(); render(); return;}
+    case 'vpick':{const n=b.dataset.n, k=+b.dataset.part; st.vpick=st.vpick&&st.vpick.n===n&&st.vpick.part===k?null:{n,part:k}; render(); return;}
+    case 'vset': case 'vtype': case 'vclear':{
+      const sk=LOG.skills[st.song], n=b.dataset.n; if(!sk) return;
+      let f=act==='vset'?parseFrets(b.dataset.f):act==='vtype'?parseFrets((document.getElementById('vType')||{}).value):null;
+      if(act==='vtype'&&!f){const m=document.getElementById('vMsg'); if(m){m.textContent='That needs six strings, low E to high E, such as 000220 or x02220.'; m.style.color='var(--bad)';} return;}
+      const vs={...(sk.voicings||{})}; if(f) vs[n]=fretText(f); else delete vs[n];
+      setSong(st.song,{voicings:vs}); if(D.line==='prog'&&D.prog===st.song) refresh();
+      if(f) hearFrets(f); render(); return;}
+    case 'vhear':{const sk=LOG.skills[st.song], n=b.dataset.n, typed=parseFrets((document.getElementById('vType')||{}).value);
+      const f=typed||(sk.voicings&&sk.voicings[n]&&parseFrets(sk.voicings[n]))||autoVoicing(n,sk.key??0); if(f) hearFrets(f); return;}
+    case 'sgstep':{const sk=LOG.skills[st.song]; if(!sk) return; const P=songPat(sk), c=P.steps[i], nx={'.':'x',x:'>','>':'m',m:'.'}[c];
+      setSongStrum(st.song,{pat:'custom',swing:!!(sk.strum&&sk.strum.pat?sk.strum.swing:P.swing),custom:{res:P.res,steps:P.steps.slice(0,i)+nx+P.steps.slice(i+1)}}); render(); return;}
+    case 'sgres':{const sk=LOG.skills[st.song]; if(!sk) return; const P=songPat(sk), res=+b.dataset.v; if(res===P.res) return;
+      setSongStrum(st.song,{pat:'custom',swing:!!(sk.strum&&sk.strum.swing),custom:{res,steps:res===16?P.steps.split('').map(c=>c+'.').join(''):P.steps.split('').filter((c,j)=>j%2===0).join('')}}); render(); return;}
+    case 'sgswing':{const sk=LOG.skills[st.song]; if(!sk) return; const P=songPat(sk), sp=sk.strum&&sk.strum.pat?sk.strum:{pat:P.id,swing:!!P.swing};
+      setSongStrum(st.song,{...sp,swing:!sp.swing}); render(); return;}
     case 'lgtoken':{const t=(document.getElementById('lgToken').value||'').trim(); if(!t) return; setToken(t); sync.state=''; render(); syncNow(); return;}
     case 'lgsync': syncNow(); return;
     case 'lgforget': setToken(''); sync.state=''; render(); return;
@@ -1919,6 +2085,7 @@ const onClick=e=>{
   save(); render();
 };
 [panel,sheetEl].forEach(el=>el.addEventListener('click',onClick));
+function hearFrets(f){ try{ensureAC(); let j=0; f.forEach((x,s)=>{if(x!==null) toneAt(MIDI[s]+x,ac.currentTime+0.02+(j++)*0.03,0.16);});}catch(err){} }
 function strumNow(){ if(!cur.voicing) return; try{ensureAC(); strum(ac.currentTime+0.02,0.2);}catch(err){} st.flashUntil=Date.now()+1600; renderBoard(); setTimeout(renderBoard,1650); }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&st.sheet&&document.getElementById('gloss').hidden){st.sheet=false; render(); const g=document.querySelector('[data-act="sheet"]'); if(g) g.focus();} });
 // Space always plays or pauses the drill while the page has focus, whatever control was last clicked.
@@ -2100,7 +2267,7 @@ const TIPS=[
  ['#modes [data-mode="drill"]',()=>'<b>Drill</b>: pick a box, then play scale lines over a chord, or strum and arpeggiate a chord progression, with the metronome. (3)'],
  ['[data-act="line"][data-v="scale"]',()=>'Play scale patterns through the box over one chord.'],
  ['[data-act="line"][data-v="prog"]',()=>'Strum and arpeggiate a chord progression in this key and box, with strum patterns you can count and edit.'],
- ['[data-set="prog"]',()=>{const S=songProg(D.prog); if(S) return `<b>${esc(S.name)}</b>: ${S.chords.join(' ')}. ${S.chords.length} bars, one chord each, as you typed them on the Path tab.`; const P=PROG_BY[D.prog]; return `<b>${P.name}</b>: ${progRomans(P.degs).join(' ')}. ${P.degs.length} bar${P.degs.length>1?'s':''} of chords, built from ${NOTES[cur.key]} ${esc(modeName())}, so the same progression works in any key or mode.`;}],
+ ['[data-set="prog"]',()=>{const S=songProg(D.prog); if(S) return `<b>${esc(S.name)}</b>: ${S.chords.length} bars, one chord each, as you typed them in the Songs tab. Pick another song or a common progression here.`; const P=PROG_BY[D.prog]; return `<b>${P.name}</b>: ${progRomans(P.degs).join(' ')}. ${P.degs.length} bar${P.degs.length>1?'s':''} of chords, built from ${NOTES[cur.key]} ${esc(modeName())}, so the same progression works in any key or mode.`;}],
  ['[data-act="plan"][data-v="both"]',()=>`Strum each chord for a bar, then pick the same shape for a bar, one string at a time (an ${term('arpeggio','arpeggio')}).`],
  ['[data-act="plan"][data-v="strum"]',()=>'Strum each chord for a bar with the pattern below.'],
  ['[data-act="plan"][data-v="arp"]',()=>'Pick each chord’s shape one string at a time for a bar, low to high and back.'],
@@ -2111,15 +2278,28 @@ const TIPS=[
  ['[data-act="clean"]',()=>lg.last&&lg.last.clean?`Marked clean at ${lg.last.clean} bpm. Click to unmark it.`:`If that run was ${term('clean','clean')}, mark it at ${lg.last?lg.last.bpm[1]:saved.bpm} bpm. A step on the path is done when a run is marked clean at its goal tempo.`],
  ['[data-act="step"]',el=>{buildPath(); const t=STEP_BY[el.dataset.id]; return `<b>${t.title}</b>: ${stepWhat(t)} Opens Drill set up for this step.`;}],
  ['[data-act="topath"]',()=>'Go back to the learning path.'],
- ['[data-act="songform"]',()=>'Add a song you’re learning: its key and closest progression set up Drill for it.'],
- ['[data-act="songadd"]',()=>'Add this song to the path.'],
+ ['[data-act="songform"]',()=>'Add a song you’re learning, with its chords, in the Songs tab.'],
+ ['[data-act="songadd"]',()=>'Add this song. It shows up on the Path too.'],
  ['[data-act="songcancel"]',()=>'Close the form without adding a song.'],
  ['[data-act="rate"]',el=>`Rate how well you play it: ${el.dataset.v} of 5. Learned at 4. Click your current rating again to lower it.`],
- ['[data-act="songplay"]',el=>{const sk=LOG.skills[el.dataset.id]; return sk?`Open Drill on ${esc(sk.name)}’s ${sk.chords&&sk.chords.length?'chords':'key and progression'}, in open position: strum each chord, then arpeggiate it.`:'';}],
- ['[data-act="songedit"]',el=>{const sk=LOG.skills[el.dataset.id]; return sk?`Change ${esc(sk.name)}’s details or type its chords.`:'';}],
- ['#sgKey',()=>'The song’s key.'],
- ['#sgMinor',()=>'Whether the song is in a major or a minor key.'],
- ['#sgProg',()=>'The progression closest to the song’s chords. Drill uses it to set up the changes.'],
+ ['[data-act="songplay"]',el=>{const sk=LOG.skills[el.dataset.id]; return sk?`Practice: open Drill on ${esc(sk.name)}’s ${sk.chords&&sk.chords.length?'chords':'key and progression'}, in open position: strum each chord, then arpeggiate it.`:'';}],
+ ['[data-act="songopen"]',el=>{const sk=LOG.skills[el.dataset.id]; return sk?`Open ${esc(sk.name)} in the Songs tab to change its chords, voicings and strum pattern.`:'';}],
+ ['#modes [data-mode="songs"]',()=>'<b>Songs</b>: your songs, with their chords in parts, a voicing for each chord, and a strum pattern. Practice takes one straight to Drill. (5)'],
+ ['[data-act="partadd"]',()=>'Add another part, like a chorus or bridge. Parts play one after another when you practice.'],
+ ['[data-act="partdel"]',()=>'Remove this part and its chords from the song.'],
+ ['[data-act="vpick"]',el=>`Pick how to play <b>${esc(el.dataset.n)}</b> in this song.${el.classList.contains('own')?' Gold frets mean it’s your own choice.':''}`],
+ ['[data-act="vset"]',el=>`Play ${esc(el.closest('.vpop').getAttribute('aria-label').replace('Voicing for ',''))} as ${esc(el.dataset.f)}, low E to high E, whenever you practice this song. You’ll hear it.`],
+ ['[data-act="vtype"]',()=>'Use the frets typed here, low E to high E.'],
+ ['[data-act="vhear"]',()=>'Hear the typed shape, or the current one.'],
+ ['[data-act="vclear"]',()=>'Forget your voicing and let Fretmap pick a shape for each box.'],
+ ['[data-sg="pat"]',()=>{const sk=LOG.skills[st.song], P=sk&&songPat(sk); return P?`<b>${P.name}</b>: ${counting(P)}. Saved with this song.`:'';}],
+ ['[data-act="sgstep"]',el=>{const sk=LOG.skills[st.song], P=songPat(sk), k=+el.dataset.i; return `<b>${countLabels(P.res)[k]}</b>, ${k%2?'up':'down'}: ${STEP_NAME[P.steps[k]]}. Click to cycle strum, accent, chuck, ghost.`;}],
+ ['[data-act="sgres"][data-v="8"]',()=>'Put the song’s pattern on 8 steps a bar.'],
+ ['[data-act="sgres"][data-v="16"]',()=>'Put the song’s pattern on 16 steps a bar.'],
+ ['[data-act="sgswing"]',()=>'Shuffle feel for this song: the second strum of each pair lands late.'],
+ ['[data-sf="key"]',()=>'The song’s key. Roman numerals in Drill count from it.'],
+ ['[data-sf="minor"]',()=>'Whether the song is in a major or a minor key.'],
+ ['[data-sf="prog"]',()=>'With no chords typed yet, practice this common progression in the song’s key.'],
  ['[data-act="lgtoken"]',()=>'Save the token in this browser and sync now. It finds your existing Fretmap gist, or makes a new private one.'],
  ['[data-act="lgsync"]',()=>'Merge this browser’s log with the gist now. Nothing is ever deleted by a sync.'],
  ['[data-act="lgforget"]',()=>'Remove the token from this browser. Your log and the gist stay as they are.'],

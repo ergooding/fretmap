@@ -7,11 +7,16 @@ A guitar fretboard trainer that runs as a single page: intervals, scales and mod
 ## Modes
 
 - **Explore**: see every degree of a scale around the key.
-- **Name it** and **Find it**: interval quizzes that weight the intervals you miss.
+- **Quiz**: interval quizzes that weight the intervals you miss. **Name it** asks which degree a note is; **Find it** asks where a degree sits.
 - **Drill**: pick a 5-fret box, then either
   - **Scale lines**: play patterns through it against a chord with a count-in, tab, fingerings, a chord diagram, and optional chord hits on beat 1, or
-  - **Strum chords**: pick a common progression (pop, doo-wop, ii V I, 12-bar blues, Andalusian and more) built from the key and mode, voiced inside the box, and play each chord as a bar of strumming, a bar of the same shape arpeggiated, or both. Strum patterns run from plain 8ths through ghost strums, 16ths, syncopation, and shuffle, with the counting under each step; edit any step to make your own.
-- **Path**: a learning path from scales (all five A minor pentatonic boxes) to the chords inside each box, to progressions, to songs you add with their Songsterr links and, if you like, their chords typed out (for example "(A, E6, Dmaj7) x2, A, E6, D, A"), which Drill then plays a bar each (each chord can have its own voicing, and strum pattern changes made while playing a song are saved with it), with a rhythm track of strum patterns alongside. Every step is built from the focus (key, scale, mode) in the header above the tabs, which every tab shares; pentatonic and blues focuses borrow chords from the 7-note mode they sit in. Each step opens Drill set up for it and is done when you mark a run clean at its goal tempo. Progress is kept in the browser; add a GitHub token with only the gist permission to sync it between devices through a private gist, or export and import it as a file.
+  - **Strum chords**: pick a common progression (pop, doo-wop, ii V I, 12-bar blues, Andalusian and more) built from the key and mode, or one of your songs. The song sheet shows a tile per bar with the chord, its roman numeral and the frets you'll play, and lights up the current bar. Play each chord as a bar of strumming, a bar of the same shape picked, or both. The strum card under the neck holds the pattern: plain 8ths through ghost strums, 16ths, syncopation, and shuffle, with the counting under each step; edit any step to make your own.
+
+  Tempo, Play, the count and Mark clean sit in one practice bar. Everything else (each chord, 7ths, notes per beat, click, notes, shuffle, dot labels, what the neck shows while playing, and the tempo ramp) is in the ⚙ Settings sheet.
+- **Path**: a learning path from scales, position by position, to the chords inside each position, to progressions, to your songs, with a rhythm track of strum patterns alongside. Every step is built from the focus (key, scale, mode) in the header above the tabs, which every tab shares; pentatonic and blues focuses borrow chords from the 7-note mode they sit in. Each step opens Drill set up for it and is done when you mark a run clean at its goal tempo.
+- **Songs**: your songs, with their Songsterr links and a rating for how well you play them. Type each part's chords the way you'd write them (for example "(A, E6, Dmaj7) x2, A, E6, D, A"), a bar each; parts play one after another. Tap a chord to pick its voicing from a few shapes drawn as diagrams, or type your own, such as 000220. Each song keeps its own strum pattern, edited here or in Drill. **Practice** opens Drill on the song.
+
+Progress is kept in the browser; add a GitHub token with only the gist permission to sync it between devices through a private gist (under Sync and backup on the Path tab), or export and import it as a file. The ? button opens a glossary, along with the keyboard shortcuts.
 
 The layout switches between phone and desktop based on the window shape. The ◐ button in the header overrides it.
 
