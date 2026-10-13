@@ -82,7 +82,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(d.querySelector('.pnext [data-act=step]').dataset.id==='s5','path-next-s5');
   click(d.querySelector('.pnext [data-act=step]'));
   ok(X.st.mode==='drill'&&X.F.key===9&&X.F.fam==='pent'&&X.F.mode===1&&X.F.pos===5&&X.D.line==='scale'&&X.D.pattern==='thirds','step-setup',[X.st.mode,X.F.key,X.F.fam,X.F.mode,X.F.pos,X.D.line,X.D.pattern].join(' '));
-  ok(/Frets 5–9, from the root · goal 80/.test(d.getElementById('panel').textContent),'path-note');
+  ok(/Frets 5–9, from the root · goal 80/.test(d.getElementById('sheet').textContent),'path-note');
   const runClean=(bpm,secs)=>{X.saved.bpm=bpm; click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(secs); click(d.querySelector('[data-act=play]')); const c=d.querySelector('[data-act=clean]'); ok(c,'clean-chip-'+bpm); if(c) click(c);};
   runClean(70,20); ok(!X.stepState(X.STEP_BY.s5).done,'step-not-done-below-goal');
   runClean(80,20); ok(X.stepState(X.STEP_BY.s5).done,'step-done-at-goal');
@@ -91,7 +91,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   // a chord step keeps the pentatonic focus and borrows Aeolian's chords
   click(d.querySelector('[data-act=step][data-id=c5]'));
   ok(X.F.fam==='pent'&&X.F.mode===1&&X.D.line==='prog'&&X.D.prog==='one'&&X.D.plan==='both'&&X.R.pat==='quarters'&&X.cur.prog&&X.cur.prog.length===1&&X.cur.prog[0].ch.name==='Am','chord-step',[X.F.fam,X.D.line,X.D.prog,X.D.plan,X.R.pat].join(' '));
-  ok(/comes? from A Aeolian/.test(d.getElementById('panel').textContent),'borrowed-chords-hint');
+  ok(/comes? from A Aeolian/.test(d.getElementById('sheet').textContent),'borrowed-chords-hint');
   runClean(80,20); ok(X.stepState(X.STEP_BY.c5).done,'chord-step-done');
   click(d.querySelector('[data-act=topath]'));
   ok(X.stepWhat(X.STEP_BY.p145)==='Am Dm Em Am, without leaving frets 5–9.','prog-step-text',X.stepWhat(X.STEP_BY.p145));
@@ -117,7 +117,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(X.mergeLogs(X.LOG,older).skills[song[0]].rating===4,'older-rating-loses');
   click(d.querySelector(`[data-act=songplay][data-id="${song[0]}"]`));
   ok(X.st.mode==='drill'&&X.F.key===7&&X.F.mode===0&&X.D.line==='prog'&&X.D.prog==='145'&&X.F.pos===0,'song-play',[X.F.key,X.F.mode,X.D.prog,X.F.pos].join(' '));
-  ok(/Wish You Were Here: play the changes/.test(d.getElementById('panel').textContent),'song-path-note');
+  ok(/Wish You Were Here: play the changes/.test(d.getElementById('sheet').textContent),'song-path-note');
   // a song with its own typed chords
   const pc=X.parseChords('(A, E6, Dmaj7) x 2, A, E6, D, A');
   ok(pc.chords.join(' ')==='A E6 Dmaj7 A E6 Dmaj7 A E6 D A'&&!pc.bad.length,'parse-chords',JSON.stringify(pc));
@@ -129,7 +129,8 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   const here=X.LOG.skills['song:here-pavement']; ok(here&&here.key===9&&!here.minor&&here.chords.length===10,'song-chords',JSON.stringify(here));
   click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]'));
   ok(X.D.prog==='song:here-pavement'&&X.F.key===9&&X.cur.prog.length===10&&X.cur.prog.map(p=>p.ch.roman).slice(0,3).join(' ')==='I V6 IVmaj7'&&X.cur.prog.every(p=>p.voicing),'song-chords-drill',X.cur.prog.map(p=>p.ch.roman+(p.voicing?'':'!')).join(' '));
-  ok(/Here: A E6 Dmaj7/.test(d.querySelector('[data-set=prog]').textContent),'song-in-prog-menu');
+  ok(d.querySelector('[data-set=prog] option[value="song:here-pavement"]').textContent==='Here'&&[...d.querySelectorAll('.sh-bars .nm')].slice(0,3).map(e=>e.textContent).join(' ')==='A E6 Dmaj7','song-in-prog-menu');
+  ok(d.querySelectorAll('.sh-bars .bar').length===10,'song-sheet-tiles');
   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(30); click(d.querySelector('[data-act=play]'));
   ok(entries(X).slice(-1)[0].skill.includes(':song:here-pavement:'),'song-chords-logged',entries(X).slice(-1)[0].skill);
   // edit keeps it in place
@@ -149,13 +150,13 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]'));
   const dm=X.cur.prog.find(p=>p.ch.name==='Dmaj7'); ok(dm&&dm.voicing.own&&dm.voicing.frets.join()==='0,0,0,2,2,0','voicing-in-drill',dm&&JSON.stringify(dm.voicing));
   // the strum pattern edited while playing a song is kept with the song
-  ok(/saved with Here/.test(d.getElementById('panel').textContent),'song-strum-hint');
+  ok(/Saved with Here/.test(d.getElementById('panel').textContent),'song-strum-hint');
   click(d.querySelector('[data-act=rstep][data-i="1"]'));
   const sp=X.LOG.skills['song:here-pavement'].strum; ok(sp&&sp.pat==='custom'&&sp.custom.steps===X.R.custom.steps,'song-strum-saved',JSON.stringify(sp));
   const stepsNow=X.R.custom.steps; X.R.pat='faithful'; X.R.custom={res:8,steps:'x.......'};
   mode('practice'); click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]'));
   ok(X.R.pat==='custom'&&X.R.custom.steps===stepsNow,'song-strum-restored',X.R.pat+' '+X.R.custom.steps+' want '+stepsNow+' saved '+JSON.stringify(X.LOG.skills['song:here-pavement'].strum));
-  ok(/Here: play the changes/.test(d.getElementById('panel').textContent),'song-strum-pathnote');
+  ok(/Here: play the changes/.test(d.getElementById('sheet').textContent),'song-strum-pathnote');
   // stored under its own key
   ok(JSON.parse(w.localStorage.getItem(X.LOG_KEY)).sessions.length===X.LOG.sessions.length,'stored');
   // merge: union, idempotent

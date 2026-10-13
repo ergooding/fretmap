@@ -30,6 +30,8 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
     click(d.querySelector('[data-mode=drill]'));
     click(d.querySelector('.cell[data-s="0"][data-f="5"]'));
     click(d.querySelector('[data-act=line][data-v=prog]'));
+    click(d.querySelector('[data-act=sheet]')); // Each chord and notes per beat live in Settings
+    if(!d.querySelector('.sets')) fail('ui',L+' settings did not open');
     if(X.D.line!=='prog'||!d.querySelector('[data-set=prog]')) fail('ui',L+' no progression controls');
     if(d.querySelector('[data-k=pad]')||d.querySelector('[data-set=pattern]')) fail('ui',L+' scale-line controls still shown');
 
@@ -154,7 +156,7 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
       const b=d.querySelector('[data-pci="2"]'); if(!b) fail('preview','no chord strip'); else {click(b); if(X.cur.pci!==2||X.cur.voicing!==X.cur.prog[2].voicing) fail('preview','chord not shown');} }
     // five-note scales borrow the chords of the 7-note mode they sit in, and say so
     d.getElementById('selFam').value='pent'; d.getElementById('selFam').dispatchEvent(new w.Event('change',{bubbles:true}));
-    if(!X.cur.prog||X.cur.prog.length!==4||!/7-note mode it sits in/.test(d.getElementById('panel').textContent)) fail('pent','no borrowed chords for a 5-note scale');
+    if(!X.cur.prog||X.cur.prog.length!==4||!/7-note mode it sits in/.test(d.getElementById('sheet').textContent)) fail('pent','no borrowed chords for a 5-note scale');
     if(!d.querySelector('[data-act=play]')) fail('pent','no play button for borrowed chords');
     d.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true})); d.dispatchEvent(new w.KeyboardEvent('keyup',{key:' ',bubbles:true}));
     if(!X.st.playing) fail('pent','space did not play borrowed chords');

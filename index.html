@@ -49,14 +49,13 @@ h1{font-size:1.05rem;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
 .prompt .big{font-size:1.6rem;font-weight:700;line-height:1;min-width:1.6em;text-align:center}
 .prompt .sub{color:var(--muted);font-size:.82rem}
 .prompt.flash{animation:flash .5s}
+.prompt[hidden]{display:none}
 @keyframes flash{50%{color:var(--bad)}}
 
 .neck-wrap{flex:1;min-height:0;display:flex;justify-content:center}
 /* phone portrait: the neck keeps a usable height and a long panel scrolls instead of squashing it */
 .app:not(.wide):not(.land) .neck-wrap{min-height:min(230px,32vh)}
 .app.m-drill:not(.wide):not(.land) .neck-wrap{flex:0 0 min(260px,34vh)}
-.app.m-drill:not(.wide):not(.land) .transport{order:-1} /* play stays in reach above the settings */
-.app.m-drill:not(.wide):not(.land) .pathnote{order:-2}
 .app:not(.wide):not(.land):not(.m-practice) .panel{flex:0 1 auto;min-height:0;overflow:auto}
 .app:not(.wide):not(.land):not(.m-practice) .panel>*{flex-shrink:0}
 .neck{position:relative;height:100%;width:100%;max-width:380px;display:grid;
@@ -178,8 +177,6 @@ html.wide{font-size:19px}
 .app.wide .tcol .ln{background:linear-gradient(transparent 8px,var(--line) 8px,var(--line) 9px,transparent 9px)}
 .app.wide .tcol.beat{margin-left:8px}
 .app.wide .tcol.bar{margin-left:14px;box-shadow:-8px 0 0 -7px var(--muted)}
-.kbd{font-size:.75rem;color:var(--muted);margin:0;display:none}
-.app.wide .kbd{display:block}
 .chip.tog[aria-pressed="true"]::before{content:"✓ "}
 .seg{display:inline-flex;align-items:center;flex:none;border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:2px}
 .segw{display:inline-flex;align-items:center;gap:6px;flex:none}
@@ -259,7 +256,10 @@ html.wide{font-size:19px}
 .rchords .hint{flex:1;min-width:10em}
 .rchords .now{outline:2px solid var(--gold)}
 .app.wide .rgrid{max-width:900px;padding:10px 8px}
-.app.wide .modes button{padding:8px 2px;font-size:.78rem;white-space:nowrap}
+.app.wide .modes button{padding:7px 16px;font-size:.85rem;white-space:nowrap}
+.app.wide header{gap:16px}
+.app.wide h1{flex:none}
+.app.wide .stats{flex:1}
 .modes button{white-space:nowrap}
 .app:not(.wide) .modes button{font-size:.8rem;padding:8px 3px}
 /* practice mode: the log takes the neck's place */
@@ -331,10 +331,67 @@ html.land{font-size:15px}
 .app.land .neck{max-width:none;height:100%}
 .app.land .panel{grid-area:panel;min-height:0;overflow:auto;gap:6px;padding-bottom:4px}
 .app.land .panel>*{flex-shrink:0}
-.app.land .transport{order:-1}
 .app.land .transport .icon,.app.land .bpm{height:auto}
 .app.land .btn{padding:8px}
 .app.land .ans{padding:7px 0}
+
+/* Drill: the song sheet (what you play), the strum card under the neck, and the practice bar */
+.song-sheet{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 12px;flex:none;min-width:0}
+.song-sheet[hidden]{display:none}
+.sh-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.sh-name{font-size:1.3rem}
+.sh-head span{color:var(--muted);font-size:.85rem}
+.sh-top{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;min-width:0}
+.sh-title{font:inherit;font-weight:700;font-size:1.05rem;color:var(--ink);background:none;border:0;border-bottom:1px dashed var(--muted);border-radius:0;padding:2px 0;max-width:100%;min-width:0;cursor:pointer;text-overflow:ellipsis}
+.sh-sub,.sh-no{font-size:.78rem;color:var(--muted)}
+.sh-no{margin-left:auto;font-variant-numeric:tabular-nums}
+.sh-bars{position:relative;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth;padding:1px}
+.sh-bars::-webkit-scrollbar{display:none}
+.bar{flex:none;min-width:66px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:5px 9px;cursor:pointer}
+.bar .nm{font-weight:700;font-size:.98rem}
+.bar .rn{font-family:"Times New Roman",Georgia,serif;color:var(--muted);font-size:.88rem;line-height:1.1}
+.bar .fr{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.74rem;color:var(--muted);letter-spacing:.04em}
+.bar.own .fr{color:color-mix(in srgb,var(--gold) 72%,var(--ink));font-weight:700}
+.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);background:color-mix(in srgb,var(--gold) 20%,var(--surface))}
+.app.wide .sh-bars{display:grid;grid-template-columns:1fr 1fr;overflow:visible}
+.app.wide .bar{display:grid;grid-template-columns:1fr auto;grid-template-areas:"nm fr" "rn fr";align-items:center;column-gap:8px;padding:6px 10px}
+.app.wide .bar .nm{grid-area:nm}.app.wide .bar .rn{grid-area:rn}.app.wide .bar .fr{grid-area:fr}
+.strum-card{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 10px;flex:none}
+.strum-card .rgrid{border:0;padding:2px 0;background:none;max-width:none}
+.sc-top{align-items:center}
+.saved-with{font-size:.75rem;color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:3px 10px;white-space:nowrap;flex:none}
+.app.wide .strum-card{max-width:900px}
+.pbar{display:flex;gap:6px;align-items:stretch;flex-wrap:wrap;position:sticky;bottom:0;z-index:4;background:var(--bg);padding:6px 0 2px;margin-top:auto;flex:none}
+.pbar .icon{height:auto;min-height:42px;width:40px;font-size:1.1rem}
+.pbar .play{flex:0 1 150px;min-width:100px}
+.pbar .chip{align-self:center}
+.pcount{flex:1;min-width:0;align-self:center;font-size:.9rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.pcount:empty{display:none}
+.pcount b{color:var(--ink)}
+.pcount b.on{color:var(--bg);background:var(--ink);border-radius:5px;padding:0 4px}
+.pcount .gh{opacity:.6}
+.app:not(.wide) .pbar .play{flex:1}
+.app:not(.wide) .pcount{order:5;flex-basis:100%;text-align:center}
+.app:not(.wide) .pbar .chip{order:6}
+.app.wide .pbar{max-width:900px;padding-top:10px}
+.app.land .song-sheet{grid-area:prompt;padding:6px 8px;gap:5px}
+.app.land .bar{padding:3px 7px}
+/* Drill settings sheet */
+.sets-wrap{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.42);display:flex;align-items:center;justify-content:center;padding:env(safe-area-inset-top,0px) 12px env(safe-area-inset-bottom,0px)}
+.sets{background:var(--surface);color:var(--ink);border-radius:16px;width:min(460px,100%);max-height:calc(100% - 24px);overflow:auto;padding:12px 16px 16px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.sets-top{display:flex;align-items:center;justify-content:space-between}
+.sets-top b{font-size:1.05rem}
+.sets h4{margin:12px 0 2px;font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.set{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 10px;padding:6px 0;font-size:.9rem;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.set select{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:5px 6px}
+.sw{flex:none;width:44px;height:26px;border-radius:999px;border:0;background:var(--line);position:relative;cursor:pointer;padding:0}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--surface);transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.sw[aria-pressed="true"]{background:var(--good)}
+.sw[aria-pressed="true"]::after{transform:translateX(18px)}
+@media (prefers-reduced-motion: reduce){.sw::after{transition:none}.sh-bars{scroll-behavior:auto}}
+.seglab:empty{display:none}
+.song-sheet .segw{flex-wrap:wrap;flex:1 1 auto;min-width:0}
+.gl-keys{margin:0 10px;font-size:.88rem;line-height:1.45}
 </style>
 </head>
 <body>
@@ -359,15 +416,15 @@ html.land{font-size:15px}
       <label>Position<select id="selPos"></select></label>
     </div>
   </div>
-  <aside class="side">
   <nav class="modes" id="modes">
     <button data-mode="explore">Explore</button>
     <button data-mode="quiz">Quiz</button>
     <button data-mode="drill">Drill</button>
     <button data-mode="practice">Path</button>
   </nav>
-  <p class="kbd">Keys: 1–5 switch modes, ← → step positions, space plays and pauses a drill.</p>
+  <aside class="side">
   <div class="prompt" id="prompt" aria-live="polite"></div>
+  <div class="song-sheet" id="sheet" hidden></div>
   <div class="voice-card" id="voiceCard" hidden></div>
   </aside>
   <div class="neck-wrap"><div class="neck" id="neck"></div></div>
@@ -737,6 +794,8 @@ function applyLayout(){
   land=!wide&&mqLand.matches; horiz=wide||land;
   appEl.classList.toggle('wide',wide); document.documentElement.classList.toggle('wide',wide);
   appEl.classList.toggle('land',land); document.documentElement.classList.toggle('land',land);
+  const nav=document.getElementById('modes'), hd=appEl.querySelector('header');
+  if(wide) hd.insertBefore(nav,hd.querySelector('.stats')); else appEl.insertBefore(nav,appEl.querySelector('.side'));
   const L={auto:['◐','Layout: automatic'],wide:['🖥','Layout: desktop'],compact:['📱','Layout: phone']}[saved.layout];
   layoutBtn.textContent=L[0]; layoutBtn.setAttribute('aria-label',L[1]);
   layoutNeck();
@@ -1213,7 +1272,7 @@ const startOfDay=t=>{const d=new Date(t); d.setHours(0,0,0,0); return d.getTime(
 const mins=list=>Math.round(list.reduce((a,e)=>a+(e.secs||0),0)/60);
 
 // ---------- render ----------
-const promptEl=document.getElementById('prompt'), panel=document.getElementById('panel');
+const promptEl=document.getElementById('prompt'), panel=document.getElementById('panel'), sheetEl=document.getElementById('sheet');
 function renderStats(){
   const m=mins(entriesSince(startOfDay(now())));
   document.getElementById('stats').innerHTML=(saved.total?`<b>${saved.hits}/${saved.total}</b> right, streak <b>${saved.streak}</b>`:'Pick a focus, then quiz')
@@ -1223,7 +1282,7 @@ function renderStats(){
 function render(){
   document.querySelectorAll('#modes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===st.mode||(b.dataset.mode==='quiz'&&(st.mode==='name'||st.mode==='find'))));
   appEl.classList.toggle('m-practice',st.mode==='practice'); appEl.classList.toggle('m-drill',st.mode==='drill');
-  renderStats(); focusText(); renderBoard(); renderPrompt(); renderPanel(); renderVoice();
+  renderStats(); focusText(); renderBoard(); renderPrompt(); renderPanel(); renderSheet(); renderVoice(); updateLive();
 }
 const picking=()=>st.mode==='drill'&&(st.picking||cur.whole);
 function drillLabel(p){
@@ -1283,15 +1342,11 @@ function renderBoard(){
 function ctx(key){return F.fam==='chrom'?'':` in ${NOTES[key]} ${modeName()}`;}
 function renderPrompt(){
   const q=st.q;
+  promptEl.hidden=false;
   if(st.mode==='practice'){practicePrompt(); return;}
   if(st.mode==='drill'){
     if(picking()){promptEl.innerHTML=`<span class="big">☝</span><span>Tap where your index finger sits. The drill uses the 5 frets from there.</span>`;return;}
-    if(st.playing&&st.count){promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${st.count}</span><span>Count-in…</span>`;return;}
-    if(D.line==='prog'){progPrompt(); return;}
-    const per=[0,0,0,0,0,0]; boxNotes().forEach(n=>per[n.s]++);
-    const ch=cur.chord;
-    promptEl.innerHTML=`<span class="big" style="color:var(--gold);font-size:1.3rem;min-width:auto">${ch.name}</span><span>${ch.roman?ch.roman+' in ':'Over '}${NOTES[cur.key]} ${F.fam==='chrom'?'':modeName()}. Solid dots are ${term('chordtone','chord tones')}, pearl dots are ${term('passing','passing tones')}.<br><span class="sub">Notes per string, low to high: ${per.join(' ')}${D.pad&&!cur.voicing?'. No voicing fits this box, so the chord step is skipped.':''}</span></span>`;
-    return;
+    promptEl.hidden=true; updateLive(); return; // the song sheet and the practice bar say what's playing
   }
   if(st.mode==='explore'){
     promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${NOTES[cur.key]}</span><span>Tap any note to make it the key. Faded notes sit outside the position.</span>`;
@@ -1305,16 +1360,6 @@ function renderPrompt(){
     const res=q.answered?(q.picked&&ivOf(q.picked,q.key)===q.iv?'Right. ':'Faded dots show where it was. '):'';
     promptEl.innerHTML=`<span class="big" style="color:${COL[q.iv]}">${L[0]}</span><span>${res}Find the ${term(IVKEY[q.iv],L[1])}${ctx(q.key)}${cur.whole?' anywhere':' in the lit frets'}.</span>`;
   }
-}
-function progPrompt(){
-  if(!cur.prog){promptEl.innerHTML=`<span class="big">♪</span><span>Progressions are built from a 7-note scale. Pick a mode of Major, Harmonic minor, or Melodic minor in the focus settings.</span>`; return;}
-  const ch=cur.chord, n=(st.playing||st.paused)&&st.idx>=0?st.seq[st.idx]:null, P=curPat();
-  const missing=cur.prog.filter(p=>!p.voicing).map(p=>p.ch.name);
-  let what;
-  if(n&&n.chord) what=`Strum, counting ${counting(P)}`;
-  else if(n) what=`${term('arpeggio','Arpeggiate')} it: ${cur.voicing?'the same shape, one string at a time, low to high and back':'its chord tones in the box'}.`;
-  else what=`${term('progression',progLabel(D.prog))}. Each chord: ${{both:'a bar strummed, then a bar arpeggiated',strum:'a bar strummed',arp:'a bar arpeggiated'}[D.plan]}.`;
-  promptEl.innerHTML=`<span class="big" style="color:var(--gold);font-size:1.3rem;min-width:auto">${ch.name}</span><span>${term('roman',ch.roman)} in ${NOTES[cur.key]} ${modeName()}. ${what}<br><span class="sub">${cur.prog.map(p=>p.ch.name).join(' · ')}${missing.length&&D.plan!=='arp'?`. No voicing of ${[...new Set(missing)].join(', ')} fits this box, so ${missing.length===1?'it is':'they are'} arpeggiated instead.`:''}</span></span>`;
 }
 function finger(n){
   if(cur.lo===0) return n.f===0?'o':String(Math.min(4,n.f));
@@ -1365,18 +1410,13 @@ function chordFormula(v){
     <p class="st-lab">${term('stack')}, counted in ${term('half','half steps')}</p><div class="stack">${ladder}</div>
     ${omitted.length?`<p>This ${term('voicing')} leaves out the ${omitted.join(', ')}.</p>`:''}</div>`;
 }
-function rnStrip(){
-  if(cur.prog) return `<div class="rn-strip" role="group" aria-label="Chords in this progression">${progChipsHTML()}</div>`;
-  if(cur.chords.length<2) return '';
-  return `<div class="rn-strip" role="group" aria-label="Chords in this mode">${cur.chords.map((c,i)=>`<button data-rn="${i}" aria-pressed="${i===D.chord}">${c.roman}</button>`).join('')}</div>`;
-}
 function renderVoice(){
   const el=document.getElementById('voiceCard');
-  const show=wide&&st.mode==='drill'&&!picking();
+  const show=wide&&st.mode==='drill'&&!picking()&&D.line!=='prog';
   el.hidden=!show; if(!show) return;
   const v=cur.voicing;
   const ctxt=`${F.fam==='chrom'?'':' in '+NOTES[cur.key]+' '+modeName()}`;
-  const head=`<div class="vc-head"><b>${cur.chord.name}</b><b class="rn term" data-term="roman" tabindex="0">${cur.chord.roman}</b><span>${ctxt.trim()}</span></div>${rnStrip()}`;
+  const head=`<div class="vc-head"><b>${cur.chord.name}</b><b class="rn term" data-term="roman" tabindex="0">${cur.chord.roman}</b><span>${ctxt.trim()}</span></div>`;
   if(!v){el.innerHTML=`${head}${chordFormula(null)}<p>No playable voicing with the root in the bass fits frets ${cur.lo}–${cur.hi}. Try the next position.</p>`;return;}
   const tabTxt=v.frets.some(f=>f!==null&&f>9)?v.frets.map(f=>f===null?'x':f).join(' '):v.frets.map(f=>f===null?'x':f).join('');
   el.innerHTML=`${head}<p class="vc-shape">${v.own?esc(v.name):`${v.name.startsWith('Drop')?term('drop3',v.name):v.name.startsWith('Found')?v.name:term('shape',v.name)}, frets ${cur.lo}–${cur.hi}`}</p>
@@ -1452,9 +1492,9 @@ function rgridHTML(P){
 }
 function markProgChord(){
   document.querySelectorAll('[data-pci]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.pci===cur.pci));
-}
-function progChipsHTML(){
-  return cur.prog.map((p,i)=>`<button data-pci="${i}" aria-pressed="${i===cur.pci}">${p.ch.roman}</button>`).join('');
+  const no=document.getElementById('barNo'); if(no&&cur.prog) no.textContent=`bar ${cur.pci+1} of ${cur.prog.length}`;
+  const strip=document.querySelector('.sh-bars'), b=strip&&strip.querySelector(`[data-pci="${cur.pci}"]`);
+  if(b&&strip.scrollWidth>strip.clientWidth+2) strip.scrollLeft=b.offsetLeft-strip.clientWidth/2+b.offsetWidth/2;
 }
 function updateRGrid(){
   const g=document.getElementById('rgrid'); if(!g) return;
@@ -1628,42 +1668,88 @@ function syncHTML(){
     <div class="actions"><button class="btn primary" data-act="lgsync"${sync.busy?' disabled':''}>Sync now</button><button class="btn" data-act="lgforget">Forget token</button></div>${backup}`;
 }
 const cleanChip=()=>canClean()?`<button class="chip tog" data-act="clean" aria-pressed="${!!lg.last.clean}">${lg.last.clean?`Clean at ${lg.last.clean} bpm`:'Mark last run clean'}</button>`:'';
-function progPanel(playSeg){
-  if(!cur.prog){panel.innerHTML=`<div class="row">${playSeg}</div><p class="hint">Progressions are built from the chords of a 7-note scale. Pick a mode of Major, Harmonic minor, or Melodic minor in the focus settings.</p>`; return;}
-  const P=curPat(), sev=`<button class="chip tog" data-act="sev" aria-pressed="${D.sev}">7ths</button>`;
+const RAMPS=[[0,'Off'],[2,'+2 bpm a pass'],[4,'+4 bpm a pass'],[8,'+8 bpm a pass']];
+function sheetSel(){
+  // the progression menu: common progressions, then your songs
   const songs=songSteps().filter(({s})=>s.chords&&s.chords.length);
-  const progOpts=PROGS.map(([id])=>`<option value="${id}"${id===D.prog?' selected':''}>${progLabel(id)}</option>`).join('')
-    +(songs.length?`<optgroup label="Your songs">${songs.map(({id})=>`<option value="${esc(id)}"${id===D.prog?' selected':''}>${progLabel(id)}</option>`).join('')}</optgroup>`:'');
+  const o=`<optgroup label="Common progressions">${PROGS.map(([id,name])=>`<option value="${id}"${id===D.prog?' selected':''}>${esc(name)}</option>`).join('')}</optgroup>`
+    +(songs.length?`<optgroup label="Your songs">${songs.map(({id,s})=>`<option value="${esc(id)}"${id===D.prog?' selected':''}>${esc(s.name)}</option>`).join('')}</optgroup>`:'');
+  return `<select class="sh-title" data-set="prog" aria-label="Progression">${o}</select>`;
+}
+function renderSheet(){
+  // what you play: the chord chips for scale lines, or one tile per bar for a progression or song
+  const el=sheetEl, show=st.mode==='drill'&&!picking();
+  el.hidden=!show; if(!show){el.innerHTML=''; return;}
+  const playSeg=`<div class="row">${seg('Play','line',[['scale','Scale lines'],['prog','Strum chords']],D.line)}</div>`;
+  if(D.line!=='prog'){
+    const chips=cur.chords.map((c,i)=>`<button class="chip" data-act="chord" data-i="${i}" aria-pressed="${i===D.chord}">${c.roman?c.roman+' ':''}${c.name}</button>`).join('');
+    const per=[0,0,0,0,0,0]; boxNotes().forEach(n=>per[n.s]++);
+    el.innerHTML=`${playSeg}${pathNote()}
+      <div class="sh-head"><b class="sh-name">${cur.chord.name}</b><span>${cur.chord.roman?cur.chord.roman+' in ':'Over '}${NOTES[cur.key]} ${F.fam==='chrom'?'':esc(modeName())}</span></div>
+      <div class="row sh-chips" role="group" aria-label="Chord to drill over">${chips}</div>
+      <div class="drow"><select data-set="pattern" aria-label="Pattern">${opts(PATTERNS,D.pattern)}</select></div>
+      <p class="hint">Solid dots are ${term('chordtone','chord tones')}, pearl dots ${term('passing','passing tones')}. Notes per string, low to high: ${per.join(' ')}.${D.pad&&!cur.voicing?' No voicing fits this box, so the chord step is skipped.':''} Tap the chosen chord again to hear it.</p>`;
+    return;
+  }
+  if(!cur.prog){el.innerHTML=`${playSeg}<p class="hint">Progressions are built from the chords of a 7-note scale. Pick a mode of Major, Harmonic minor, or Melodic minor in the focus settings.</p>`; return;}
+  const S=songProg(D.prog), sk=S&&LOG.skills[D.prog], n=cur.prog.length;
+  const sub=S?`${sk.artist?esc(sk.artist)+' · ':''}${n} bars`:`${progRomans((PROG_BY[D.prog]||PROG_BY.pop).degs).join(' ')} · ${n} bar${n>1?'s':''}`;
+  const tiles=cur.prog.map((p,i)=>`<button class="bar${p.voicing&&p.voicing.own?' own':''}" data-pci="${i}" aria-pressed="${i===cur.pci}"><span class="nm">${esc(p.ch.name)}</span><span class="rn">${p.ch.roman}</span><span class="fr">${p.voicing?fretText(p.voicing.frets):'picked'}</span></button>`).join('');
+  const missing=[...new Set(cur.prog.filter(p=>!p.voicing).map(p=>p.ch.name))];
+  const notes=[missing.length&&D.plan!=='arp'?`No voicing of ${missing.map(esc).join(', ')} fits this box, so ${missing.length===1?'it is':'they are'} picked instead.`:'',
+    cur.chords.length!==7&&!S?`${esc(modeName())} has too few notes to build these chords, so they come from ${NOTES[cur.key]} ${FAMS.major.modes[TO_DIATONIC[F.fam][F.mode]||0][0]}, the 7-note mode it sits in.`:''].filter(Boolean).join(' ');
+  el.innerHTML=`${playSeg}${pathNote()}
+    <div class="sh-top">${sheetSel()}<span class="sh-sub">${sub}</span><span class="sh-no" id="barNo">bar ${cur.pci+1} of ${n}</span></div>
+    <div class="sh-bars" role="group" aria-label="Bars, one chord each">${tiles}</div>
+    ${wide?`<div class="row">${seg('Each chord','plan',[['both','Strum, then pick'],['strum','Strum'],['arp','Pick']],D.plan)}</div>`:''}
+    ${notes?`<p class="hint">${notes}</p>`:''}`;
+}
+function strumCard(){
+  if(D.plan==='arp') return `<div class="strum-card"><p class="hint">Each chord is ${term('arpeggio','picked')} one string at a time, so there is no strum pattern. Change <b>Each chord</b> in ⚙ Settings to strum.</p></div>`;
+  const P=curPat();
   const groups=RPATS.map(([g,list])=>`<optgroup label="${g}">${list.map(p=>`<option value="${p[0]}"${p[0]===R.pat?' selected':''}>${p[1]}</option>`).join('')}</optgroup>`).join('')
     +`<optgroup label="Edit the grid to make your own"><option value="custom"${R.pat==='custom'?' selected':''}>Your pattern</option></optgroup>`;
-  const planSeg=seg('Each chord','plan',[['both','Both'],['strum','Strum'],['arp','Arpeggio']],D.plan);
-  const progSel=`<select data-set="prog" aria-label="Progression">${progOpts}</select>`;
-  const patSel=D.plan==='arp'?'':`<select data-set="rpat" aria-label="Strum pattern">${groups}</select>${R.pat==='custom'?seg('Grid','rres',[['8','8ths'],['16','16ths']],String(P.res)):''}`;
-  const grid=D.plan==='arp'?'':`<div class="rgrid r${P.res}" id="rgrid" style="--n:${P.res}">${rgridHTML(P)}</div>${songNow()?`<p class="hint">Strum changes here are saved with ${esc(songProg(D.prog).name)}.</p>`:''}`;
-  // desktop has the width to put the menus side by side; phones stack them
-  const top=wide?`<div class="row">${playSeg}${sev}${planSeg}</div><div class="drow">${progSel}${patSel}</div>`
-    :`<div class="row">${playSeg}${sev}</div><div class="drow">${progSel}</div><div class="row">${planSeg}</div>${patSel?`<div class="drow">${patSel}</div>`:''}`;
-  panel.innerHTML=`${pathNote()}
-    ${top}
-    ${grid}
-    <div class="tab" id="tab"></div>
-    ${cur.chords.length!==7?`<p class="hint">${modeName()} has too few notes to build these chords, so they come from ${NOTES[cur.key]} ${FAMS.major.modes[TO_DIATONIC[F.fam][F.mode]||0][0]}, the 7-note mode it sits in.</p>`:''}
-    <div class="transport">${transportHTML()}
-      ${D.plan!=='strum'?`<select data-set="sub" aria-label="Arpeggio notes per beat">${opts(SUBS,D.sub)}</select>`:''}
-      <button class="btn primary play" data-act="play">${st.playing?'❚❚ Pause':st.paused?'▶ Resume':'▶ Play'}</button>
-      ${st.paused?'<button class="icon" data-act="restart" aria-label="Restart from the top">⏮</button>':''}
-    </div>
-    <div class="row">${cleanChip()}
-      <button class="chip tog" data-act="tog" data-k="click" aria-pressed="${D.click}">Click</button>
-      <button class="chip tog" data-act="tog" data-k="notes" aria-pressed="${D.notes}">Notes</button>
-      <button class="chip tog" data-act="rtog" data-k="swing" aria-pressed="${R.swing}">Shuffle feel</button>
-      ${seg('Labels','lbl',[['key','Key degrees'],['chord','Chord degrees'],['notes','Notes']],saved.labels==='notes'?'notes':D.ref)}
-      <select data-set="guide" aria-label="Guide">${opts(GUIDES,D.guide)}</select>
-      <select data-set="ramp" aria-label="Speed ramp">${opts([[0,'No ramp'],[2,'+2 bpm per pass'],[4,'+4 bpm per pass'],[8,'+8 bpm per pass']],D.ramp)}</select>
-      <button class="chip" data-act="strum">Strum chord</button>
-      <button class="chip" data-act="move">Move box</button>
-    </div>`;
-  renderTab(); updateRGrid();
+  return `<div class="strum-card"><div class="row sc-top"><span class="seglab">Strum</span><select data-set="rpat" aria-label="Strum pattern">${groups}</select>${R.pat==='custom'?seg('Grid','rres',[['8','8ths'],['16','16ths']],String(P.res)):''}${songNow()?`<span class="saved-with" data-tip="Changes to the strum pattern are kept with this song, and used whenever you practice it.">Saved with ${esc(songProg(D.prog).name)}</span>`:''}</div>
+    <div class="rgrid r${P.res}" id="rgrid" style="--n:${P.res}">${rgridHTML(P)}</div></div>`;
+}
+function pbarHTML(){
+  // everything you touch while practicing, in one bar
+  return `<div class="pbar">${transportHTML()}
+    <button class="btn primary play" data-act="play">${st.playing?'❚❚ Pause':st.paused?'▶ Resume':'▶ Play'}</button>
+    ${st.paused?'<button class="icon" data-act="restart" aria-label="Restart from the top">⏮</button>':''}
+    <span class="pcount" id="pcount"></span>${cleanChip()}
+    <button class="icon gear" data-act="sheet" aria-label="Drill settings" aria-haspopup="dialog">⚙</button></div>`;
+}
+function updateLive(){
+  // the count in the practice bar: the count-in, the strum count with the current step lit, or what to pick
+  const el=document.getElementById('pcount'); if(!el) return;
+  const n=st.playing&&st.idx>=0?st.seq[st.idx]:null;
+  if(st.playing&&st.count){el.innerHTML=`Count-in <b class="on">${st.count}</b>`; return;}
+  if(D.line!=='prog'||!cur.prog){el.innerHTML=''; return;}
+  if(n&&!n.chord){el.innerHTML=`Pick <b>${esc(cur.chord.name)}</b>`; return;}
+  if(D.plan==='arp'){el.innerHTML=''; return;}
+  const P=curPat(), L=countLabels(P.res);
+  el.innerHTML=P.steps.split('').map((c,k)=>n&&k===n.k?`<b class="on">${L[k]}</b>`:c==='.'?`<span class="gh">(${L[k]})</span>`:k%(P.res/4)===0?`<b>${L[k]}</b>`:L[k]).join(' ');
+}
+function setsHTML(){
+  // Drill settings, grouped by what they change
+  if(!st.sheet) return '';
+  const prog=D.line==='prog'&&cur.prog;
+  const line=(label,ctl)=>`<div class="set"><span>${label}</span>${ctl}</div>`;
+  const sw=(act,k,on,label)=>line(label,`<button class="sw" data-act="${act}" data-k="${k}" aria-pressed="${on}" aria-label="${label}"></button>`);
+  const sev=cur.set.size===7||prog?line('Add 7ths',`<button class="sw" data-act="sev" aria-pressed="${D.sev}" aria-label="Add 7ths"></button>`):'';
+  const play=prog?[line('Each chord',seg('','plan',[['both','Strum, then pick'],['strum','Strum'],['arp','Pick']],D.plan)),sev,
+      D.plan!=='strum'?line('Picked notes per beat',`<select data-set="sub" aria-label="Picked notes per beat">${opts(SUBS,D.sub)}</select>`):'']
+    :[line('Notes per beat',`<select data-set="sub" aria-label="Notes per beat">${opts(SUBS,D.sub)}</select>`),sev,
+      sw('tog','pad',D.pad,'Strum the chord each bar'),line('End each pass on',seg('','resolve',[['key','Key root'],['chord','Chord root']],D.resolve))];
+  const hear=[sw('tog','click',D.click,'Click'),sw('tog','notes',D.notes,'Play the notes'),prog?sw('rtog','swing',R.swing,'Shuffle feel'):''];
+  const neck=[line('Dot labels',seg('','lbl',[['key','Key'],['chord','Chord'],['notes','Notes']],saved.labels==='notes'?'notes':D.ref)),
+    line('While playing',`<select data-set="guide" aria-label="While playing">${opts(GUIDES,D.guide)}</select>`)];
+  const fast=[line('Tempo ramp',`<select data-set="ramp" aria-label="Tempo ramp">${opts(RAMPS,D.ramp)}</select>`)];
+  const grp=(h,list)=>`<section><h4>${h}</h4>${list.join('')}</section>`;
+  return `<div class="sets-wrap"><div class="sets" role="dialog" aria-modal="true" aria-label="Drill settings">
+    <div class="sets-top"><b>Drill settings</b><button class="icon" data-act="sheetclose" aria-label="Close settings">✕</button></div>
+    ${grp('What you play',play)}${grp('What you hear',hear)}${grp('What the neck shows',neck)}${grp('Getting faster',fast)}</div></div>`;
 }
 function renderPanel(){
   const q=st.q;
@@ -1674,33 +1760,8 @@ function renderPanel(){
         ${!cur.whole?'<div class="actions"><button class="btn" data-act="keepbox">Keep '+cur.posLabel.split(',')[0]+'</button></div>':''}`;
       return;
     }
-    const playSeg=seg('Play','line',[['scale','Scale lines'],['prog','Strum chords']],D.line);
-    if(D.line==='prog'){progPanel(playSeg); return;}
-    const chips=cur.chords.map((c,i)=>`<button class="chip" data-act="chord" data-i="${i}" aria-pressed="${i===D.chord}">${c.roman?c.roman+' ':''}${c.name}</button>`).join('');
-    const sev=cur.set.size===7?`<button class="chip tog" data-act="sev" aria-pressed="${D.sev}">7ths</button>`:'';
-    panel.innerHTML=`${pathNote()}
-      <div class="row">${playSeg}</div>
-      <div class="row">${sev}${chips}</div>
-      <div class="drow">
-        <select data-set="pattern" aria-label="Pattern">${opts(PATTERNS,D.pattern)}</select>
-        <select data-set="guide" aria-label="Guide">${opts(GUIDES,D.guide)}</select>
-      </div>
-      <div class="tab" id="tab"></div>
-      <div class="transport">${transportHTML()}
-        <select data-set="sub" aria-label="Notes per beat">${opts(SUBS,D.sub)}</select>
-        <button class="btn primary play" data-act="play">${st.playing?'❚❚ Pause':st.paused?'▶ Resume':'▶ Play'}</button>
-        ${st.paused?'<button class="icon" data-act="restart" aria-label="Restart from the top">⏮</button>':''}
-      </div>
-      <div class="row">${cleanChip()}
-        <button class="chip tog" data-act="tog" data-k="click" aria-pressed="${D.click}">Click</button>
-        <button class="chip tog" data-act="tog" data-k="notes" aria-pressed="${D.notes}">Notes</button>
-        <button class="chip tog" data-act="tog" data-k="pad" aria-pressed="${D.pad}">Chord each bar</button>
-        ${seg('End on','resolve',[['key','Key root'],['chord','Chord root']],D.resolve)}
-        ${seg('Labels','lbl',[['key','Key degrees'],['chord','Chord degrees'],['notes','Notes']],saved.labels==='notes'?'notes':D.ref)}
-        <select data-set="ramp" aria-label="Speed ramp">${opts([[0,'No ramp'],[2,'+2 bpm per pass'],[4,'+4 bpm per pass'],[8,'+8 bpm per pass']],D.ramp)}</select>
-        <button class="chip" data-act="strum">Strum chord</button>
-        <button class="chip" data-act="move">Move box</button>
-      </div>`;
+    if(D.line==='prog'&&cur.prog){panel.innerHTML=`${strumCard()}<div class="tab" id="tab"></div>${pbarHTML()}${setsHTML()}`; renderTab(); updateRGrid(); return;}
+    panel.innerHTML=`${D.line==='prog'?'':'<div class="tab" id="tab"></div>'}${pbarHTML()}${setsHTML()}`;
     renderTab();
     return;
   }
@@ -1726,7 +1787,7 @@ function renderPanel(){
 function setMode(m){
   if(m==='quiz') m=saved.quiz==='find'?'find':'name'; // Name it and Find it share the Quiz tab, which remembers the last one
   if(m==='name'||m==='find') saved.quiz=m;
-  clearTimeout(st.timer); stopMet(); st.mode=m; st.q=null; panel.scrollTop=0;
+  clearTimeout(st.timer); stopMet(); st.mode=m; st.q=null; st.sheet=false; panel.scrollTop=0;
   if(st.mode==='explore'||st.mode==='practice') render();
   else if(st.mode==='drill'){st.picking=cur.whole; st.seq=genSeq(); render();}
   else newQuestion();
@@ -1755,7 +1816,7 @@ panel.addEventListener('input',e=>{ // the voicing rows follow the chords as the
   const kept={}; box.querySelectorAll('[data-voice]').forEach(el=>{if(el.value) kept[el.dataset.voice]=el.value;});
   const k=+(document.getElementById('sgKey')||{}).value; box.innerHTML=voicingRows(e.target.value,kept,isNaN(k)?-1:k);
 });
-panel.addEventListener('change',e=>{
+const onChange=e=>{
   if(e.target.id==='lgFile'){const f=e.target.files[0]; if(!f) return;
     f.text().then(t=>{const err=importLog(t); st.importMsg=err||`Imported ${f.name}.`; render();}); return;}
   const k=e.target.dataset.set; if(!k) return;
@@ -1764,13 +1825,30 @@ panel.addEventListener('change',e=>{
   if(k==='prog'){D.prog=v; refresh(); save(); regen(); return;}
   D[k]=(k==='sub'||k==='ramp')?+v:v; save();
   if(k==='pattern'||k==='sub') regen(); else render();
-});
+  if(e.target.closest('.sets')) keepSets(`[data-set="${k}"]`);
+};
+[panel,sheetEl].forEach(el=>el.addEventListener('change',onChange));
+function keepSets(sel){ // the settings sheet redraws with every change; keep its scroll and focus
+  const box=document.querySelector('.sets'), top=st.setsTop||0;
+  if(box) box.scrollTop=top;
+  const n=document.querySelector('.sets '+sel); if(n) n.focus({preventScroll:true});
+}
 panel.addEventListener('toggle',e=>{ if(e.target.classList&&e.target.classList.contains('psync')) st.syncOpen=e.target.open; },true);
-panel.addEventListener('click',e=>{
+const onClick=e=>{
+  if(e.target.classList.contains('sets-wrap')){st.sheet=false; render(); return;}
   const b=e.target.closest('button'); if(!b) return;
   const act=b.dataset.act, i=+b.dataset.i;
+  if(b.closest('.sets')){ // keep the sheet where it was after it redraws
+    st.setsTop=b.closest('.sets').scrollTop;
+    const sel=`[data-act="${act}"]${b.dataset.k?`[data-k="${b.dataset.k}"]`:''}${b.dataset.v?`[data-v="${b.dataset.v}"]`:''}`;
+    setTimeout(()=>keepSets(sel),0);
+  }
+  const pb=b.dataset.pci!==undefined?b:null;
+  if(pb){showProgChord(+pb.dataset.pci); return;}
   switch(act){
-    case 'chord': D.chord=i; refresh(); save(); regen(); return;
+    case 'sheet': st.sheet=true; st.setsTop=0; render(); {const c=document.querySelector('[data-act="sheetclose"]'); if(c) c.focus();} return;
+    case 'sheetclose': st.sheet=false; render(); {const g=document.querySelector('[data-act="sheet"]'); if(g) g.focus();} return;
+    case 'chord': if(i===D.chord&&!st.playing){strumNow(); return;} D.chord=i; refresh(); save(); regen(); return;
     case 'sev': D.sev=!D.sev; refresh(); save(); regen(); return;
     case 'tog': D[b.dataset.k]=!D[b.dataset.k]; save(); if(b.dataset.k==='pad') regen(); else render(); return;
     case 'resolve': D.resolve=b.dataset.v; save(); regen(); return;
@@ -1825,7 +1903,7 @@ panel.addEventListener('click',e=>{
       const now=performance.now(); met.taps=met.taps.filter(t=>now-t<2500); met.taps.push(now);
       if(met.taps.length>=2){const d=(met.taps[met.taps.length-1]-met.taps[0])/(met.taps.length-1); saved.bpm=Math.max(30,Math.min(260,Math.round(60000/d))); save(); document.getElementById('bpmVal').textContent=saved.bpm;}
       return;}
-    case 'strum': ensureAC(); strum(ac.currentTime+0.02,0.2); st.flashUntil=Date.now()+1600; renderBoard(); setTimeout(renderBoard,1650); return;
+    case 'strum': strumNow(); return;
     case 'move': stopMet(); st.picking=true; render(); return;
     case 'keepbox': st.picking=false; st.seq=genSeq(); render(); return;
     case 'iv': st.visible.has(i)?st.visible.delete(i):st.visible.add(i); break;
@@ -1839,7 +1917,10 @@ panel.addEventListener('click',e=>{
     default: return;
   }
   save(); render();
-});
+};
+[panel,sheetEl].forEach(el=>el.addEventListener('click',onClick));
+function strumNow(){ if(!cur.voicing) return; try{ensureAC(); strum(ac.currentTime+0.02,0.2);}catch(err){} st.flashUntil=Date.now()+1600; renderBoard(); setTimeout(renderBoard,1650); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&st.sheet&&document.getElementById('gloss').hidden){st.sheet=false; render(); const g=document.querySelector('[data-act="sheet"]'); if(g) g.focus();} });
 // Space always plays or pauses the drill while the page has focus, whatever control was last clicked.
 // Captured before buttons and menus see it, so it never also re-clicks a focused button.
 let spaceHandled=false;
@@ -1944,7 +2025,7 @@ function renderGloss(){
   const el=document.getElementById('gloss');
   el.innerHTML=`<div class="gl-panel" role="dialog" aria-modal="true" aria-label="Glossary">
     <div class="gl-top"><h2>Glossary</h2><button class="icon" data-gl="close" aria-label="Close glossary">✕</button></div>
-    <div class="gl-body">${GLOSS_GROUPS.map(([g,list])=>`<section id="gl-${g.split(' ')[0].toLowerCase()}"><h3>${g}</h3>${list.map(([k,t,d,hs])=>
+    <div class="gl-body"><section id="gl-keys"><h3>Keyboard</h3><p class="gl-keys">1 to 5 switch tabs, ← and → step through positions, space plays and pauses a drill, and Esc closes this and the settings.</p></section>${GLOSS_GROUPS.map(([g,list])=>`<section id="gl-${g.split(' ')[0].toLowerCase()}"><h3>${g}</h3>${list.map(([k,t,d,hs])=>
       `<div class="gl-row" id="gl-${k}"><div><b>${t}</b>${hs!==undefined?` <span class="gl-hs">${hs} half step${hs===1?'':'s'}</span>`:''}<p>${d}</p></div>${hs!==undefined?`<button class="icon" data-gl="hear" data-hs="${hs}" aria-label="Hear a ${t}">▶</button>`:''}</div>`).join('')}</section>`).join('')}</div></div>`;
 }
 function openGloss(k){
@@ -2020,10 +2101,12 @@ const TIPS=[
  ['[data-act="line"][data-v="scale"]',()=>'Play scale patterns through the box over one chord.'],
  ['[data-act="line"][data-v="prog"]',()=>'Strum and arpeggiate a chord progression in this key and box, with strum patterns you can count and edit.'],
  ['[data-set="prog"]',()=>{const S=songProg(D.prog); if(S) return `<b>${esc(S.name)}</b>: ${S.chords.join(' ')}. ${S.chords.length} bars, one chord each, as you typed them on the Path tab.`; const P=PROG_BY[D.prog]; return `<b>${P.name}</b>: ${progRomans(P.degs).join(' ')}. ${P.degs.length} bar${P.degs.length>1?'s':''} of chords, built from ${NOTES[cur.key]} ${esc(modeName())}, so the same progression works in any key or mode.`;}],
- ['[data-act="plan"][data-v="both"]',()=>`Both: strum each chord for a bar, then ${term('arpeggio','arpeggiate')} the same shape for a bar, one string at a time.`],
+ ['[data-act="plan"][data-v="both"]',()=>`Strum each chord for a bar, then pick the same shape for a bar, one string at a time (an ${term('arpeggio','arpeggio')}).`],
  ['[data-act="plan"][data-v="strum"]',()=>'Strum each chord for a bar with the pattern below.'],
- ['[data-act="plan"][data-v="arp"]',()=>'Play each chord’s shape one string at a time for a bar, low to high and back.'],
- ['[data-pci]',el=>{const p=cur.prog&&cur.prog[+el.dataset.pci]; if(!p) return ''; return `<b>${p.ch.name}</b> (${p.ch.roman}): ${formulaText(p.ch)}${p.voicing?', played '+p.voicing.frets.map(f=>f===null?'x':f).join(' '):''}.${st.playing?'':' Click to hear it and see it on the neck.'}`;}],
+ ['[data-act="plan"][data-v="arp"]',()=>'Pick each chord’s shape one string at a time for a bar, low to high and back.'],
+ ['[data-act="sheet"]',()=>'Drill settings: what you play, what you hear, what the neck shows, and the tempo ramp.'],
+ ['[data-act="sheetclose"]',()=>'Close the settings. Esc does it too.'],
+ ['[data-pci]',el=>{const p=cur.prog&&cur.prog[+el.dataset.pci]; if(!p) return ''; return `<b>${p.ch.name}</b> (${p.ch.roman}): ${formulaText(p.ch)}${p.voicing?', played '+p.voicing.frets.map(f=>f===null?'x':f).join(' '):''}.${p.voicing&&p.voicing.own?' Your own voicing.':''}${st.playing?'':' Click to hear it and see it on the neck.'}`;}],
  ['#modes [data-mode="practice"]',()=>'<b>Path</b>: your learning path from scales to chords to progressions to songs, with a rhythm track. Each step opens Drill set up for it. (4)'],
  ['[data-act="clean"]',()=>lg.last&&lg.last.clean?`Marked clean at ${lg.last.clean} bpm. Click to unmark it.`:`If that run was ${term('clean','clean')}, mark it at ${lg.last?lg.last.bpm[1]:saved.bpm} bpm. A step on the path is done when a run is marked clean at its goal tempo.`],
  ['[data-act="step"]',el=>{buildPath(); const t=STEP_BY[el.dataset.id]; return `<b>${t.title}</b>: ${stepWhat(t)} Opens Drill set up for this step.`;}],
@@ -2067,7 +2150,7 @@ const TIPS=[
  ['[data-act="hear"]',()=>'Hear the root and the ? note again.'],
  ['[data-act="reset"]',()=>'Clear your score, streaks, and the record of which intervals you miss.'],
  ['[data-act="next"]',()=>st.q&&st.q.answered?'Next question. Intervals you miss come up more often.':'Skip this one. Skipping doesn’t count against you.'],
- ['[data-act="chord"]',el=>{const c=cur.chords[+el.dataset.i];return `<b>${c.name}</b> (${c.roman}): ${formulaText(c)}. Click to drill over this chord.`;}],
+ ['[data-act="chord"]',el=>{const i=+el.dataset.i, c=cur.chords[i];return `<b>${c.name}</b> (${c.roman}): ${formulaText(c)}. ${i===D.chord?'Click to hear it and see it on the neck.':'Click to drill over this chord.'}`;}],
  ['[data-rn]',el=>{const c=cur.chords[+el.dataset.rn];return `<b>${c.name}</b>: ${formulaText(c)}. Click to drill over it.`;}],
  ['[data-act="sev"]',()=>`Build 4-note 7th chords. Currently ${D.sev?'on':'off (triads)'}.`],
  ['[data-set="pattern"]',()=>PAT_TIP[D.pattern]],

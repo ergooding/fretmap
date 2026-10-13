@@ -106,6 +106,7 @@ setTimeout(async()=>{
   const bpm0=DX.saved.bpm; let chordOnDownbeat=true, sawChord=false;
   const iv=setInterval(()=>{const i=DX.st.idx; if(i>=0){const x=DX.st.seq[i]; if(x&&x.chord){sawChord=true; if(i%(4*DX.D.sub)) chordOnDownbeat=false;}}},10);
   await new Promise(r=>setTimeout(r,3000));
+  click(d.querySelector('[data-act=sheet]'));
   const sub=d.querySelector('[data-set=sub]'); sub.value='3'; sub.dispatchEvent(new w.Event('change',{bubbles:true}));
   await new Promise(r=>setTimeout(r,3000)); clearInterval(iv);
   if(!sawChord) fail('play-chord','never saw chord step'); if(!chordOnDownbeat) fail('play-downbeat','chord off the downbeat');

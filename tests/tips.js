@@ -22,7 +22,10 @@ async function run(wide){
    goMode(d,click,m); check(m);
    if(m==='name'){click(d.querySelector('[data-act=answer]')); check('name answered');}
    if(m==='drill'){click(d.querySelector('.cell[data-s="0"][data-f="5"]')); check('drill box');
-     click(d.querySelector('[data-act=tog][data-k=pad]')); check('drill pad'); click(d.querySelector('[data-act=move]')); check('drill pick');}
+     click(d.querySelector('[data-act=sheet]')); check('drill settings');
+     click(d.querySelector('[data-act=tog][data-k=pad]')); check('drill pad'); click(d.querySelector('[data-act=sheetclose]')); check('drill settings closed');
+     click(d.querySelector('[data-act=chord][aria-pressed=true]')); check('drill chord heard');
+     X.F.pos=-1; X.refresh(); click(d.querySelector('[data-mode=explore]')); click(d.querySelector('[data-mode=drill]')); check('drill pick');}
    if(m==='practice'){d.querySelector('.psync').open=true; check('path sync open');
      click(d.querySelector('[data-act=songform]')); check('path song form');
      d.getElementById('sgName').value='Wish You Were Here'; d.getElementById('sgLink').value='https://www.songsterr.com/x'; click(d.querySelector('[data-act=songadd]')); check('path song added');
@@ -38,6 +41,7 @@ async function run(wide){
      click(d.querySelector('[data-act=rres][data-v="16"]')); check('prog custom 16');
      const sel=d.querySelector('[data-set=rpat]'); sel.value='shuffle'; sel.dispatchEvent(new w.Event('change',{bubbles:true})); check('prog shuffle');
      for(const id of X.PROGS.map(p=>p[0])){const ps=d.querySelector('[data-set=prog]'); ps.value=id; ps.dispatchEvent(new w.Event('change',{bubbles:true})); check('prog '+id);}
+     click(d.querySelector('[data-act=sheet]')); check('prog settings');
      for(const v of ['strum','arp','both']){click(d.querySelector(`[data-act=plan][data-v=${v}]`)); check('plan '+v);}
      const pc=d.querySelector('[data-pci="1"]'); if(pc){click(pc); check('prog chord preview');}
      d.getElementById('selFam').value='pent'; d.getElementById('selFam').dispatchEvent(new w.Event('change',{bubbles:true})); check('prog pentatonic');
