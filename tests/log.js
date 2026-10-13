@@ -2,6 +2,7 @@
 // clean marks and best tempo, manual entries, merge and import without losing anything, and gist sync between two devices
 // against a fake GitHub API. Also checks the Practice views for missing text in both layouts.
 const {JSDOM}=require('jsdom');
+const goMode=(d,ck,m)=>{if(m==='name'||m==='find'){ck(d.querySelector('[data-mode=quiz]')); const b=d.querySelector(`[data-act=quiz][data-v=${m}]`); if(b&&b.getAttribute('aria-pressed')!=='true') ck(b);} else ck(d.querySelector(`[data-mode=${m}]`));};
 const html=require('fs').readFileSync(require('path').join(__dirname,'..','index.html'),'utf8');
 let bad=0; const fail=(k,m)=>{bad++; console.log('FAIL',k,m===undefined?'':m);};
 const ok=(c,k,m)=>{if(!c) fail(k,m);};
@@ -33,7 +34,7 @@ async function device(wide=true){
   const w=dom.window; w.addEventListener('error',e=>fail('error',e.message));
   await sleep(60);
   const d=w.document, X=w.__fretDebug, click=el=>el.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
-  const mode=m=>click(d.querySelector(`[data-mode=${m}]`));
+  const mode=m=>goMode(d,click,m);
   const advance=(secs)=>{w.__clock+=secs*1000; const end=w.__now+secs; while(w.__now<end){w.__now=Math.min(end,w.__now+0.02); if(X.st.playing&&X.st.mode==='drill') X.schedule();}};
   return {w,d,X,click,mode,advance};
 }

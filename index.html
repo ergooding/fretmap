@@ -362,8 +362,7 @@ html.land{font-size:15px}
   <aside class="side">
   <nav class="modes" id="modes">
     <button data-mode="explore">Explore</button>
-    <button data-mode="name">Name it</button>
-    <button data-mode="find">Find it</button>
+    <button data-mode="quiz">Quiz</button>
     <button data-mode="drill">Drill</button>
     <button data-mode="practice">Path</button>
   </nav>
@@ -1222,7 +1221,7 @@ function renderStats(){
   document.getElementById('soundBtn').textContent=saved.sound?'🔊':'🔇';
 }
 function render(){
-  document.querySelectorAll('#modes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===st.mode));
+  document.querySelectorAll('#modes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===st.mode||(b.dataset.mode==='quiz'&&(st.mode==='name'||st.mode==='find'))));
   appEl.classList.toggle('m-practice',st.mode==='practice'); appEl.classList.toggle('m-drill',st.mode==='drill');
   renderStats(); focusText(); renderBoard(); renderPrompt(); renderPanel(); renderVoice();
 }
@@ -1441,6 +1440,7 @@ function updateTab(){
   const c=el.querySelector(`[data-j="${st.idx}"]`);
   if(c){c.classList.add('now'); el.scrollLeft=c.offsetLeft-el.clientWidth/2+c.offsetWidth/2;}
 }
+const quizSeg=()=>`<div class="row">${seg('Quiz','quiz',[['name','Name it'],['find','Find it']],st.mode)}</div>`;
 function seg(label,act,list,v){return `<div class="segw" role="group" aria-label="${label}"><span class="seglab">${label}</span><div class="seg">`+list.map(([k,l])=>`<button data-act="${act}" data-v="${k}" aria-pressed="${k===v}">${l}</button>`).join('')+'</div></div>';}
 function opts(list,v){return list.map(([k,l])=>`<option value="${k}"${String(k)===String(v)?' selected':''}>${l}</option>`).join('');}
 function rgridHTML(P){
@@ -1714,22 +1714,24 @@ function renderPanel(){
     const btns=cur.allowed.map(i=>{let cls='ans';
       if(q.answered){if(i===q.iv)cls+=' right';else if(i===q.picked)cls+=' wrong';}
       return `<button class="${cls}" data-act="answer" data-i="${i}" ${q.answered?'disabled':''} aria-label="${lab(i)[1]}">${lab(i)[0]}</button>`;}).join('');
-    panel.innerHTML=`<div class="answers" style="grid-template-columns:repeat(${cols},1fr)">${btns}<button class="ans" data-act="hear" aria-label="Hear it again">🔁</button></div>
+    panel.innerHTML=`${quizSeg()}<div class="answers" style="grid-template-columns:repeat(${cols},1fr)">${btns}<button class="ans" data-act="hear" aria-label="Hear it again">🔁</button></div>
       <div class="actions"><button class="btn" data-act="reset">Reset score</button><button class="btn primary" data-act="next">${q.answered?'Next':'Skip'}</button></div>`;
   }else{
-    panel.innerHTML=`<p class="hint">Tap the fretboard. Any octave counts${cur.whole?'':', as long as it’s inside the lit frets'}.</p>
+    panel.innerHTML=`${quizSeg()}<p class="hint">Tap the fretboard. Any octave counts${cur.whole?'':', as long as it’s inside the lit frets'}.</p>
       <div class="actions"><button class="btn" data-act="reset">Reset score</button><button class="btn primary" data-act="next">${q.answered?'Next':'Skip'}</button></div>`;
   }
 }
 
 // ---------- events ----------
-document.getElementById('modes').addEventListener('click',e=>{
-  const b=e.target.closest('button'); if(!b) return;
-  clearTimeout(st.timer); stopMet(); st.mode=b.dataset.mode; st.q=null; panel.scrollTop=0;
+function setMode(m){
+  if(m==='quiz') m=saved.quiz==='find'?'find':'name'; // Name it and Find it share the Quiz tab, which remembers the last one
+  if(m==='name'||m==='find') saved.quiz=m;
+  clearTimeout(st.timer); stopMet(); st.mode=m; st.q=null; panel.scrollTop=0;
   if(st.mode==='explore'||st.mode==='practice') render();
   else if(st.mode==='drill'){st.picking=cur.whole; st.seq=genSeq(); render();}
   else newQuestion();
-});
+}
+document.getElementById('modes').addEventListener('click',e=>{const b=e.target.closest('button'); if(b) setMode(b.dataset.mode);});
 document.getElementById('soundBtn').addEventListener('click',()=>{saved.sound=!saved.sound;save();renderStats();if(saved.sound)tone(57);});
 neck.addEventListener('click',e=>{
   const c=e.target.closest('.cell'); if(!c) return;
@@ -1831,6 +1833,7 @@ panel.addEventListener('click',e=>{
     case 'labels': saved.labels=b.dataset.v; break;
     case 'answer':{const q=st.q;if(q.answered)return;q.picked=i;q.answered=true;record(i===q.iv);play(q.root);play(q.target,.45);break;}
     case 'hear': play(st.q.root);play(st.q.target,.5); return;
+    case 'quiz': if(b.dataset.v!==st.mode) setMode(b.dataset.v); return;
     case 'next': newQuestion(); return;
     case 'reset': saved.hits=0;saved.total=0;saved.streak=0;saved.best=0;saved.weights=Array(12).fill(1); break;
     default: return;
@@ -2010,9 +2013,10 @@ const TIPS=[
  ['.cell',cellTip],
  ['.tcol',tabTip],
  ['#modes [data-mode="explore"]',()=>'<b>Explore</b>: see every degree of the scale around the key. Click a note to make it the key. (1)'],
- ['#modes [data-mode="name"]',()=>'<b>Name it</b>: say which degree the ? note is, counted up from the root. (2)'],
- ['#modes [data-mode="find"]',()=>'<b>Find it</b>: click where a given degree sits inside the lit frets. (3)'],
- ['#modes [data-mode="drill"]',()=>'<b>Drill</b>: pick a box, then play scale lines over a chord, or strum and arpeggiate a chord progression, with the metronome. (4)'],
+ ['#modes [data-mode="quiz"]',()=>'<b>Quiz</b>: Name it asks which degree a note is; Find it asks you to click where a degree sits. (2)'],
+ ['[data-act="quiz"][data-v="name"]',()=>'<b>Name it</b>: say which degree the ? note is, counted up from the root.'],
+ ['[data-act="quiz"][data-v="find"]',()=>'<b>Find it</b>: click where a given degree sits inside the lit frets.'],
+ ['#modes [data-mode="drill"]',()=>'<b>Drill</b>: pick a box, then play scale lines over a chord, or strum and arpeggiate a chord progression, with the metronome. (3)'],
  ['[data-act="line"][data-v="scale"]',()=>'Play scale patterns through the box over one chord.'],
  ['[data-act="line"][data-v="prog"]',()=>'Strum and arpeggiate a chord progression in this key and box, with strum patterns you can count and edit.'],
  ['[data-set="prog"]',()=>{const S=songProg(D.prog); if(S) return `<b>${esc(S.name)}</b>: ${S.chords.join(' ')}. ${S.chords.length} bars, one chord each, as you typed them on the Path tab.`; const P=PROG_BY[D.prog]; return `<b>${P.name}</b>: ${progRomans(P.degs).join(' ')}. ${P.degs.length} bar${P.degs.length>1?'s':''} of chords, built from ${NOTES[cur.key]} ${esc(modeName())}, so the same progression works in any key or mode.`;}],
@@ -2020,7 +2024,7 @@ const TIPS=[
  ['[data-act="plan"][data-v="strum"]',()=>'Strum each chord for a bar with the pattern below.'],
  ['[data-act="plan"][data-v="arp"]',()=>'Play each chord’s shape one string at a time for a bar, low to high and back.'],
  ['[data-pci]',el=>{const p=cur.prog&&cur.prog[+el.dataset.pci]; if(!p) return ''; return `<b>${p.ch.name}</b> (${p.ch.roman}): ${formulaText(p.ch)}${p.voicing?', played '+p.voicing.frets.map(f=>f===null?'x':f).join(' '):''}.${st.playing?'':' Click to hear it and see it on the neck.'}`;}],
- ['#modes [data-mode="practice"]',()=>'<b>Path</b>: your learning path from scales to chords to progressions to songs, with a rhythm track. Each step opens Drill set up for it. (5)'],
+ ['#modes [data-mode="practice"]',()=>'<b>Path</b>: your learning path from scales to chords to progressions to songs, with a rhythm track. Each step opens Drill set up for it. (4)'],
  ['[data-act="clean"]',()=>lg.last&&lg.last.clean?`Marked clean at ${lg.last.clean} bpm. Click to unmark it.`:`If that run was ${term('clean','clean')}, mark it at ${lg.last?lg.last.bpm[1]:saved.bpm} bpm. A step on the path is done when a run is marked clean at its goal tempo.`],
  ['[data-act="step"]',el=>{buildPath(); const t=STEP_BY[el.dataset.id]; return `<b>${t.title}</b>: ${stepWhat(t)} Opens Drill set up for this step.`;}],
  ['[data-act="topath"]',()=>'Go back to the learning path.'],

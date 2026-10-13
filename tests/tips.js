@@ -1,5 +1,6 @@
 // Checks that every button and menu has a tooltip, and that no tooltip shows missing text, in both layouts.
 const {JSDOM}=require('jsdom');
+const goMode=(d,ck,m)=>{if(m==='name'||m==='find'){ck(d.querySelector('[data-mode=quiz]')); const b=d.querySelector(`[data-act=quiz][data-v=${m}]`); if(b&&b.getAttribute('aria-pressed')!=='true') ck(b);} else ck(d.querySelector(`[data-mode=${m}]`));};
 const html=require('fs').readFileSync(require('path').join(__dirname,'..','index.html'),'utf8');
 let bad=0,count=0; const seen=new Set();
 async function run(wide){
@@ -18,7 +19,7 @@ async function run(wide){
    [...d.querySelectorAll('button,select')].filter(e=>!e.closest('[hidden]')&&!e.matches(X.TIP_SEL)&&!e.closest(X.TIP_SEL)).forEach(e=>{console.log('NO TIP',label,e.outerHTML.slice(0,90));bad++;});
  };
  for(const m of ['explore','name','find','drill','practice']){
-   click(d.querySelector(`[data-mode=${m}]`)); check(m);
+   goMode(d,click,m); check(m);
    if(m==='name'){click(d.querySelector('[data-act=answer]')); check('name answered');}
    if(m==='drill'){click(d.querySelector('.cell[data-s="0"][data-f="5"]')); check('drill box');
      click(d.querySelector('[data-act=tog][data-k=pad]')); check('drill pad'); click(d.querySelector('[data-act=move]')); check('drill pick');}

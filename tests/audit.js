@@ -1,6 +1,7 @@
 // Exhaustive settings audit: drills (every scale, mode, key, position, chord, pattern, subdivision, chord step, and ending),
 // chord voicings, quiz questions, explore dots, text in both layouts, and a timed playback run. Takes a few minutes.
 const {JSDOM}=require('jsdom');
+const goMode=(d,ck,m)=>{if(m==='name'||m==='find'){ck(d.querySelector('[data-mode=quiz]')); const b=d.querySelector(`[data-act=quiz][data-v=${m}]`); if(b&&b.getAttribute('aria-pressed')!=='true') ck(b);} else ck(d.querySelector(`[data-mode=${m}]`));};
 const html=require('fs').readFileSync(require('path').join(__dirname,'..','index.html'),'utf8');
 function mk(wide){
  const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){
@@ -77,7 +78,7 @@ setTimeout(async()=>{
      if(key>=0){ const dots=d.querySelectorAll('.cell .dot').length;
        let expect=0; for(let s=0;s<6;s++)for(let f=0;f<=12;f++) if(cur.set.has((pc(s,f)-cur.key+12)%12)) expect++;
        if(dots!==expect) fail('explore-dots',`${fam}/${m}/${key}/${p} ${dots} vs ${expect}`); }
-     for(const mode of ['name','find']){ click(d.querySelector(`[data-mode=${mode}]`));
+     for(const mode of ['name','find']){ goMode(d,click,mode);
       for(let k=0;k<6;k++){ const q=X.st.q; nQuiz++;
        const tag=`${mode} ${fam}/${m}/${key}/${p}`;
        if(!q||!q.root||!q.target){fail('quiz-missing',tag);break;}
@@ -95,7 +96,7 @@ setTimeout(async()=>{
  // ---- text sanity across modes and layouts
  for(const wide of [true,false]){ const dm=mk(wide), dd=dm.window.document; await new Promise(r=>setTimeout(r,50));
    const ck=el=>el.dispatchEvent(new dm.window.MouseEvent('click',{bubbles:true}));
-   for(const mode of ['explore','name','find','drill']){ ck(dd.querySelector(`[data-mode=${mode}]`)); if(mode==='drill') ck(dd.querySelector('.cell[data-s="1"][data-f="3"]'));
+   for(const mode of ['explore','name','find','drill']){ goMode(dd,ck,mode); if(mode==='drill') ck(dd.querySelector('.cell[data-s="1"][data-f="3"]'));
      const txt=dd.querySelector('.app').textContent; if(/undefined|NaN|\[object/.test(txt)) fail('text',`${wide?'wide':'phone'} ${mode}`);}
  }
  // ---- playback: tempo, sub change mid-play, walk+pad, ramp
