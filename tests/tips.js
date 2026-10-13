@@ -22,10 +22,15 @@ async function run(wide){
    if(m==='name'){click(d.querySelector('[data-act=answer]')); check('name answered');}
    if(m==='drill'){click(d.querySelector('.cell[data-s="0"][data-f="5"]')); check('drill box');
      click(d.querySelector('[data-act=tog][data-k=pad]')); check('drill pad'); click(d.querySelector('[data-act=move]')); check('drill pick');}
-   if(m==='practice'){for(const v of ['skills','sync','today']){click(d.querySelector(`[data-act=pview][data-v=${v}]`)); check('practice '+v);}
-     click(d.querySelector('[data-act=addkind][data-v=other]')); check('practice add other');
-     d.getElementById('lgName').value='Spider exercise'; click(d.querySelector('[data-act=lgadd]')); check('practice added');
-     click(d.querySelector('[data-act=pview][data-v=skills]')); check('practice skills filled');}
+   if(m==='practice'){d.querySelector('.psync').open=true; check('path sync open');
+     click(d.querySelector('[data-act=songform]')); check('path song form');
+     d.getElementById('sgName').value='Wish You Were Here'; d.getElementById('sgLink').value='https://www.songsterr.com/x'; click(d.querySelector('[data-act=songadd]')); check('path song added');
+     click(d.querySelector('[data-act=rate][data-v="3"]')); check('path song rated');
+     click(d.querySelector('[data-act=step][data-id=s2]')); check('drill from path');
+     click(d.querySelector('[data-act=topath]')); check('back to path');
+     click(d.querySelector('[data-act=step][data-id=r3]')); check('rhythm step from path');
+     click(d.querySelector('[data-act=topath]'));
+     click(d.querySelector('[data-act=songplay]')); check('song changes in drill');}
    if(m==='drill'){click(d.querySelector('.cell[data-s="0"][data-f="5"]'));
      click(d.querySelector('[data-act=line][data-v=prog]')); check('drill prog');
      click(d.querySelector('.rstep[data-i="1"]')); check('prog custom');

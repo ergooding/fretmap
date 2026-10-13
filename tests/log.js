@@ -74,24 +74,37 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   const nS=X.LOG.sessions.length; w.__clock+=25*60e3;
   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(30); click(d.querySelector('[data-act=play]'));
   ok(X.LOG.sessions.length===nS+1,'new-session',X.LOG.sessions.length);
-  // manual song entry from the form
-  mode('practice'); d.getElementById('lgName').value='Wish You Were Here'; d.getElementById('lgArtist').value='Pink Floyd';
-  d.getElementById('lgLink').value='https://www.songsterr.com/a/wsa/pink-floyd-wish-you-were-here-tab-s49'; d.getElementById('lgMins').value='20';
-  click(d.querySelector('[data-act=lgadd]'));
-  const song=Object.entries(X.LOG.skills).find(([id,s])=>s.kind==='song'); ok(song&&song[1].link.startsWith('https://www.songsterr.com'),'song');
-  ok(entries(X).some(e=>e.manual&&e.secs===1200),'song-entry');
-  d.getElementById('lgName').value='Bad link'; d.getElementById('lgLink').value='javascript:alert(1)'; click(d.querySelector('[data-act=lgadd]'));
+  // the path: the first unfinished step is box 1, and Start opens Drill set up for it
+  mode('practice'); ok(!/undefined|NaN|\[object/.test(d.querySelector('.app').textContent),'path-text');
+  ok(d.querySelector('.pnext [data-act=step]').dataset.id==='s1','path-next-s1');
+  click(d.querySelector('.pnext [data-act=step]'));
+  ok(X.st.mode==='drill'&&X.F.key===9&&X.F.fam==='pent'&&X.F.mode===1&&X.F.pos===5&&X.D.line==='scale'&&X.D.pattern==='g3','step-setup',[X.st.mode,X.F.key,X.F.fam,X.F.mode,X.F.pos,X.D.line,X.D.pattern].join(' '));
+  ok(/Box 1, frets 5–9 · goal 100/.test(d.getElementById('panel').textContent),'path-note');
+  const runClean=(bpm,secs)=>{X.saved.bpm=bpm; click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(secs); click(d.querySelector('[data-act=play]')); const c=d.querySelector('[data-act=clean]'); ok(c,'clean-chip-'+bpm); if(c) click(c);};
+  runClean(90,20); ok(!X.stepState(X.STEP_BY.s1).done,'step-not-done-below-goal');
+  runClean(100,20); ok(X.stepState(X.STEP_BY.s1).done,'step-done-at-goal');
+  click(d.querySelector('[data-act=topath]')); ok(X.st.mode==='practice'&&d.querySelector('[data-act=step][data-id=s1]').classList.contains('done'),'path-shows-done');
+  ok(d.querySelector('.pnext [data-act=step]').dataset.id==='s2','path-next-s2');
+  // a chord step opens the progression drill with its plan and strum pattern
+  click(d.querySelector('[data-act=step][data-id=c1]'));
+  ok(X.D.line==='prog'&&X.D.prog==='one'&&X.D.plan==='both'&&X.R.pat==='quarters'&&X.cur.prog&&X.cur.prog.length===1&&X.cur.prog[0].ch.name==='Am','chord-step',[X.D.line,X.D.prog,X.D.plan,X.R.pat].join(' '));
+  runClean(80,20); ok(X.stepState(X.STEP_BY.c1).done,'chord-step-done');
+  click(d.querySelector('[data-act=topath]')); click(d.querySelector('[data-act=step][data-id=r5]'));
+  ok(X.R.swing===true&&X.D.plan==='strum'&&X.F.key===7&&X.F.pos===0,'rhythm-step-shuffle');
+  // songs: add from the form, rate, and play its changes
+  mode('practice'); click(d.querySelector('[data-act=songform]'));
+  d.getElementById('sgName').value='Wish You Were Here'; d.getElementById('sgArtist').value='Pink Floyd';
+  d.getElementById('sgLink').value='https://www.songsterr.com/a/wsa/pink-floyd-wish-you-were-here-tab-s49'; d.getElementById('sgKey').value='7'; d.getElementById('sgProg').value='145';
+  click(d.querySelector('[data-act=songadd]'));
+  const song=Object.entries(X.LOG.skills).find(([id,s])=>s.kind==='song'); ok(song&&song[1].link.startsWith('https://www.songsterr.com')&&song[1].key===7&&song[1].prog==='145','song',JSON.stringify(song));
+  click(d.querySelector('[data-act=songform]')); d.getElementById('sgName').value='Bad link'; d.getElementById('sgLink').value='javascript:alert(1)'; click(d.querySelector('[data-act=songadd]'));
   ok(!Object.values(X.LOG.skills).some(s=>s.link&&!s.link.startsWith('https://')),'link-sanitized');
-  // views render without missing text, and Practice this opens the right place
-  for(const v of ['today','skills','sync']){click(d.querySelector(`[data-act=pview][data-v=${v}]`)); ok(!/undefined|NaN|\[object/.test(d.querySelector('.app').textContent),'text-'+v);}
-  click(d.querySelector('[data-act=pview][data-v=skills]'));
-  const box=[...d.querySelectorAll('[data-act=lgpractice]')].find(b=>b.dataset.id.startsWith('box:'));
-  click(box); ok(X.st.mode==='drill'&&X.F.pos===5&&X.D.line==='scale','practice-this',X.st.mode+' '+X.F.pos+' '+X.D.line);
-  // Practice this on a progression restores the progression, plan, and strum pattern
-  X.D.line='scale'; X.D.prog='blues'; X.R.pat='faithful'; mode('practice'); click(d.querySelector('[data-act=pview][data-v=skills]'));
-  const pb=[...d.querySelectorAll('[data-act=lgpractice]')].find(b=>b.dataset.id.endsWith(':faithful'));
-  ok(pb,'practice-this-prog-button');
-  if(pb){click(pb); ok(X.st.mode==='drill'&&X.D.line==='prog'&&X.D.prog==='pop'&&X.D.plan==='both'&&X.R.pat==='faithful'&&X.F.pos===5&&X.cur.prog&&X.cur.prog.length===4,'practice-this-prog',[X.D.line,X.D.prog,X.D.plan,X.R.pat,X.F.pos].join(' '));}
+  click(d.querySelector(`[data-act=rate][data-id="${song[0]}"][data-v="4"]`)); ok(X.LOG.skills[song[0]].rating===4,'song-rated');
+  const older={v:1,sessions:[],skills:{[song[0]]:{...X.LOG.skills[song[0]],rating:2,updated:1}}};
+  ok(X.mergeLogs(X.LOG,older).skills[song[0]].rating===4,'older-rating-loses');
+  click(d.querySelector(`[data-act=songplay][data-id="${song[0]}"]`));
+  ok(X.st.mode==='drill'&&X.F.key===7&&X.F.mode===0&&X.D.line==='prog'&&X.D.prog==='145'&&X.F.pos===0,'song-play',[X.F.key,X.F.mode,X.D.prog,X.F.pos].join(' '));
+  ok(/Wish You Were Here: play the changes/.test(d.getElementById('panel').textContent),'song-path-note');
   // stored under its own key
   ok(JSON.parse(w.localStorage.getItem(X.LOG_KEY)).sessions.length===X.LOG.sessions.length,'stored');
   // merge: union, idempotent
@@ -118,6 +131,6 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(X.sync.state==='err'&&/token/.test(X.sync.msg)&&entries(X).length===n,'sync-bad-token',X.sync.msg);
   ok(/sync failed/.test(d.getElementById('stats').textContent),'stats-sync-failed');
   // phone layout text
-  B.mode('practice'); for(const v of ['today','skills','sync']){B.click(B.d.querySelector(`[data-act=pview][data-v=${v}]`)); ok(!/undefined|NaN|\[object/.test(B.d.querySelector('.app').textContent),'phone-text-'+v);}
+  B.mode('practice'); ok(!/undefined|NaN|\[object/.test(B.d.querySelector('.app').textContent),'phone-text-path');
   console.log('log checks done, bad',bad); process.exit(bad?1:0);
 })();
