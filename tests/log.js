@@ -90,7 +90,15 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(X.D.line==='prog'&&X.D.prog==='one'&&X.D.plan==='both'&&X.R.pat==='quarters'&&X.cur.prog&&X.cur.prog.length===1&&X.cur.prog[0].ch.name==='Am','chord-step',[X.D.line,X.D.prog,X.D.plan,X.R.pat].join(' '));
   runClean(80,20); ok(X.stepState(X.STEP_BY.c1).done,'chord-step-done');
   click(d.querySelector('[data-act=topath]')); click(d.querySelector('[data-act=step][data-id=r5]'));
-  ok(X.R.swing===true&&X.D.plan==='strum'&&X.F.key===7&&X.F.pos===0,'rhythm-step-shuffle');
+  // rhythm steps follow the selected key: after the Am chord step that's A Aeolian in box 1
+  ok(X.R.swing===true&&X.D.plan==='strum'&&X.F.key===9&&X.F.fam==='major'&&X.F.mode===5&&X.F.pos===5&&X.cur.prog.map(p=>p.ch.name).join(' ')==='Am Dm Em Am','rhythm-step-follows-key',[X.F.key,X.F.fam,X.F.mode,X.F.pos,X.cur.prog.map(p=>p.ch.name)].join(' '));
+  runClean(80,20); ok(X.stepState(X.STEP_BY.r5).done,'rhythm-step-done');
+  // a pentatonic focus moves onto its 7-note scale; a run in one key counts in every key
+  Object.assign(X.F,{key:4,fam:'pent',mode:1,pos:-1}); X.refresh();
+  const fk=X.followKey(); ok(fk.key===4&&fk.fam==='major'&&fk.mode===5&&fk.pos===0,'follow-pent',JSON.stringify(fk));
+  ok(X.stepWhat(X.STEP_BY.r1)==='Em Am, a bar each. Keep the hand moving down and up.','rhythm-what',X.stepWhat(X.STEP_BY.r1));
+  ok(X.stepState(X.STEP_BY.r5).done,'rhythm-done-any-key');
+  mode('practice'); ok(/Strumming in E Aeolian/.test(d.querySelector('.path').textContent),'rhythm-sub');
   // songs: add from the form, rate, and play its changes
   mode('practice'); click(d.querySelector('[data-act=songform]'));
   d.getElementById('sgName').value='Wish You Were Here'; d.getElementById('sgArtist').value='Pink Floyd';

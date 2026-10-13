@@ -1388,7 +1388,9 @@ function transportHTML(){
 // ---------- learning path ----------
 // Scale, then chords, then progressions, then songs, with a rhythm track alongside. Each step is a Drill setup with a goal;
 // a step is done when a run of its skill has been marked clean at the goal tempo. The log behind it fills those numbers in.
-const AMP={key:9,fam:'pent',mode:1}, AMIN={key:9,fam:'major',mode:5}, GOPEN={key:7,fam:'major',mode:0,pos:0,line:'prog',sev:false};
+const AMP={key:9,fam:'pent',mode:1}, AMIN={key:9,fam:'major',mode:5};
+// rhythm steps follow the key and scale you have selected; RHY holds what they share
+const RHY={follow:true,line:'prog',plan:'strum',sev:false};
 const PATH=[
  {id:'scale',name:'Scales',sub:'A minor pentatonic, all five boxes',steps:[
   {id:'s1',title:'Box 1, frets 5–9',what:'The shape you already know, in groups of 3, as a warm-up and a baseline.',...AMP,pos:5,line:'scale',pattern:'g3',sub:2,goal:100},
@@ -1406,19 +1408,34 @@ const PATH=[
   {id:'p2',title:'Minor epic in box 1',what:'Am, F, C, G: the i VI III VII sound of a lot of rock.',...AMIN,pos:5,line:'prog',prog:'epic',plan:'both',rpat:'faithful',sev:false,goal:80},
   {id:'p3',title:'Dorian vamp, i IV',what:'Am to D. The major IV is what makes Dorian sound brighter than plain minor.',key:9,fam:'major',mode:1,pos:5,line:'prog',prog:'two',plan:'both',rpat:'faithful',sev:false,goal:80},
   {id:'p4',title:'Mixolydian rock, I ♭VII IV I',what:'A, G, D, A. The ♭VII chord is the Mixolydian sound.',key:9,fam:'major',mode:4,pos:5,line:'prog',prog:'flat7',plan:'both',rpat:'faithful',sev:false,goal:80}]},
- {id:'rhythm',name:'Rhythm track',sub:'Strumming open G chords, any time alongside the steps above',steps:[
-  {id:'r1',title:'8ths, accents on 2 and 4',what:'G to C, a bar each. Keep the hand moving down and up.',...GOPEN,prog:'two',plan:'strum',rpat:'backbeat',goal:90},
-  {id:'r2',title:'Ghost strums',what:'Down, down-up, up-down-up over G D Em C. Count it out loud.',...GOPEN,prog:'pop',plan:'strum',rpat:'faithful',goal:80},
-  {id:'r3',title:'16ths: 1 & a',what:'The gallop over G D Em C.',...GOPEN,prog:'pop',plan:'strum',rpat:'gallop',goal:70},
-  {id:'r4',title:'Syncopation: 3-3-2',what:'The tresillo over G C D G.',...GOPEN,prog:'145',plan:'strum',rpat:'tresillo',goal:80},
-  {id:'r5',title:'Shuffle feel',what:'Swung 8ths over G C D G.',...GOPEN,prog:'145',plan:'strum',rpat:'shufflefaith',goal:80}]}
+ {id:'rhythm',name:'Rhythm track',sub:()=>{const k=followKey(); return `Strumming in ${NOTES[k.key]} ${FAMS[k.fam].modes[k.mode][0]}, from the scale you have selected. Any time alongside the steps above`;},steps:[
+  {id:'r1',title:'8ths, accents on 2 and 4',what:'{ch}, a bar each. Keep the hand moving down and up.',...RHY,prog:'two',plan:'strum',rpat:'backbeat',goal:90},
+  {id:'r2',title:'Ghost strums',what:'Down, down-up, up-down-up over {ch}. Count it out loud.',...RHY,prog:'pop',plan:'strum',rpat:'faithful',goal:80},
+  {id:'r3',title:'16ths: 1 & a',what:'The gallop over {ch}.',...RHY,prog:'pop',plan:'strum',rpat:'gallop',goal:70},
+  {id:'r4',title:'Syncopation: 3-3-2',what:'The tresillo over {ch}.',...RHY,prog:'145',plan:'strum',rpat:'tresillo',goal:80},
+  {id:'r5',title:'Shuffle feel',what:'Swung 8ths over {ch}.',...RHY,prog:'145',plan:'strum',rpat:'shufflefaith',goal:80}]}
 ];
 const STEP_BY={}; PATH.forEach(g=>g.steps.forEach(s=>{s.stage=g.id; STEP_BY[s.id]=s;}));
+// The key a rhythm step uses: the one selected, moved onto a 7-note scale so it has chords
+// (minor pentatonic and minor blues become Aeolian, major pentatonic Ionian, and so on). Whole neck strums open chords.
+const TO_DIATONIC={pent:[0,5,4,5,0],blues:[5,4],chrom:[0]};
+function followKey(){
+  const seven=FAMS[F.fam].steps.length===7;
+  return {key:cur.key,fam:seven?F.fam:'major',mode:seven?F.mode:(TO_DIATONIC[F.fam]||[0])[F.mode]||0,pos:F.pos>=0?F.pos:0};
+}
+const resolved=s=>s.follow?{...s,...followKey()}:s;
+function progNames(k,prog){ // chord names of a progression in a key, without touching the current focus
+  const steps=FAMS[k.fam].steps, rot=FAMS[k.fam].modes[k.mode][1], iv=steps.map((_,i)=>(steps[(rot+i)%7]-steps[rot]+12)%12);
+  return PROG_BY[prog].degs.map(d=>{const r=iv[d], q=QUAL[`${(iv[(d+2)%7]-r+12)%12},${(iv[(d+4)%7]-r+12)%12}`]; return NOTES[(k.key+r)%12]+(q??'');});
+}
+function stepWhat(s){ if(!s.follow) return s.what; const k=followKey(); return s.what.replace('{ch}',progNames(k,s.prog).join(' ')); }
 function setupSkill(s){
+  s=resolved(s);
   return s.line==='prog'?`prog:${s.key}:${s.fam}:${s.mode}:${s.pos}:${s.prog}:${s.plan}:${s.plan==='arp'?'-':s.rpat}`:`box:${s.key}:${s.fam}:${s.mode}:${s.pos}`;
 }
 function stepState(s){
-  const b=bestOf(setupSkill(s)), done=!!b&&b.bpm>=s.goal&&(s.line==='prog'||b.sub>=(s.sub||1));
+  // a rhythm step counts in any key: it's the strumming that's being learned
+  const b=s.follow?[...new Set(LOG.sessions.flatMap(x=>x.entries.map(e=>e.skill)))].filter(id=>id&&id.startsWith('prog:')&&id.endsWith(`:${s.prog}:${s.plan}:${s.rpat}`)).map(bestOf).filter(Boolean).sort((a,b)=>b.bpm-a.bpm)[0]||null:bestOf(setupSkill(s)), done=!!b&&b.bpm>=s.goal&&(s.line==='prog'||b.sub>=(s.sub||1));
   return {best:b,done};
 }
 function songSteps(){
@@ -1434,6 +1451,7 @@ function goalText(s){
   return `Goal: clean at ${s.goal} bpm${s.line==='scale'?' in 8ths':''}. `+(b?`Best so far: ${b.bpm}.`:'No clean run yet.');
 }
 function applySetup(s){
+  s=resolved(s);
   F.key=s.key; F.fam=s.fam; F.mode=s.mode; F.pos=s.pos;
   D.line=s.line; D.guide='full';
   if(s.line==='scale'){D.pattern=s.pattern; D.sub=s.sub;}
@@ -1486,8 +1504,8 @@ function songsHTML(){
 }
 function practiceHTML(){
   const n=nextStep();
-  const next=n?`<div class="pnext"><p class="st-lab">Next up</p><b>${n.title}</b><p>${n.what} ${goalText(n)}</p><button class="btn primary" data-act="step" data-id="${n.id}">Start in Drill</button></div>`:'';
-  const stages=PATH.map(g=>`<section class="pstage"><h3>${g.name} <small>${g.sub}</small></h3><ol class="psteps">${g.steps.map(s=>stepRow(s,n&&s===n)).join('')}</ol></section>`);
+  const next=n?`<div class="pnext"><p class="st-lab">Next up</p><b>${n.title}</b><p>${stepWhat(n)} ${goalText(n)}</p><button class="btn primary" data-act="step" data-id="${n.id}">Start in Drill</button></div>`:'';
+  const stages=PATH.map(g=>`<section class="pstage"><h3>${g.name} <small>${typeof g.sub==='function'?g.sub():g.sub}</small></h3><ol class="psteps">${g.steps.map(s=>stepRow(s,n&&s===n)).join('')}</ol></section>`);
   stages.splice(3,0,songsHTML());
   return `<div class="path">${next}${stages.join('')}
     <details class="psync"${st.syncOpen?' open':''}><summary>Sync and backup</summary>${syncHTML()}</details></div>`;
@@ -1886,7 +1904,7 @@ const TIPS=[
  ['[data-pci]',el=>{const p=cur.prog&&cur.prog[+el.dataset.pci]; if(!p) return ''; return `<b>${p.ch.name}</b> (${p.ch.roman}): ${formulaText(p.ch)}${p.voicing?', played '+p.voicing.frets.map(f=>f===null?'x':f).join(' '):''}.${st.playing?'':' Click to hear it and see it on the neck.'}`;}],
  ['#modes [data-mode="practice"]',()=>'<b>Path</b>: your learning path from scales to chords to progressions to songs, with a rhythm track. Each step opens Drill set up for it. (5)'],
  ['[data-act="clean"]',()=>lg.last&&lg.last.clean?`Marked clean at ${lg.last.clean} bpm. Click to unmark it.`:`If that run was ${term('clean','clean')}, mark it at ${lg.last?lg.last.bpm[1]:saved.bpm} bpm. A step on the path is done when a run is marked clean at its goal tempo.`],
- ['[data-act="step"]',el=>{const t=STEP_BY[el.dataset.id]; return `<b>${t.title}</b>: ${t.what} Opens Drill set up for this step.`;}],
+ ['[data-act="step"]',el=>{const t=STEP_BY[el.dataset.id]; return `<b>${t.title}</b>: ${stepWhat(t)} Opens Drill set up for this step.`;}],
  ['[data-act="topath"]',()=>'Go back to the learning path.'],
  ['[data-act="songform"]',()=>'Add a song you’re learning: its key and closest progression set up Drill for it.'],
  ['[data-act="songadd"]',()=>'Add this song to the path.'],
@@ -1989,7 +2007,7 @@ document.addEventListener('keydown',e=>{const t=e.target.closest&&e.target.close
 addEventListener('scroll',hideTip,true);
 addEventListener('resize',hideTip);
 
-window.__fretDebug={tipFor,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,PATH,STEP_BY,setupSkill,stepState,nextStep,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,progLabel,setProgChord,pschedule};
+window.__fretDebug={tipFor,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,PATH,STEP_BY,setupSkill,stepState,nextStep,followKey,stepWhat,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,progLabel,setProgChord,pschedule};
 fillSelects();
 render();
 setTimeout(syncNow,300); // does nothing without a token
