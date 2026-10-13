@@ -136,6 +136,25 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(d.getElementById('sgChords').value==='(A, E6, Dmaj7) x2, A, E6, D, A','song-edit-prefill');
   d.getElementById('sgChords').value='A E6 Dmaj7'; click(d.querySelector('[data-act=songadd]'));
   ok(X.LOG.skills['song:here-pavement'].chords.length===3&&!d.getElementById('sgChords'),'song-edit-saved');
+  // a song can set its own voicing for a chord
+  click(d.querySelector('[data-act=songedit][data-id="song:here-pavement"]'));
+  const vin=d.querySelector('[data-voice="Dmaj7"]'); ok(vin&&vin.placeholder==='xx0222','voicing-row',vin&&vin.placeholder);
+  const ta=d.getElementById('sgChords'); ta.value='A E6 Dmaj7 Bm'; ta.dispatchEvent(new w.Event('input',{bubbles:true}));
+  ok(d.querySelector('[data-voice="Bm"]')&&d.querySelector('[data-voice="Dmaj7"]'),'voicing-rows-follow');
+  d.querySelector('[data-voice="Dmaj7"]').value='0 0 0 2 2 1 9'; click(d.querySelector('[data-act=songadd]'));
+  ok(/needs six strings/.test(d.getElementById('sgMsg').textContent),'voicing-bad');
+  d.querySelector('[data-voice="Dmaj7"]').value='000220'; click(d.querySelector('[data-act=songadd]'));
+  ok(X.LOG.skills['song:here-pavement'].voicings.Dmaj7==='000220','voicing-saved',JSON.stringify(X.LOG.skills['song:here-pavement'].voicings));
+  click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]'));
+  const dm=X.cur.prog.find(p=>p.ch.name==='Dmaj7'); ok(dm&&dm.voicing.own&&dm.voicing.frets.join()==='0,0,0,2,2,0','voicing-in-drill',dm&&JSON.stringify(dm.voicing));
+  // the strum pattern edited while playing a song is kept with the song
+  ok(/saved with Here/.test(d.getElementById('panel').textContent),'song-strum-hint');
+  click(d.querySelector('[data-act=rstep][data-i="1"]'));
+  const sp=X.LOG.skills['song:here-pavement'].strum; ok(sp&&sp.pat==='custom'&&sp.custom.steps===X.R.custom.steps,'song-strum-saved',JSON.stringify(sp));
+  const stepsNow=X.R.custom.steps; X.R.pat='faithful'; X.R.custom={res:8,steps:'x.......'};
+  mode('practice'); click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]'));
+  ok(X.R.pat==='custom'&&X.R.custom.steps===stepsNow,'song-strum-restored',X.R.pat+' '+X.R.custom.steps+' want '+stepsNow+' saved '+JSON.stringify(X.LOG.skills['song:here-pavement'].strum));
+  ok(/Here: play the changes/.test(d.getElementById('panel').textContent),'song-strum-pathnote');
   // stored under its own key
   ok(JSON.parse(w.localStorage.getItem(X.LOG_KEY)).sessions.length===X.LOG.sessions.length,'stored');
   // merge: union, idempotent
