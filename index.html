@@ -106,6 +106,7 @@ h1{font-size:1.05rem;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
 .btn:disabled{opacity:.4;cursor:default}
 .hint{font-size:.78rem;color:var(--muted);margin:0}
 
+.goal{display:flex;flex-direction:column;gap:6px}
 .focus{display:flex;gap:6px;align-items:stretch}
 .focus-sum{flex:1;min-width:0;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 10px;cursor:pointer;line-height:1.25}
 .focus-sum b{display:block;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -152,13 +153,18 @@ h1{font-size:1.05rem;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
 .neck.h .inlay::after{width:14px;height:14px}
 /* wide layout */
 html.wide{font-size:19px}
-.app.wide{max-width:none;display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr);
-  grid-template-areas:"head head" "side neck" "side panel";gap:18px 32px;padding:18px 32px 22px}
+.app.wide{max-width:none;display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr);
+  grid-template-areas:"head head" "goal goal" "side neck" "side panel";gap:18px 32px;padding:18px 32px 22px}
 .app.wide header{grid-area:head}
 .app.wide h1{font-size:1.35rem}
 .app.wide .side{display:flex;flex-direction:column;gap:12px;grid-area:side;min-height:0;overflow:auto}
 .app.wide .side>*{flex-shrink:0}
 .app.wide .focus-grid[hidden]{display:grid}
+/* wide: the focus is one row under the title, its settings always open beside it */
+.app.wide .goal{grid-area:goal;flex-direction:row;gap:12px;align-items:stretch}
+.app.wide .focus{flex:0 0 380px;min-width:0}
+.app.wide .focus-sum{cursor:default}
+.app.wide .focus-grid{flex:1;grid-template-columns:repeat(4,minmax(0,1fr));max-width:1100px;padding:6px 10px 8px}
 .app.wide .prompt{font-size:1rem;align-items:flex-start}
 .app.wide .prompt .big{font-size:2.1rem}
 .app.wide .neck-wrap{grid-area:neck;flex:none;height:clamp(240px,42vh,620px)}
@@ -257,10 +263,10 @@ html.wide{font-size:19px}
 .modes button{white-space:nowrap}
 .app:not(.wide) .modes button{font-size:.8rem;padding:8px 3px}
 /* practice mode: the log takes the neck's place */
-.app.m-practice .focus,.app.m-practice .focus-grid,.app.m-practice .neck-wrap{display:none!important}
+.app.m-practice .neck-wrap{display:none!important}
 .app.m-practice .panel{flex:1;min-height:0;overflow:auto}
-.app.wide.m-practice{grid-template-areas:"head head" "side panel" "side panel"}
-.app.land.m-practice{grid-template-areas:"modes head" "prompt prompt" "panel panel" "panel panel" "panel panel"}
+.app.wide.m-practice{grid-template-areas:"head head" "goal goal" "side panel" "side panel"}
+.app.land.m-practice{grid-template-areas:"modes head" "goal goal" "prompt prompt" "panel panel"}
 .app.wide.m-practice .panel>*{max-width:760px}
 .lg-sum{margin:0;font-size:.9rem;line-height:1.4}
 .path{display:flex;flex-direction:column;gap:14px}
@@ -302,8 +308,8 @@ html.wide{font-size:19px}
 /* landscape phone: horizontal neck on the left, controls in a scrolling column on the right */
 html.land{font-size:15px}
 .app.land{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(290px,40%);
-  grid-template-rows:auto auto auto auto minmax(0,1fr);
-  grid-template-areas:"modes head" "neck focus" "neck fgrid" "neck prompt" "neck panel";
+  grid-template-rows:auto auto auto minmax(0,1fr);
+  grid-template-areas:"modes head" "neck goal" "neck prompt" "neck panel";
   gap:6px 12px;padding:6px max(10px,env(safe-area-inset-right,0px)) 6px max(10px,env(safe-area-inset-left,0px))}
 .app.land header{grid-area:head;gap:6px}
 .app.land h1{display:none}
@@ -311,9 +317,9 @@ html.land{font-size:15px}
 .app.land .icon{width:32px;height:32px}
 .app.land .modes{grid-area:modes}
 .app.land .modes button{padding:6px 4px}
-.app.land .focus{grid-area:focus}
+.app.land .goal{grid-area:goal}
 .app.land .focus-sum{padding:4px 8px}
-.app.land .focus-grid{grid-area:fgrid;padding:6px 8px 8px}
+.app.land .focus-grid{padding:6px 8px 8px}
 .app.land .prompt{grid-area:prompt;font-size:.8rem;min-height:0}
 .app.land .prompt .big{font-size:1.15rem}
 .app.land .prompt .sub{font-size:.72rem}
@@ -336,6 +342,19 @@ html.land{font-size:15px}
     <button class="icon" id="layoutBtn"></button>
     <button class="icon" id="soundBtn" aria-label="Toggle sound">🔊</button>
   </header>
+  <div class="goal" id="goal" role="region" aria-label="Focus: key, scale, mode and position for every tab">
+    <div class="focus">
+      <button class="focus-sum" id="focusBtn" aria-expanded="false"><b id="focusTitle"></b><span id="focusSub"></span></button>
+      <button class="icon" data-step="-1" aria-label="Previous position">◀</button>
+      <button class="icon" data-step="1" aria-label="Next position">▶</button>
+    </div>
+    <div class="focus-grid" id="focusGrid" hidden>
+      <label>Key<select id="selKey"></select></label>
+      <label>Scale<select id="selFam"></select></label>
+      <label>Mode<select id="selMode"></select></label>
+      <label>Position<select id="selPos"></select></label>
+    </div>
+  </div>
   <aside class="side">
   <nav class="modes" id="modes">
     <button data-mode="explore">Explore</button>
@@ -344,17 +363,6 @@ html.land{font-size:15px}
     <button data-mode="drill">Drill</button>
     <button data-mode="practice">Path</button>
   </nav>
-  <div class="focus">
-    <button class="focus-sum" id="focusBtn" aria-expanded="false"><b id="focusTitle"></b><span id="focusSub"></span></button>
-    <button class="icon" data-step="-1" aria-label="Previous position">◀</button>
-    <button class="icon" data-step="1" aria-label="Next position">▶</button>
-  </div>
-  <div class="focus-grid" id="focusGrid" hidden>
-    <label>Key<select id="selKey"></select></label>
-    <label>Scale<select id="selFam"></select></label>
-    <label>Mode<select id="selMode"></select></label>
-    <label>Position<select id="selPos"></select></label>
-  </div>
   <p class="kbd">Keys: 1–5 switch modes, ← → step positions, space plays and pauses a drill.</p>
   <div class="prompt" id="prompt" aria-live="polite"></div>
   <div class="voice-card" id="voiceCard" hidden></div>
@@ -692,12 +700,12 @@ function focusText(){
   const k=F.key>=0?NOTES[F.key]:'Random key';
   const scale=F.fam==='chrom'?'all notes':modeName();
   document.getElementById('focusTitle').textContent=`${k} ${scale}`;
-  document.getElementById('focusSub').textContent=cur.posLabel+'. Tap to change.';
+  document.getElementById('focusSub').textContent=cur.posLabel+(document.querySelector('.app').classList.contains('wide')?'. Used by every tab.':'. Tap to change.');
 }
 function focusChanged(){
   refresh(); st.visible=new Set(cur.allowed); save(); fillSelects();
   if(st.mode==='drill') regen();
-  else if(st.mode==='explore') render(); else newQuestion();
+  else if(st.mode==='explore'||st.mode==='practice') render(); else newQuestion();
 }
 selKey.onchange=()=>{F.key=+selKey.value;focusChanged();};
 selFam.onchange=()=>{F.fam=selFam.value;F.mode=0;D.chord=0;focusChanged();};
@@ -1732,7 +1740,7 @@ document.addEventListener('keypress',e=>{ if(e.key===' '&&spaceHandled){ e.preve
 document.addEventListener('keydown',e=>{
   const tag=e.target.tagName;
   if(e.key===' '||tag==='SELECT'||tag==='INPUT'||e.metaKey||e.ctrlKey||e.altKey) return;
-  else if((e.key==='ArrowRight'||e.key==='ArrowLeft')&&st.mode!=='practice'){ e.preventDefault(); document.querySelector(`[data-step="${e.key==='ArrowRight'?1:-1}"]`).click(); }
+  else if((e.key==='ArrowRight'||e.key==='ArrowLeft')){ e.preventDefault(); document.querySelector(`[data-step="${e.key==='ArrowRight'?1:-1}"]`).click(); }
   else if('12345'.includes(e.key)&&e.key.length===1){ document.querySelectorAll('#modes button')[+e.key-1].click(); }
 });
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&st.playing) pauseMet(); if(document.hidden) syncNow();});
@@ -1925,7 +1933,7 @@ const TIPS=[
  ['[data-act="rres"][data-v="8"]',()=>'Put your pattern on 8 steps a bar: 1 & 2 & 3 & 4 &.'],
  ['[data-act="rres"][data-v="16"]',()=>'Put your pattern on 16 steps a bar: 1 e & a, four times.'],
  ['[data-act="rtog"][data-k="swing"]',()=>'Shuffle feel: the second strum of each pair lands late, two thirds of the way through, like a triplet with the middle note left out.'],
- ['#focusBtn',()=>'Your focus: every mode uses this key, scale, mode, and position.'+(wide?'':' Tap to show or hide the settings.')],
+ ['#focusBtn',()=>'Your focus: every tab uses this key, scale, mode, and position, so it stays put as you move between them.'+(wide?'':' Tap to show or hide the settings.')],
  ['[data-step="-1"]',()=>'Previous position. Shortcut: ←'],
  ['[data-step="1"]',()=>'Next position. Shortcut: →'],
  ['#selKey',()=>'The key center. Random picks a new key for each quiz question.'],
