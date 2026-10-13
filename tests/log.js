@@ -170,6 +170,26 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(sp2.custom.steps[0]!==stepsNow[0]&&X.R.custom.steps===sp2.custom.steps,'songs-strum-edit',JSON.stringify(sp2));
   setF('[data-sg=pat]','shuffle'); ok(X.LOG.skills['song:here-pavement'].strum.pat==='shuffle'&&X.R.pat==='shuffle'&&X.R.swing,'songs-strum-menu');
   click(d.querySelector('[data-act=sgswing]')); ok(X.LOG.skills['song:here-pavement'].strum.swing===false&&!X.R.swing,'songs-strum-swing');
+  // each song keeps its own "Your pattern", and the general one is left alone
+  X.addSong('Song B','','','-1','0','pop','G C D',{});
+  mode('drill'); setF('[data-set=prog]','pop'); click(d.querySelector('[data-act=rstep][data-i="2"]'));
+  const general=X.R.custom.steps; ok(X.R.pat==='custom'&&!X.R.owner,'general-custom');
+  click(d.querySelector('[data-act=line][data-v=prog]'));
+  setF('[data-set=prog]','song:here-pavement'); setF('[data-set=rpat]','custom');
+  const hereSteps=X.LOG.skills['song:here-pavement'].strum.custom.steps; ok(X.R.owner==='song:here-pavement'&&X.R.custom.steps===hereSteps&&hereSteps!==general,'song-own-custom',X.R.custom.steps+' '+hereSteps+' '+general);
+  setF('[data-set=prog]','song:song-b'); ok(X.R.pat==='faithful'&&X.R.custom.steps!==hereSteps,'song-b-default',X.R.pat+' '+X.R.custom.steps);
+  click(d.querySelector('[data-act=rstep][data-i="0"]')); const bSteps=X.LOG.skills['song:song-b'].strum.custom.steps;
+  ok(X.LOG.skills['song:here-pavement'].strum.custom.steps===hereSteps&&bSteps!==hereSteps,'song-b-own',bSteps);
+  setF('[data-set=prog]','pop'); ok(X.R.pat==='custom'&&X.R.custom.steps===general&&!X.R.owner,'general-restored',X.R.custom.steps+' want '+general);
+  setF('[data-set=prog]','song:here-pavement'); ok(X.R.custom.steps===hereSteps&&X.R.pat==='custom','here-restored');
+  setF('[data-set=prog]','song:song-b'); ok(X.R.custom.steps===bSteps&&X.R.pat==='custom','b-restored');
+  click(d.querySelector('[data-act=rstep][data-i="3"]')); ok(X.LOG.skills['song:here-pavement'].strum.custom.steps===hereSteps,'here-untouched');
+  // a song's tempo: Practice starts there, and it's the goal
+  mode('songs'); click(d.querySelector('[data-act=songopen][data-id="song:here-pavement"]'));
+  setF('[data-sf=tempo]','300'); ok(/between 30 and 260/.test(d.getElementById('sfMsg').textContent)&&!X.LOG.skills['song:here-pavement'].tempo,'tempo-bad');
+  setF('[data-sf=tempo]','92'); ok(X.LOG.skills['song:here-pavement'].tempo===92,'tempo-saved');
+  X.saved.bpm=60; click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]'));
+  ok(X.saved.bpm===92&&/goal 92 bpm/.test(d.getElementById('sheet').textContent),'tempo-practice',X.saved.bpm+' '+d.getElementById('sheet').textContent.slice(0,120));
   // stored under its own key
   ok(JSON.parse(w.localStorage.getItem(X.LOG_KEY)).sessions.length===X.LOG.sessions.length,'stored');
   // merge: union, idempotent

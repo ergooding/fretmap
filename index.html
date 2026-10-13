@@ -394,6 +394,7 @@ html.land{font-size:15px}
 .field{display:flex;flex-direction:column;gap:3px;font-size:.74rem;color:var(--muted);min-width:0;flex:1 1 140px}
 .field.grow{flex:2 1 220px}
 .se-meta .field{flex:0 1 auto}
+.tempo-in{width:5.5em}
 .field input,.field select,.sbox textarea,.vp-type input{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 8px;min-width:0}
 .se-go{flex:0 0 auto;padding:10px 20px}
 .se-link{color:inherit;font-size:.85rem;align-self:center}
@@ -671,6 +672,7 @@ function parentChords(){ // a smaller scale borrows the chords of the 7-note mod
 }
 let cur={};
 function refresh(){
+  if(typeof syncStrum==='function') syncStrum();
   cur.set=scaleSet();
   cur.key=F.key>=0?F.key:(cur.lastKey??0);
   cur.pos=positions(F.key);
@@ -1158,7 +1160,17 @@ if(R.pat!=='custom'&&!RPAT[R.pat]) R.pat='faithful';
 const STEP_NAME={x:'strum','>':'accented strum',m:'muted strum (chuck)','.':'ghost, the hand moves past the strings'};
 // while Drill plays a song's chords, its strum pattern is the song's own and is kept with the song
 const songNow=()=>D.line==='prog'&&songProg(D.prog)?D.prog:null;
-function keepSongStrum(){const id=songNow(); if(id) setSong(id,{strum:{pat:R.pat,swing:!!R.swing,...(R.pat==='custom'?{custom:{...R.custom}}:{})}});}
+function keepSongStrum(){const id=songNow(); if(id) setSong(id,{strum:{pat:R.pat,swing:!!R.swing,custom:{...R.custom}}});}
+function syncStrum(force){
+  // Drill has one live strum pattern. While a song plays, it's the song's own (its "Your pattern" included);
+  // the general pattern is set aside and comes back when you switch to anything else.
+  try{LOG;}catch(e){return;}
+  const id=songNow(); if(!force&&(R.owner||null)===id) return;
+  if(!R.owner) saved.rfree={pat:R.pat,custom:{...R.custom},swing:!!R.swing};
+  if(id){const sp=LOG.skills[id].strum||{}, pat=sp.pat==='custom'||RPAT[sp.pat]?sp.pat:'faithful', P=RPAT[pat]||RPAT.faithful;
+    R.pat=pat==='custom'&&!sp.custom?'faithful':pat; R.custom=sp.custom?{...sp.custom}:{res:P.res,steps:P.steps}; R.swing=sp.pat?!!sp.swing:!!P.swing; R.owner=id;}
+  else{const f=saved.rfree; if(f){R.pat=f.pat; R.custom={...f.custom}; R.swing=!!f.swing;} delete R.owner;}
+}
 function curPat(){return R.pat==='custom'?{id:'custom',name:'Your pattern',res:R.custom.res,steps:R.custom.steps}:RPAT[R.pat];}
 function countLabels(res){return res===16?[1,2,3,4].flatMap(b=>[String(b),'e','&','a']):[1,2,3,4].flatMap(b=>[String(b),'&']);}
 function counting(P){const L=countLabels(P.res); return P.steps.split('').map((c,k)=>c==='.'?`(${L[k]})`:L[k]).join(' ');}
@@ -1620,7 +1632,7 @@ function stepState(s){
 function songSteps(){
   return Object.entries(LOG.skills).filter(([id,s])=>s.kind==='song'&&!s.gone).sort((a,b)=>(a[1].added||0)-(b[1].added||0)).map(([id,s])=>({id,s}));
 }
-function songSetup(s,id){const sp=s.strum, rpat=!sp?'faithful':sp.pat==='custom'&&sp.custom?`custom-${sp.custom.res}-${sp.custom.steps}`:sp.pat; return {strum:sp,key:s.key??0,fam:'major',mode:s.minor?5:0,pos:0,line:'prog',prog:s.chords&&s.chords.length&&id?id:PROG_BY[s.prog]?s.prog:'pop',plan:'both',rpat,sev:false,goal:s.bpm||80};}
+function songSetup(s,id){const sp=s.strum, rpat=!sp?'faithful':sp.pat==='custom'&&sp.custom?`custom-${sp.custom.res}-${sp.custom.steps}`:sp.pat; return {strum:sp,key:s.key??0,fam:'major',mode:s.minor?5:0,pos:0,line:'prog',prog:s.chords&&s.chords.length&&id?id:PROG_BY[s.prog]?s.prog:'pop',plan:'both',rpat,sev:false,goal:s.tempo||80,tempo:s.tempo||0};}
 function nextStep(){
   for(const g of buildPath()){ if(g.id==='rhythm') continue; const s=g.steps.find(s=>!stepState(s).done); if(s) return s; }
   return null;
@@ -1634,11 +1646,11 @@ function applySetup(s){
   F.pos=s.pos;
   D.line=s.line; D.guide='full';
   if(s.line==='scale'){D.pattern=s.pattern; D.sub=s.sub;}
-  else{D.prog=s.prog; D.plan=s.plan;
-    if(s.strum&&(RPAT[s.strum.pat]||s.strum.custom)){R.pat=s.strum.pat; if(s.strum.custom) R.custom={...s.strum.custom}; R.swing=!!s.strum.swing;} // a song's own pattern
-    else{R.pat=s.rpat; R.swing=!!(RPAT[s.rpat]&&RPAT[s.rpat].swing);}}
+  else{D.prog=s.prog; D.plan=s.plan;}
   if(s.sev!==undefined) D.sev=s.sev;
-  refresh(); st.visible=new Set(cur.allowed); fillSelects(); save();
+  refresh(); if(songNow()) syncStrum(true); // a song loads its own strum pattern, as saved with it
+  if(s.line==='prog'&&!songNow()){R.pat=s.rpat; R.swing=!!(RPAT[s.rpat]&&RPAT[s.rpat].swing);}
+  if(s.tempo) saved.bpm=s.tempo; // a song starts at its own tempo st.visible=new Set(cur.allowed); fillSelects(); save();
   document.querySelector('#modes [data-mode="drill"]').click();
 }
 function stepFor(id){ buildPath(); return id==='song'?null:STEP_BY[id]; }
@@ -1688,7 +1700,7 @@ function saveParts(id,parts){
 function songPat(sk){const sp=sk.strum; return sp&&sp.pat==='custom'&&sp.custom?{id:'custom',name:'Your pattern',res:sp.custom.res,steps:sp.custom.steps}:RPAT[sp&&RPAT[sp.pat]?sp.pat:'faithful'];}
 function setSongStrum(id,strum){
   setSong(id,{strum});
-  if(D.line==='prog'&&D.prog===id){R.pat=strum.pat; if(strum.custom) R.custom={...strum.custom}; R.swing=!!strum.swing; save();} // Drill plays the song's own pattern
+  if(songNow()===id){R.pat=strum.pat; if(strum.custom) R.custom={...strum.custom}; R.swing=!!strum.swing; save();} // Drill plays the song's own pattern
 }
 function voicingChoices(name,key){
   // a few playable shapes up the neck, from the same search Drill uses for a box
@@ -1728,6 +1740,7 @@ function songEditor(id){
       <button class="btn primary se-go" data-act="songplay" data-id="${esc(id)}">▶ Practice</button></div>
     <p class="hint bad" id="sfMsg" role="status"></p>
     <div class="se-meta"><label class="field">Key<select data-sf="key">${NOTES.map((x,i)=>`<option value="${i}"${i===key?' selected':''}>${x}</option>`).join('')}</select></label>
+      <label class="field">Tempo (bpm)<input data-sf="tempo" type="number" inputmode="numeric" min="30" max="260" step="1" value="${sk.tempo||''}" placeholder="80" class="tempo-in"></label>
       <label class="field">Major or minor<select data-sf="minor"><option value="0">Major</option><option value="1"${sk.minor?' selected':''}>Minor</option></select></label>
       <span class="field">How well you play it<span class="stars" role="group" aria-label="How well you play it">${rate}</span></span>
       ${sk.link?`<a class="se-link" href="${esc(sk.link)}" target="_blank" rel="noopener" data-tip="Open the tab in Songsterr">Open in Songsterr ↗</a>`:''}</div>`;
@@ -1952,6 +1965,7 @@ function songChange(e){
     else if(f==='key') setSong(id,{key:+v});
     else if(f==='minor') setSong(id,{minor:v==='1'});
     else if(f==='prog') setSong(id,{prog:PROG_BY[v]?v:'pop'});
+    else if(f==='tempo'){const n=Math.round(+v); if(v&&!(n>=30&&n<=260)){const m=document.getElementById('sfMsg'); if(m) m.textContent='Tempo needs to be between 30 and 260 bpm.'; return true;} if(n) setSong(id,{tempo:n}); else {delete sk.tempo; setSong(id,{});}}
     if(D.line==='prog'&&D.prog===id) refresh();
     render(); return true;}
   if(t.dataset.part!==undefined||t.dataset.partName!==undefined){
@@ -1962,7 +1976,8 @@ function songChange(e){
       parts[k].text=t.value;}
     saveParts(id,parts); if(D.line==='prog'&&D.prog===id) refresh(); render(); return true;}
   if(t.dataset.sg==='pat'){const v=t.value, P=songPat(sk);
-    setSongStrum(id,v==='custom'?{pat:'custom',swing:!!(sk.strum&&sk.strum.swing),custom:{res:P.res,steps:P.steps}}:{pat:v,swing:!!RPAT[v].swing}); render(); return true;}
+    const own=sk.strum&&sk.strum.custom; // the song's own pattern is kept while another one is picked
+    setSongStrum(id,v==='custom'?{pat:'custom',swing:!!(sk.strum&&sk.strum.swing),custom:own?{...own}:{res:P.res,steps:P.steps}}:{pat:v,swing:!!RPAT[v].swing,...(own?{custom:{...own}}:{})}); render(); return true;}
   return false;
 }
 const onChange=e=>{
@@ -2299,6 +2314,7 @@ const TIPS=[
  ['[data-act="sgswing"]',()=>'Shuffle feel for this song: the second strum of each pair lands late.'],
  ['[data-sf="key"]',()=>'The song’s key. Roman numerals in Drill count from it.'],
  ['[data-sf="minor"]',()=>'Whether the song is in a major or a minor key.'],
+ ['[data-sf="tempo"]',()=>'The song’s tempo. Practice starts Drill at it, and the song is done on the Path when a run is clean at it.'],
  ['[data-sf="prog"]',()=>'With no chords typed yet, practice this common progression in the song’s key.'],
  ['[data-act="lgtoken"]',()=>'Save the token in this browser and sync now. It finds your existing Fretmap gist, or makes a new private one.'],
  ['[data-act="lgsync"]',()=>'Merge this browser’s log with the gist now. Nothing is ever deleted by a sync.'],
