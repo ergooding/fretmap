@@ -117,6 +117,25 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   click(d.querySelector(`[data-act=songplay][data-id="${song[0]}"]`));
   ok(X.st.mode==='drill'&&X.F.key===7&&X.F.mode===0&&X.D.line==='prog'&&X.D.prog==='145'&&X.F.pos===0,'song-play',[X.F.key,X.F.mode,X.D.prog,X.F.pos].join(' '));
   ok(/Wish You Were Here: play the changes/.test(d.getElementById('panel').textContent),'song-path-note');
+  // a song with its own typed chords
+  const pc=X.parseChords('(A, E6, Dmaj7) x 2, A, E6, D, A');
+  ok(pc.chords.join(' ')==='A E6 Dmaj7 A E6 Dmaj7 A E6 D A'&&!pc.bad.length,'parse-chords',JSON.stringify(pc));
+  ok(X.parseChords('F#m7 Bb C/G Gsus4 x2 Bm7b5').chords.join(' ')==='F♯m7 B♭ C Gsus4 Gsus4 Bm7♭5','parse-chords-2',X.parseChords('F#m7 Bb C/G Gsus4 x2 Bm7b5').chords.join(' '));
+  mode('practice'); click(d.querySelector('[data-act=songform]'));
+  d.getElementById('sgName').value='Here'; d.getElementById('sgArtist').value='Pavement'; d.getElementById('sgChords').value='(A, E6, Dmaj7) x2, A, Q7, D, A';
+  click(d.querySelector('[data-act=songadd]')); ok(/can't read “Q7”/.test(d.querySelector('.path').textContent)&&!X.LOG.skills['song:here-pavement'],'chords-bad-token');
+  d.getElementById('sgChords').value='(A, E6, Dmaj7) x2, A, E6, D, A'; click(d.querySelector('[data-act=songadd]'));
+  const here=X.LOG.skills['song:here-pavement']; ok(here&&here.key===9&&!here.minor&&here.chords.length===10,'song-chords',JSON.stringify(here));
+  click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]'));
+  ok(X.D.prog==='song:here-pavement'&&X.F.key===9&&X.cur.prog.length===10&&X.cur.prog.map(p=>p.ch.roman).slice(0,3).join(' ')==='I V6 IVmaj7'&&X.cur.prog.every(p=>p.voicing),'song-chords-drill',X.cur.prog.map(p=>p.ch.roman+(p.voicing?'':'!')).join(' '));
+  ok(/Here: A E6 Dmaj7/.test(d.querySelector('[data-set=prog]').textContent),'song-in-prog-menu');
+  click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(30); click(d.querySelector('[data-act=play]'));
+  ok(entries(X).slice(-1)[0].skill.includes(':song:here-pavement:'),'song-chords-logged',entries(X).slice(-1)[0].skill);
+  // edit keeps it in place
+  mode('practice'); click(d.querySelector('[data-act=songedit][data-id="song:here-pavement"]'));
+  ok(d.getElementById('sgChords').value==='(A, E6, Dmaj7) x2, A, E6, D, A','song-edit-prefill');
+  d.getElementById('sgChords').value='A E6 Dmaj7'; click(d.querySelector('[data-act=songadd]'));
+  ok(X.LOG.skills['song:here-pavement'].chords.length===3&&!d.getElementById('sgChords'),'song-edit-saved');
   // stored under its own key
   ok(JSON.parse(w.localStorage.getItem(X.LOG_KEY)).sessions.length===X.LOG.sessions.length,'stored');
   // merge: union, idempotent
