@@ -152,12 +152,13 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
     change('[data-set=prog]','pop');
     if(wide){ for(let i=0;i<3&&!d.querySelector('.app').classList.contains('wide');i++) click(d.getElementById('layoutBtn')); // jsdom matches every media query, so force the desktop layout
       const b=d.querySelector('[data-pci="2"]'); if(!b) fail('preview','no chord strip'); else {click(b); if(X.cur.pci!==2||X.cur.voicing!==X.cur.prog[2].voicing) fail('preview','chord not shown');} }
-    // five-note scales get a message instead of a progression
+    // five-note scales borrow the chords of the 7-note mode they sit in, and say so
     d.getElementById('selFam').value='pent'; d.getElementById('selFam').dispatchEvent(new w.Event('change',{bubbles:true}));
-    if(X.cur.prog||X.st.seq.length||!/7-note scale/.test(d.getElementById('panel').textContent)) fail('pent','no message for a 5-note scale');
-    if(d.querySelector('[data-act=play]')) fail('pent','play button shown with nothing to play');
+    if(!X.cur.prog||X.cur.prog.length!==4||!/7-note mode it sits in/.test(d.getElementById('panel').textContent)) fail('pent','no borrowed chords for a 5-note scale');
+    if(!d.querySelector('[data-act=play]')) fail('pent','no play button for borrowed chords');
     d.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true})); d.dispatchEvent(new w.KeyboardEvent('keyup',{key:' ',bubbles:true}));
-    if(X.st.playing) fail('pent','space played an empty drill');
+    if(!X.st.playing) fail('pent','space did not play borrowed chords');
+    d.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true})); d.dispatchEvent(new w.KeyboardEvent('keyup',{key:' ',bubbles:true}));
     d.getElementById('selFam').value='major'; d.getElementById('selFam').dispatchEvent(new w.Event('change',{bubbles:true}));
     // space plays and pauses
     d.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true}));

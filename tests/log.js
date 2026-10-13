@@ -74,31 +74,35 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   const nS=X.LOG.sessions.length; w.__clock+=25*60e3;
   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(30); click(d.querySelector('[data-act=play]'));
   ok(X.LOG.sessions.length===nS+1,'new-session',X.LOG.sessions.length);
-  // the path: the first unfinished step is box 1, and Start opens Drill set up for it
+  // the path is built from the focus: A minor pentatonic starts at the root position, frets 5–9
+  Object.assign(X.F,{key:9,fam:'pent',mode:1,pos:-1}); X.refresh();
   mode('practice'); ok(!/undefined|NaN|\[object/.test(d.querySelector('.app').textContent),'path-text');
-  ok(d.querySelector('.pnext [data-act=step]').dataset.id==='s1','path-next-s1');
+  ok([...d.querySelectorAll('.psteps [data-act=step][data-id^=s]')].map(e=>e.dataset.id).join(' ')==='s5 s8 s3 s0','path-scale-order');
+  ok(d.querySelector('.pnext [data-act=step]').dataset.id==='s5','path-next-s5');
   click(d.querySelector('.pnext [data-act=step]'));
-  ok(X.st.mode==='drill'&&X.F.key===9&&X.F.fam==='pent'&&X.F.mode===1&&X.F.pos===5&&X.D.line==='scale'&&X.D.pattern==='g3','step-setup',[X.st.mode,X.F.key,X.F.fam,X.F.mode,X.F.pos,X.D.line,X.D.pattern].join(' '));
-  ok(/Box 1, frets 5–9 · goal 100/.test(d.getElementById('panel').textContent),'path-note');
+  ok(X.st.mode==='drill'&&X.F.key===9&&X.F.fam==='pent'&&X.F.mode===1&&X.F.pos===5&&X.D.line==='scale'&&X.D.pattern==='thirds','step-setup',[X.st.mode,X.F.key,X.F.fam,X.F.mode,X.F.pos,X.D.line,X.D.pattern].join(' '));
+  ok(/Frets 5–9, from the root · goal 80/.test(d.getElementById('panel').textContent),'path-note');
   const runClean=(bpm,secs)=>{X.saved.bpm=bpm; click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(secs); click(d.querySelector('[data-act=play]')); const c=d.querySelector('[data-act=clean]'); ok(c,'clean-chip-'+bpm); if(c) click(c);};
-  runClean(90,20); ok(!X.stepState(X.STEP_BY.s1).done,'step-not-done-below-goal');
-  runClean(100,20); ok(X.stepState(X.STEP_BY.s1).done,'step-done-at-goal');
-  click(d.querySelector('[data-act=topath]')); ok(X.st.mode==='practice'&&d.querySelector('[data-act=step][data-id=s1]').classList.contains('done'),'path-shows-done');
-  ok(d.querySelector('.pnext [data-act=step]').dataset.id==='s2','path-next-s2');
-  // a chord step opens the progression drill with its plan and strum pattern
-  click(d.querySelector('[data-act=step][data-id=c1]'));
-  ok(X.D.line==='prog'&&X.D.prog==='one'&&X.D.plan==='both'&&X.R.pat==='quarters'&&X.cur.prog&&X.cur.prog.length===1&&X.cur.prog[0].ch.name==='Am','chord-step',[X.D.line,X.D.prog,X.D.plan,X.R.pat].join(' '));
-  runClean(80,20); ok(X.stepState(X.STEP_BY.c1).done,'chord-step-done');
-  click(d.querySelector('[data-act=topath]')); click(d.querySelector('[data-act=step][data-id=r5]'));
-  // rhythm steps follow the selected key: after the Am chord step that's A Aeolian in box 1
-  ok(X.R.swing===true&&X.D.plan==='strum'&&X.F.key===9&&X.F.fam==='major'&&X.F.mode===5&&X.F.pos===5&&X.cur.prog.map(p=>p.ch.name).join(' ')==='Am Dm Em Am','rhythm-step-follows-key',[X.F.key,X.F.fam,X.F.mode,X.F.pos,X.cur.prog.map(p=>p.ch.name)].join(' '));
+  runClean(70,20); ok(!X.stepState(X.STEP_BY.s5).done,'step-not-done-below-goal');
+  runClean(80,20); ok(X.stepState(X.STEP_BY.s5).done,'step-done-at-goal');
+  click(d.querySelector('[data-act=topath]')); ok(X.st.mode==='practice'&&d.querySelector('[data-act=step][data-id=s5]').classList.contains('done'),'path-shows-done');
+  ok(d.querySelector('.pnext [data-act=step]').dataset.id==='s8','path-next-s8');
+  // a chord step keeps the pentatonic focus and borrows Aeolian's chords
+  click(d.querySelector('[data-act=step][data-id=c5]'));
+  ok(X.F.fam==='pent'&&X.F.mode===1&&X.D.line==='prog'&&X.D.prog==='one'&&X.D.plan==='both'&&X.R.pat==='quarters'&&X.cur.prog&&X.cur.prog.length===1&&X.cur.prog[0].ch.name==='Am','chord-step',[X.F.fam,X.D.line,X.D.prog,X.D.plan,X.R.pat].join(' '));
+  ok(/comes? from A Aeolian/.test(d.getElementById('panel').textContent),'borrowed-chords-hint');
+  runClean(80,20); ok(X.stepState(X.STEP_BY.c5).done,'chord-step-done');
+  click(d.querySelector('[data-act=topath]'));
+  ok(X.stepWhat(X.STEP_BY.p145)==='Am Dm Em Am, without leaving frets 5–9.','prog-step-text',X.stepWhat(X.STEP_BY.p145));
+  click(d.querySelector('[data-act=step][data-id=r5]'));
+  ok(X.R.swing===true&&X.D.plan==='strum'&&X.F.key===9&&X.F.fam==='pent'&&X.F.pos===5&&X.cur.prog.map(p=>p.ch.name).join(' ')==='Am Dm Em Am','rhythm-step-follows-focus',[X.F.key,X.F.fam,X.F.mode,X.F.pos,X.cur.prog.map(p=>p.ch.name)].join(' '));
   runClean(80,20); ok(X.stepState(X.STEP_BY.r5).done,'rhythm-step-done');
-  // a pentatonic focus moves onto its 7-note scale; a run in one key counts in every key
-  Object.assign(X.F,{key:4,fam:'pent',mode:1,pos:-1}); X.refresh();
-  const fk=X.followKey(); ok(fk.key===4&&fk.fam==='major'&&fk.mode===5&&fk.pos===0,'follow-pent',JSON.stringify(fk));
-  ok(X.stepWhat(X.STEP_BY.r1)==='Em Am, a bar each. Keep the hand moving down and up.','rhythm-what',X.stepWhat(X.STEP_BY.r1));
-  ok(X.stepState(X.STEP_BY.r5).done,'rhythm-done-any-key');
-  mode('practice'); ok(/Strumming in E Aeolian/.test(d.querySelector('.path').textContent),'rhythm-sub');
+  // a new focus rebuilds the path; rhythm runs count in any key, scale runs don't
+  Object.assign(X.F,{key:0,fam:'major',mode:0,pos:-1}); X.refresh();
+  mode('practice'); ok(/C Ionian \(major\), position by position/.test(d.querySelector('.path').textContent),'path-follows-focus');
+  ok(X.stepWhat(X.STEP_BY.r1)==='C F, a bar each. Keep the hand moving down and up.','rhythm-what',X.stepWhat(X.STEP_BY.r1));
+  ok(X.stepState(X.STEP_BY.r5).done&&!X.stepState(X.PATH[0].steps[0]).done,'done-per-focus');
+  click(d.querySelector('.pnext [data-act=step]')); ok(X.F.key===0&&X.F.fam==='major'&&X.F.mode===0,'step-keeps-focus');
   // songs: add from the form, rate, and play its changes
   mode('practice'); click(d.querySelector('[data-act=songform]'));
   d.getElementById('sgName').value='Wish You Were Here'; d.getElementById('sgArtist').value='Pink Floyd';

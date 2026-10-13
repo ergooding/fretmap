@@ -391,6 +391,7 @@ const FAMS={
  mel:{name:'Melodic minor',steps:[0,2,3,5,7,9,11],modes:[['Melodic minor',0],['Dorian ♭2',1],['Lydian augmented',2],['Lydian dominant',3],['Mixolydian ♭6',4],['Locrian ♮2',5],['Altered',6]]},
  chrom:{name:'All notes',steps:[0,1,2,3,4,5,6,7,8,9,10,11],modes:[['Chromatic',0]]}
 };
+const TO_DIATONIC={pent:[0,5,4,5,0],blues:[5,4],chrom:[0]}; // the 7-note mode each smaller scale sits in
 const RN_SUF={'':'','m':'','°':'°','+':'+','maj7':'maj7','7':'7','m7':'7','m7♭5':'ø7','°7':'°7','m(maj7)':'(maj7)','+maj7':'+maj7','+7':'+7','7♭5':'7♭5','maj7♭5':'maj7♭5','°(maj7)':'°(maj7)','m6':'6','sus4':'sus4','sus2':'sus2'};
 const MAJ=[0,2,4,5,7,9,11], ROMAN=['I','II','III','IV','V','VI','VII'];
 const QUAL={'4,7':'','3,7':'m','3,6':'°','4,8':'+','4,7,11':'maj7','4,7,10':'7','3,7,10':'m7','3,6,10':'m7♭5','3,6,9':'°7',
@@ -430,7 +431,7 @@ const PROGS=[
  ['blues','12-bar blues',[0,0,0,0,3,3,0,0,4,3,0,4]]
 ];
 const PROG_BY={}; PROGS.forEach(([id,name,degs])=>PROG_BY[id]={id,name,degs});
-function progRomans(degs){return degs.map(d=>cur.chords&&cur.chords.length===7?cur.chords[d].roman:ROMAN[d]);}
+function progRomans(degs){return degs.map(d=>cur.pchords?cur.pchords[d].roman:ROMAN[d]);}
 function progLabel(id){const P=PROG_BY[id]||PROG_BY.pop; return P.degs.length>6?P.name:`${P.name}: ${progRomans(P.degs).join(' ')}`;}
 const upDown=X=>X.length<2?X:[...X,...X.slice(1,-1).reverse()];
 const GUIDES=[['full','Show whole shape'],['next','Show next note only'],['blind','Hide shape while playing']];
@@ -500,6 +501,12 @@ function buildChords(){
   }
   return list.map(([q,r])=>({root:key,tones:r,rel:r,name:NOTES[key]+qname(q,r),roman:(r[1]===3?'i':'I')+(q===null?'*':(RN_SUF[q]??''))}));
 }
+function parentChords(){ // a smaller scale borrows the chords of the 7-note mode it sits in, for progressions
+  const m=TO_DIATONIC[F.fam]; if(!m) return null;
+  const fam=FAMS.major, rot=fam.modes[m[F.mode]||0][1], own=cur.set;
+  cur.set=new Set(fam.steps.map((_,i)=>(fam.steps[(i+rot)%7]-fam.steps[rot]+12)%12));
+  const out=buildChords(); cur.set=own; return out;
+}
 let cur={};
 function refresh(){
   cur.set=scaleSet();
@@ -515,11 +522,12 @@ function refresh(){
   cur.chord=cur.chords[D.chord];
   cur.chordPcs=new Set(cur.chord.tones.map(t=>(cur.key+t)%12));
   cur.voicing=findVoicing();
+  cur.pchords=cur.chords.length===7?cur.chords:parentChords();
   cur.prog=null;
-  if(D.line==='prog'&&cur.chords.length===7){
+  if(D.line==='prog'&&cur.pchords){
     // each chord of the progression, voiced inside the box (frets 0–4 gives open chords)
     cur.prog=(PROG_BY[D.prog]||PROG_BY.pop).degs.map(d=>{
-      const ch=cur.chords[d]; cur.chord=ch; cur.chordPcs=new Set(ch.tones.map(t=>(cur.key+t)%12));
+      const ch=cur.pchords[d]; cur.chord=ch; cur.chordPcs=new Set(ch.tones.map(t=>(cur.key+t)%12));
       return {ch,d,pcs:cur.chordPcs,voicing:findVoicing()};
     });
     setProgChord(0);
@@ -700,7 +708,7 @@ function focusText(){
   const k=F.key>=0?NOTES[F.key]:'Random key';
   const scale=F.fam==='chrom'?'all notes':modeName();
   document.getElementById('focusTitle').textContent=`${k} ${scale}`;
-  document.getElementById('focusSub').textContent=cur.posLabel+(document.querySelector('.app').classList.contains('wide')?'. Used by every tab.':'. Tap to change.');
+  document.getElementById('focusSub').textContent=cur.posLabel+(document.querySelector('.app').classList.contains('wide')?'':'. Tap to change.');
 }
 function focusChanged(){
   refresh(); st.visible=new Set(cur.allowed); save(); fillSelects();
@@ -1396,49 +1404,54 @@ function transportHTML(){
 // ---------- learning path ----------
 // Scale, then chords, then progressions, then songs, with a rhythm track alongside. Each step is a Drill setup with a goal;
 // a step is done when a run of its skill has been marked clean at the goal tempo. The log behind it fills those numbers in.
-const AMP={key:9,fam:'pent',mode:1}, AMIN={key:9,fam:'major',mode:5};
-// rhythm steps follow the key and scale you have selected; RHY holds what they share
+// Every step is built from the focus in the header: its key, scale and mode stay put, and a step only moves the position.
+function focusName(){return `${F.key>=0?NOTES[F.key]:NOTES[cur.key]} ${F.fam==='chrom'?'all notes':modeName()}`;}
+function homePos(){ // the position that starts on the root, where progressions are played
+  return cur.pos.find(p=>(pc(0,p.lo)-cur.key+12)%12===0)||cur.pos[0]||{lo:0,hi:4,label:'Frets 0–4'};
+}
 const RHY={follow:true,line:'prog',plan:'strum',sev:false};
-const PATH=[
- {id:'scale',name:'Scales',sub:'A minor pentatonic, all five boxes',steps:[
-  {id:'s1',title:'Box 1, frets 5–9',what:'The shape you already know, in groups of 3, as a warm-up and a baseline.',...AMP,pos:5,line:'scale',pattern:'g3',sub:2,goal:100},
-  {id:'s2',title:'Box 2, frets 8–12',what:'The box above box 1. Up and down, then in 3rds once that’s easy.',...AMP,pos:8,line:'scale',pattern:'thirds',sub:2,goal:80},
-  {id:'s5',title:'Box 5, frets 3–7',what:'The box below box 1.',...AMP,pos:3,line:'scale',pattern:'thirds',sub:2,goal:80},
-  {id:'s4',title:'Box 4, open to fret 4',what:'The open-position box, using open strings.',...AMP,pos:0,line:'scale',pattern:'thirds',sub:2,goal:80},
-  {id:'s3',title:'Box 3, in E minor',what:'In A this box starts at fret 10, past the 12-fret neck here, so you learn the same shape in E minor at frets 5–9.',key:4,fam:'pent',mode:1,pos:5,line:'scale',pattern:'thirds',sub:2,goal:80}]},
- {id:'chord',name:'Chords in the boxes',sub:'Am, strummed then arpeggiated inside each box',steps:[
-  {id:'c1',title:'Am in box 1',what:'The E-shape barre around box 1. Strum a bar, then pick the same shape one string at a time.',...AMIN,pos:5,line:'prog',prog:'one',plan:'both',rpat:'quarters',sev:false,goal:80},
-  {id:'c2',title:'Am in box 2',what:'The shape that sits around box 2.',...AMIN,pos:8,line:'prog',prog:'one',plan:'both',rpat:'quarters',sev:false,goal:80},
-  {id:'c5',title:'Am in box 5',what:'The shape that sits around box 5.',...AMIN,pos:3,line:'prog',prog:'one',plan:'both',rpat:'quarters',sev:false,goal:80},
-  {id:'c4',title:'Am in box 4',what:'Open Am, around the open box.',...AMIN,pos:0,line:'prog',prog:'one',plan:'both',rpat:'quarters',sev:false,goal:80}]},
- {id:'prog',name:'Progressions',sub:'Chord changes inside one box',steps:[
-  {id:'p1',title:'i iv v i in box 1',what:'Am, Dm, Em, Am without leaving frets 5–9.',...AMIN,pos:5,line:'prog',prog:'145',plan:'both',rpat:'faithful',sev:false,goal:80},
-  {id:'p2',title:'Minor epic in box 1',what:'Am, F, C, G: the i VI III VII sound of a lot of rock.',...AMIN,pos:5,line:'prog',prog:'epic',plan:'both',rpat:'faithful',sev:false,goal:80},
-  {id:'p3',title:'Dorian vamp, i IV',what:'Am to D. The major IV is what makes Dorian sound brighter than plain minor.',key:9,fam:'major',mode:1,pos:5,line:'prog',prog:'two',plan:'both',rpat:'faithful',sev:false,goal:80},
-  {id:'p4',title:'Mixolydian rock, I ♭VII IV I',what:'A, G, D, A. The ♭VII chord is the Mixolydian sound.',key:9,fam:'major',mode:4,pos:5,line:'prog',prog:'flat7',plan:'both',rpat:'faithful',sev:false,goal:80}]},
- {id:'rhythm',name:'Rhythm track',sub:()=>{const k=followKey(); return `Strumming in ${NOTES[k.key]} ${FAMS[k.fam].modes[k.mode][0]}, from the scale you have selected. Any time alongside the steps above`;},steps:[
-  {id:'r1',title:'8ths, accents on 2 and 4',what:'{ch}, a bar each. Keep the hand moving down and up.',...RHY,prog:'two',plan:'strum',rpat:'backbeat',goal:90},
-  {id:'r2',title:'Ghost strums',what:'Down, down-up, up-down-up over {ch}. Count it out loud.',...RHY,prog:'pop',plan:'strum',rpat:'faithful',goal:80},
-  {id:'r3',title:'16ths: 1 & a',what:'The gallop over {ch}.',...RHY,prog:'pop',plan:'strum',rpat:'gallop',goal:70},
-  {id:'r4',title:'Syncopation: 3-3-2',what:'The tresillo over {ch}.',...RHY,prog:'145',plan:'strum',rpat:'tresillo',goal:80},
-  {id:'r5',title:'Shuffle feel',what:'Swung 8ths over {ch}.',...RHY,prog:'145',plan:'strum',rpat:'shufflefaith',goal:80}]}
-];
-const STEP_BY={}; PATH.forEach(g=>g.steps.forEach(s=>{s.stage=g.id; STEP_BY[s.id]=s;}));
-// The key a rhythm step uses: the one selected, moved onto a 7-note scale so it has chords
-// (minor pentatonic and minor blues become Aeolian, major pentatonic Ionian, and so on). Whole neck strums open chords.
-const TO_DIATONIC={pent:[0,5,4,5,0],blues:[5,4],chrom:[0]};
+const RHY_STEPS=[
+  {id:'r1',title:'8ths, accents on 2 and 4',what:'{ch}, a bar each. Keep the hand moving down and up.',...RHY,prog:'two',rpat:'backbeat',goal:90},
+  {id:'r2',title:'Ghost strums',what:'Down, down-up, up-down-up over {ch}. Count it out loud.',...RHY,prog:'pop',rpat:'faithful',goal:80},
+  {id:'r3',title:'16ths: 1 & a',what:'The gallop over {ch}.',...RHY,prog:'pop',rpat:'gallop',goal:70},
+  {id:'r4',title:'Syncopation: 3-3-2',what:'The tresillo over {ch}.',...RHY,prog:'145',rpat:'tresillo',goal:80},
+  {id:'r5',title:'Shuffle feel',what:'Swung 8ths over {ch}.',...RHY,prog:'145',rpat:'shufflefaith',goal:80}];
+let PATH=[], STEP_BY={}, pathSig='';
+function buildPath(){
+  const sig=[F.key,F.fam,F.mode,cur.key,F.pos].join(':'); if(sig===pathSig) return PATH; pathSig=sig;
+  const fk={key:cur.key,fam:F.fam,mode:F.mode}, k=followKey(), home=homePos(), tonic=progNames(k,'one')[0], minor=/m(?!aj)/.test(tonic)||/°/.test(tonic);
+  // start from the root position, work up the neck, then the positions below it
+  const ps=[...cur.pos.filter(p=>p.lo>=home.lo),...cur.pos.filter(p=>p.lo<home.lo).reverse()], fr=p=>`frets ${p.lo}–${p.hi}`;
+  const scale=ps.map((p,i)=>({id:'s'+p.lo,title:p===home?`Frets ${p.lo}–${p.hi}, from the root`:`Frets ${p.lo}–${p.hi}`,
+    what:i===0?'Up and down in 3rds, string by string. Say the interval of each note as you play it.':`The ${p.lo>home.lo?'next':'lower'} position, in 3rds.`,
+    ...fk,pos:p.lo,line:'scale',pattern:'thirds',sub:2,goal:80}));
+  const chord=ps.map(p=>({id:'c'+p.lo,title:`${tonic} in ${fr(p)}`,
+    what:`The ${tonic} shape that sits in ${fr(p)}. Strum a bar, then pick the same shape one string at a time.`,
+    ...fk,pos:p.lo,line:'prog',prog:'one',plan:'both',rpat:'quarters',sev:false,goal:80}));
+  const progs=minor?['two','145','epic','andalusian']:['two','145','pop','50s'];
+  const prog=progs.map(id=>({id:'p'+id,title:PROG_BY[id].name,what:`${progNames(k,id).join(' ')}, without leaving frets ${home.lo}–${home.hi}.`,
+    ...fk,pos:home.lo,line:'prog',prog:id,plan:'both',rpat:'faithful',sev:false,goal:80}));
+  const pos=F.pos>=0?F.pos:home.lo;
+  PATH=[
+    {id:'scale',name:'Scales',sub:`${focusName()}, position by position`,steps:scale},
+    {id:'chord',name:'Chords in each position',sub:`${tonic}, strummed then arpeggiated`,steps:chord},
+    {id:'prog',name:'Progressions',sub:`Chord changes in frets ${home.lo}–${home.hi}`,steps:prog},
+    {id:'rhythm',name:'Rhythm track',sub:'Strum patterns in your focus, any time alongside the steps above',steps:RHY_STEPS.map(r=>({...r,...fk,pos}))}];
+  STEP_BY={}; PATH.forEach(g=>g.steps.forEach(s=>{s.stage=g.id; STEP_BY[s.id]=s;}));
+  return PATH;
+}
+// The chords of a scale that has fewer than 7 notes come from the 7-note scale it sits in
+// (minor pentatonic and minor blues sit in Aeolian, major pentatonic in Ionian, and so on).
 function followKey(){
   const seven=FAMS[F.fam].steps.length===7;
-  return {key:cur.key,fam:seven?F.fam:'major',mode:seven?F.mode:(TO_DIATONIC[F.fam]||[0])[F.mode]||0,pos:F.pos>=0?F.pos:0};
+  return {key:cur.key,fam:seven?F.fam:'major',mode:seven?F.mode:(TO_DIATONIC[F.fam]||[0])[F.mode]||0};
 }
-const resolved=s=>s.follow?{...s,...followKey()}:s;
 function progNames(k,prog){ // chord names of a progression in a key, without touching the current focus
   const steps=FAMS[k.fam].steps, rot=FAMS[k.fam].modes[k.mode][1], iv=steps.map((_,i)=>(steps[(rot+i)%7]-steps[rot]+12)%12);
   return PROG_BY[prog].degs.map(d=>{const r=iv[d], q=QUAL[`${(iv[(d+2)%7]-r+12)%12},${(iv[(d+4)%7]-r+12)%12}`]; return NOTES[(k.key+r)%12]+(q??'');});
 }
-function stepWhat(s){ if(!s.follow) return s.what; const k=followKey(); return s.what.replace('{ch}',progNames(k,s.prog).join(' ')); }
+function stepWhat(s){ return s.follow?s.what.replace('{ch}',progNames(followKey(),s.prog).join(' ')):s.what; }
 function setupSkill(s){
-  s=resolved(s);
   return s.line==='prog'?`prog:${s.key}:${s.fam}:${s.mode}:${s.pos}:${s.prog}:${s.plan}:${s.plan==='arp'?'-':s.rpat}`:`box:${s.key}:${s.fam}:${s.mode}:${s.pos}`;
 }
 function stepState(s){
@@ -1451,7 +1464,7 @@ function songSteps(){
 }
 function songSetup(s){return {key:s.key??0,fam:'major',mode:s.minor?5:0,pos:0,line:'prog',prog:PROG_BY[s.prog]?s.prog:'pop',plan:'both',rpat:'faithful',sev:false,goal:s.bpm||80};}
 function nextStep(){
-  for(const g of PATH){ if(g.id==='rhythm') continue; const s=g.steps.find(s=>!stepState(s).done); if(s) return s; }
+  for(const g of buildPath()){ if(g.id==='rhythm') continue; const s=g.steps.find(s=>!stepState(s).done); if(s) return s; }
   return null;
 }
 function goalText(s){
@@ -1459,8 +1472,8 @@ function goalText(s){
   return `Goal: clean at ${s.goal} bpm${s.line==='scale'?' in 8ths':''}. `+(b?`Best so far: ${b.bpm}.`:'No clean run yet.');
 }
 function applySetup(s){
-  s=resolved(s);
-  F.key=s.key; F.fam=s.fam; F.mode=s.mode; F.pos=s.pos;
+  if(s.stage===undefined){F.key=s.key; F.fam=s.fam; F.mode=s.mode;} // a song brings its own key; path steps keep the focus
+  F.pos=s.pos;
   D.line=s.line; D.guide='full';
   if(s.line==='scale'){D.pattern=s.pattern; D.sub=s.sub;}
   else{D.prog=s.prog; D.plan=s.plan; R.pat=s.rpat; R.swing=!!(RPAT[s.rpat]&&RPAT[s.rpat].swing);}
@@ -1468,11 +1481,11 @@ function applySetup(s){
   refresh(); st.visible=new Set(cur.allowed); fillSelects(); save();
   document.querySelector('#modes [data-mode="drill"]').click();
 }
-function stepFor(id){ return id==='song'?null:STEP_BY[id]; }
+function stepFor(id){ buildPath(); return id==='song'?null:STEP_BY[id]; }
 function pathNote(){
   // in Drill, say when the current setup is a step on the path, and how close it is
   const id=skillNow().id;
-  const s=Object.values(STEP_BY).find(s=>setupSkill(s)===id);
+  buildPath(); const s=Object.values(STEP_BY).find(s=>setupSkill(s)===id);
   const song=!s&&songSteps().find(({s:x})=>setupSkill(songSetup(x))===id);
   if(!s&&!song) return '';
   const title=s?s.title:`${esc(song.s.name)}: play the changes`, step=s||songSetup(song.s), ok=stepState(step).done;
@@ -1513,7 +1526,7 @@ function songsHTML(){
 function practiceHTML(){
   const n=nextStep();
   const next=n?`<div class="pnext"><p class="st-lab">Next up</p><b>${n.title}</b><p>${stepWhat(n)} ${goalText(n)}</p><button class="btn primary" data-act="step" data-id="${n.id}">Start in Drill</button></div>`:'';
-  const stages=PATH.map(g=>`<section class="pstage"><h3>${g.name} <small>${typeof g.sub==='function'?g.sub():g.sub}</small></h3><ol class="psteps">${g.steps.map(s=>stepRow(s,n&&s===n)).join('')}</ol></section>`);
+  const stages=buildPath().map(g=>`<section class="pstage"><h3>${g.name} <small>${g.sub}</small></h3><ol class="psteps">${g.steps.map(s=>stepRow(s,n&&s===n)).join('')}</ol></section>`);
   stages.splice(3,0,songsHTML());
   return `<div class="path">${next}${stages.join('')}
     <details class="psync"${st.syncOpen?' open':''}><summary>Sync and backup</summary>${syncHTML()}</details></div>`;
@@ -1551,6 +1564,7 @@ function progPanel(playSeg){
     ${top}
     ${grid}
     <div class="tab" id="tab"></div>
+    ${cur.chords.length!==7?`<p class="hint">${modeName()} has too few notes to build these chords, so they come from ${NOTES[cur.key]} ${FAMS.major.modes[TO_DIATONIC[F.fam][F.mode]||0][0]}, the 7-note mode it sits in.</p>`:''}
     <div class="transport">${transportHTML()}
       ${D.plan!=='strum'?`<select data-set="sub" aria-label="Arpeggio notes per beat">${opts(SUBS,D.sub)}</select>`:''}
       <button class="btn primary play" data-act="play">${st.playing?'❚❚ Pause':st.paused?'▶ Resume':'▶ Play'}</button>
@@ -1675,7 +1689,7 @@ panel.addEventListener('click',e=>{
     case 'lbl': if(b.dataset.v==='notes') saved.labels='notes'; else {saved.labels='iv'; D.ref=b.dataset.v;} save(); render(); return;
     case 'play': togglePlay(); return;
     case 'clean': toggleClean(); return;
-    case 'step': applySetup(STEP_BY[b.dataset.id]); return;
+    case 'step': buildPath(); applySetup(STEP_BY[b.dataset.id]); return;
     case 'topath': document.querySelector('#modes [data-mode="practice"]').click(); return;
     case 'songform': st.addSong=true; st.addMsg=''; render(); {const el=document.getElementById('sgName'); if(el) el.focus();} return;
     case 'songcancel': st.addSong=false; st.addMsg=''; render(); return;
@@ -1912,7 +1926,7 @@ const TIPS=[
  ['[data-pci]',el=>{const p=cur.prog&&cur.prog[+el.dataset.pci]; if(!p) return ''; return `<b>${p.ch.name}</b> (${p.ch.roman}): ${formulaText(p.ch)}${p.voicing?', played '+p.voicing.frets.map(f=>f===null?'x':f).join(' '):''}.${st.playing?'':' Click to hear it and see it on the neck.'}`;}],
  ['#modes [data-mode="practice"]',()=>'<b>Path</b>: your learning path from scales to chords to progressions to songs, with a rhythm track. Each step opens Drill set up for it. (5)'],
  ['[data-act="clean"]',()=>lg.last&&lg.last.clean?`Marked clean at ${lg.last.clean} bpm. Click to unmark it.`:`If that run was ${term('clean','clean')}, mark it at ${lg.last?lg.last.bpm[1]:saved.bpm} bpm. A step on the path is done when a run is marked clean at its goal tempo.`],
- ['[data-act="step"]',el=>{const t=STEP_BY[el.dataset.id]; return `<b>${t.title}</b>: ${stepWhat(t)} Opens Drill set up for this step.`;}],
+ ['[data-act="step"]',el=>{buildPath(); const t=STEP_BY[el.dataset.id]; return `<b>${t.title}</b>: ${stepWhat(t)} Opens Drill set up for this step.`;}],
  ['[data-act="topath"]',()=>'Go back to the learning path.'],
  ['[data-act="songform"]',()=>'Add a song you’re learning: its key and closest progression set up Drill for it.'],
  ['[data-act="songadd"]',()=>'Add this song to the path.'],
@@ -2015,7 +2029,7 @@ document.addEventListener('keydown',e=>{const t=e.target.closest&&e.target.close
 addEventListener('scroll',hideTip,true);
 addEventListener('resize',hideTip);
 
-window.__fretDebug={tipFor,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,PATH,STEP_BY,setupSkill,stepState,nextStep,followKey,stepWhat,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,progLabel,setProgChord,pschedule};
+window.__fretDebug={tipFor,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,get PATH(){return buildPath()},get STEP_BY(){buildPath(); return STEP_BY},setupSkill,stepState,nextStep,followKey,stepWhat,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,progLabel,setProgChord,pschedule};
 fillSelects();
 render();
 setTimeout(syncNow,300); // does nothing without a token

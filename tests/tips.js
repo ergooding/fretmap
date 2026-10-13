@@ -26,7 +26,7 @@ async function run(wide){
      click(d.querySelector('[data-act=songform]')); check('path song form');
      d.getElementById('sgName').value='Wish You Were Here'; d.getElementById('sgLink').value='https://www.songsterr.com/x'; click(d.querySelector('[data-act=songadd]')); check('path song added');
      click(d.querySelector('[data-act=rate][data-v="3"]')); check('path song rated');
-     click(d.querySelector('[data-act=step][data-id=s2]')); check('drill from path');
+     click(d.querySelector('.pnext [data-act=step]')); check('drill from path');
      click(d.querySelector('[data-act=topath]')); check('back to path');
      click(d.querySelector('[data-act=step][data-id=r3]')); check('rhythm step from path');
      click(d.querySelector('[data-act=topath]'));
