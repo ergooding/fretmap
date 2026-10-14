@@ -36,7 +36,9 @@ async function run(wide){
      click(d.querySelector('[data-act=sgstep][data-i="1"]')); check('song strum custom');
      click(d.querySelector('[data-act=songform]')); check('second song form');
      goMode(d,click,'practice'); check('path with song');
-     click(d.querySelector('[data-fm=song]')); check('focus on song'); goMode(d,click,'drill'); check('drill focused on song'); click(d.querySelector('[data-fm=key]')); goMode(d,click,'practice'); check('focus back on key');
+     click(d.querySelector('[data-fm=song]')); check('focus on song'); goMode(d,click,'drill'); check('drill focused on song');
+     goMode(d,click,'explore'); check('explore song'); click(d.querySelector('.cchips [data-act=exch]:last-child')); check('explore song chord');
+     click(d.querySelector('[data-act=exlab][data-v=key]')); check('explore song key labels'); click(d.querySelector('.cell[data-s="1"][data-f="3"]')); check('explore song tap'); click(d.querySelector('[data-fm=key]')); goMode(d,click,'practice'); check('focus back on key');
      click(d.querySelector('.pnext [data-act=step]')); check('drill from path');
      click(d.querySelector('[data-act=topath]')); check('back to path');
      click(d.querySelector('[data-act=step][data-id=r3]')); check('rhythm step from path');

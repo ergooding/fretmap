@@ -135,6 +135,7 @@ h1{font-size:1.05rem;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
 .tcol span{height:12px;line-height:12px;font-size:10px}
 .tcol .ln{background:linear-gradient(transparent 5.5px,var(--line) 5.5px,var(--line) 6.5px,transparent 6.5px)}
 .tcol .ln b{background:var(--surface);padding:0 2px;font-weight:700}
+.tcol .ln b.mx{color:var(--muted);font-weight:400}
 .tcol .dg{margin-top:3px;font-weight:700}
 .tcol .fg{color:var(--muted)}
 .tcol.now{background:color-mix(in srgb,var(--gold) 35%,transparent)}
@@ -198,6 +199,25 @@ html.wide{font-size:19px}
 .voice-card p{margin:4px 0 0;font-size:.8rem;color:var(--muted);text-align:center}
 .voice-card code{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--ink);font-size:.9rem;letter-spacing:.08em}
 .dot.vc{outline:3px solid var(--gold);outline-offset:3px}
+.dot.outk{border:2px dashed #14110d}
+.ex-song{display:flex;flex-direction:column;gap:10px}
+.ex-song p{margin:0;font-size:.86rem;line-height:1.45}
+.ex-sum{color:var(--muted)}.ex-sum b{color:var(--ink)}
+.cchip.outk{border-style:dashed;border-color:var(--bad)}
+.cchip.ex-ch small{font-family:"Times New Roman",Georgia,serif;font-size:.84rem}
+.ex-card{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.ex-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.ex-name{font-size:1.3rem}
+.ex-head .rn{font-family:"Times New Roman",Georgia,serif;color:var(--muted);font-size:1.05rem}
+.ex-tag{margin-left:auto;font-size:.74rem;color:var(--good)}.ex-tag.out{color:var(--bad)}
+.exns{display:flex;flex-wrap:wrap;gap:6px}
+.exn{display:flex;flex-direction:column;border-left:4px solid var(--c);padding:1px 8px;line-height:1.2}
+.exn small{font-size:.72rem;color:var(--muted)}
+.exn.outk{border-left-style:dashed}
+.ex-play{align-items:center}.ex-play code{font-size:.9rem;letter-spacing:.06em}
+.ex-parts{display:flex;flex-direction:column;gap:6px}
+.ex-part{display:flex;flex-direction:column;gap:3px;min-width:0}
+.app.wide .sh-bars.ex-bars{display:flex;flex-wrap:wrap}
 .vc-formula{margin-top:8px}
 .vc-formula>div{display:flex;gap:6px;flex-wrap:wrap}
 .fchip{min-width:2.3em;text-align:center;padding:4px 8px;border-radius:8px;background:var(--c);color:#14110d;font-weight:700;font-size:.95rem}
@@ -349,15 +369,15 @@ html.land{font-size:15px}
 .sh-no{margin-left:auto;font-variant-numeric:tabular-nums}
 .sh-bars{position:relative;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth;padding:1px}
 .sh-bars::-webkit-scrollbar{display:none}
-.bar{flex:none;min-width:66px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:5px 9px;cursor:pointer}
-.bar .nm{font-weight:700;font-size:.98rem}
-.bar .rn{font-family:"Times New Roman",Georgia,serif;color:var(--muted);font-size:.88rem;line-height:1.1}
-.bar .fr{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.74rem;color:var(--muted);letter-spacing:.04em}
-.bar.own .fr{color:color-mix(in srgb,var(--gold) 72%,var(--ink));font-weight:700}
-.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);background:color-mix(in srgb,var(--gold) 20%,var(--surface))}
+button.bar{flex:none;min-width:66px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:5px 9px;cursor:pointer}
+button.bar .nm{font-weight:700;font-size:.98rem}
+button.bar .rn{font-family:"Times New Roman",Georgia,serif;color:var(--muted);font-size:.88rem;line-height:1.1}
+button.bar .fr{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.74rem;color:var(--muted);letter-spacing:.04em}
+button.bar.own .fr{color:color-mix(in srgb,var(--gold) 72%,var(--ink));font-weight:700}
+button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);background:color-mix(in srgb,var(--gold) 20%,var(--surface))}
 .app.wide .sh-bars{display:grid;grid-template-columns:1fr 1fr;overflow:visible}
-.app.wide .bar{display:grid;grid-template-columns:1fr auto;grid-template-areas:"nm fr" "rn fr";align-items:center;column-gap:8px;padding:6px 10px}
-.app.wide .bar .nm{grid-area:nm}.app.wide .bar .rn{grid-area:rn}.app.wide .bar .fr{grid-area:fr}
+.app.wide button.bar{display:grid;grid-template-columns:1fr auto;grid-template-areas:"nm fr" "rn fr";align-items:center;column-gap:8px;padding:6px 10px}
+.app.wide button.bar .nm{grid-area:nm}.app.wide button.bar .rn{grid-area:rn}.app.wide button.bar .fr{grid-area:fr}
 .strum-card{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 10px;flex:none}
 .strum-card .rgrid{border:0;padding:2px 0;background:none;max-width:none}
 .sc-top{align-items:center}
@@ -377,7 +397,7 @@ html.land{font-size:15px}
 .app:not(.wide) .pbar .chip{order:6}
 .app.wide .pbar{max-width:900px;padding-top:10px}
 .app.land .song-sheet{grid-area:prompt;padding:6px 8px;gap:5px}
-.app.land .bar{padding:3px 7px}
+.app.land button.bar{padding:3px 7px}
 /* Songs tab */
 .app.wide.m-songs{grid-template-areas:"head head" "goal goal" "panel panel" "panel panel"}
 .app.wide.m-songs .side{display:none}
@@ -1407,8 +1427,21 @@ function renderBoard(){
   const nowN=(st.playing||st.paused)&&st.idx>=0?st.seq[st.idx]:null;
   const nextN=nowN?st.seq[(st.idx+1)%st.seq.length]:null;
   const same=(a,s,f)=>a&&a.s===s&&a.f===f;
+  const E=exSong(), EV=E&&E.c?exVoicing(E,E.sel):null, ERel=E&&E.c?exOverRel(E):null;
   for(let s=0;s<6;s++)for(let f=0;f<=12;f++){
     const c=cells[s][f];
+    if(E){ // a song: the chosen chord's notes, the rest of the key, and the shape you play
+      c.classList.toggle('out',!cur.whole&&!inWin(f));
+      const n=pc(s,f), ghost=(!cur.whole&&!inWin(f))?' ghost':'', kiv=(n-E.key+12)%12, inK=E.scale.includes(kiv);
+      if(!E.c){dot(c,inK?{t:kiv===0?'R':lab(kiv)[0],c:COL[kiv],cls:(kiv===0?'root':'')+ghost}:null); continue;}
+      const civ=(n-E.c.root+12)%12, inC=E.c.rel.includes(civ), ref=saved.exlab==='key'?kiv:civ, inO=E.over.includes(kiv);
+      const t=saved.exlab==='notes'?NOTES[n]:saved.exlab==='key'?lab(kiv)[0]:labIn(civ,ERel)[0];
+      const vc=EV&&EV[s]===f?' vc':'';
+      if(inC) dot(c,{t,c:COL[ref],cls:(ref===0?'root':'')+(inK?'':' outk')+ghost+vc});
+      else if(inO) dot(c,{t,cls:'pass'+ghost+vc});
+      else dot(c,vc?{t,cls:'pass'+ghost+vc}:null);
+      continue;
+    }
     if(st.mode==='explore'||picking()){
       c.classList.toggle('out',!cur.whole&&!inWin(f)&&!picking());
       const iv=ivOf({s,f},cur.key), ghost=(!cur.whole&&!inWin(f))?' ghost':'';
@@ -1458,7 +1491,15 @@ function renderPrompt(){
     if(picking()){promptEl.innerHTML=`<span class="big">☝</span><span>Tap where your index finger sits. The drill uses the 5 frets from there.</span>`;return;}
     promptEl.hidden=true; updateLive(); return; // the song sheet and the practice bar say what's playing
   }
-  if(st.mode==='explore'){
+  const E=exSong();
+  if(E&&E.c){
+    const t=st.exTap;
+    promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${esc(E.sel)}</span><span>`+(t!=null
+      ?`<b>${NOTES[t]}</b> is the ${labIn((t-E.c.root+12)%12,exOverRel(E))[1]} of ${esc(E.sel)}${E.c.rel.includes((t-E.c.root+12)%12)?', one of its notes':''}, and ${E.scale.includes((t-E.key+12)%12)?`the ${lab((t-E.key+12)%12)[1]} of ${NOTES[E.key]} ${E.minor?'minor':'major'}`:`outside ${NOTES[E.key]} ${E.minor?'minor':'major'}`}.`
+      :`${esc(E.c.roman)} in ${NOTES[E.key]} ${E.minor?'minor':'major'}. Tap a note to see what it is here.`)+`</span>`;
+  }else if(E){
+    promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${NOTES[E.key]}</span><span>${esc(E.sk.name)} has no chords yet, so this shows the ${NOTES[E.key]} ${E.minor?'minor':'major'} scale.</span>`;
+  }else if(st.mode==='explore'){
     promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${NOTES[cur.key]}</span><span>Tap any note to make it the key. Faded notes sit outside the position.</span>`;
   }else if(st.mode==='name'){
     const rn=NOTES[q.key], L=lab(q.iv);
@@ -1556,7 +1597,7 @@ function progTab(el){
     setProgChord(n.ci);
     if(n.chord){
       const L=countLabels(n.n), arrow=n.strum==='m'?'×':n.k%2?'↑':'↓', ghost=n.strum==='.';
-      let rows=''; for(let s=5;s>=0;s--){const f=cur.voicing.frets[s]; rows+=`<span class="ln">${n.k===0&&f!==null?'<b>'+f+'</b>':''}</span>`;}
+      let rows=''; for(let s=5;s>=0;s--){const f=cur.voicing.frets[s]; rows+=`<span class="ln">${n.k!==0?'':f!==null?'<b>'+f+'</b>':'<b class="mx">x</b>'}</span>`;}
       return `<div class="tcol strumcol${n.k===0?' chordcol':''}${ghost?' ghost':''}${n.strum==='>'?' acc':''}${cls}" data-j="${j}">${rows}<span class="dg">${arrow}</span><span class="fg">${n.k===0?cur.chord.roman:L[n.k]}</span></div>`;
     }
     const {ref,t}=drillLabel(n);
@@ -1574,7 +1615,7 @@ function renderTab(){
     const cls=j===0?'':(j%(sub*4)===0?' bar':(j%sub===0?' beat':''));
     if(n.rest) return `<div class="tcol${cls}" data-j="${j}">${'<span class="ln"></span>'.repeat(6)}<span class="dg" style="color:var(--muted)">·</span><span class="fg"></span></div>`;
     if(n.chord){
-      let rows=''; for(let s=5;s>=0;s--){const f=cur.voicing.frets[s]; rows+=`<span class="ln">${f===null?'':'<b>'+f+'</b>'}</span>`;}
+      let rows=''; for(let s=5;s>=0;s--){const f=cur.voicing.frets[s]; rows+=`<span class="ln">${f===null?'<b class="mx">x</b>':'<b>'+f+'</b>'}</span>`;}
       return `<div class="tcol chordcol${cls}" data-j="${j}">${rows}<span class="dg" style="color:var(--gold)">${cur.chord.roman}</span><span class="fg">strum</span></div>`;
     }
     const {ref,t}=drillLabel(n);
@@ -1734,6 +1775,102 @@ function songsHTML(){
 // ---------- songs tab ----------
 // A list of your songs, and the open song: its details, its chords split into parts, a voicing for each chord, and its strum pattern.
 function songParts(sk){ return sk.parts&&sk.parts.length?sk.parts:[{name:'Verse',text:sk.chordText||''}]; }
+// ---------- explore a song ----------
+// In Song mode, Explore explains the song: what key it's in, what each chord does there, and what to play over it.
+const MODE_COLOR={Dorian:9,Phrygian:1,Lydian:6,Mixolydian:10,Aeolian:8,Locrian:6}; // the note that gives each mode its sound
+function exSong(){
+  if(st.mode!=='explore') return null;
+  const fs=focusSong(); if(!fs) return null;
+  const sk=fs.sk, key=sk.key??0, minor=!!sk.minor, parts=songParts(sk).map(p=>({name:p.name,chords:parseChords(p.text).chords}));
+  if(!parts.some(p=>p.chords.length)&&sk.chords&&sk.chords.length) parts.splice(0,parts.length,{name:'Chords',chords:sk.chords});
+  const seq=parts.flatMap(p=>p.chords), names=[...new Set(seq)];
+  const scale=minor?[0,2,3,5,7,8,10]:MAJ;
+  const sel=names.includes(st.exName)?st.exName:names[0]||null, c=sel?chordIn(sel,key):null;
+  // the notes to play over the chosen chord: the key, with any note it clashes with swapped for the chord's own
+  let over=[...scale]; const swaps=[];
+  if(c) c.tones.filter(t=>!scale.includes(t)).forEach(t=>{
+    const ok=x=>{const S=new Set(over.filter(y=>y!==x).concat(t)); return ![...S].some(n=>S.has((n+1)%12)&&S.has((n+2)%12));};
+    const cand=[(t+1)%12,(t+11)%12].filter(x=>over.includes(x)&&!c.tones.includes(x)), x=cand.find(ok);
+    if(x!==undefined){over=over.filter(y=>y!==x); swaps.push([t,x]);} over.push(t);
+  });
+  return {id:fs.id,sk,key,minor,parts,seq,names,scale,sel,c,over,swaps};
+}
+function labIn(iv,S){ // a degree's name in a 7-note set, sharps where the set calls for them
+  const h=x=>S.has(x);
+  if(iv===6&&!h(5)&&(h(7)||!h(3))) return ['♯4','augmented 4th'];
+  if(iv===8&&!h(7)&&h(9)) return ['♯5','augmented 5th'];
+  if(iv===3&&h(4)&&!h(2)) return ['♯2','augmented 2nd'];
+  return IV[iv];
+}
+function exOverRel(E){return new Set(E.over.map(t=>(t+E.key-E.c.root+24)%12));}
+function exOverMode(E){ // name the notes over an outside chord as a mode of its root, when they make one
+  const R=[...exOverRel(E)].sort((a,b)=>a-b).join();
+  for(let i=0;i<7;i++){const m=MAJ.map(x=>(x-MAJ[i]+12)%12).sort((a,b)=>a-b).join(); if(m===R) return FAMS.major.modes[i][0].replace(/ \(.*\)/,'');}
+  return null;
+}
+function exVoicing(E,n){const own=E.sk.voicings&&E.sk.voicings[n]; return (own&&parseFrets(own))||autoVoicing(n,E.key);}
+function exInKey(E,c){return c.tones.every(t=>E.scale.includes(t));}
+function exRole(E,c){ // what the chord does in the song's key
+  const d=(c.root-E.key+12)%12, home=NOTES[E.key]+(E.minor?'m':''), hm=c.rel.includes(3)&&!c.rel.includes(4);
+  if(exInKey(E,c)){
+    const M={0:'Home. The song rests here, and lines feel finished when they land on its root.',
+      2:'Moves away from home, and usually sets up the V chord.',4:`A soft stand-in for home: it shares two notes with ${home}.`,
+      5:'Moves away from home: a lift that wants to come back.',7:`The tension chord. It pulls back home to ${home}.`,
+      9:`Home's minor cousin: it shares two notes with ${home}, with a sadder sound.`,11:`Tense and unstable. It pulls hard to ${home}.`};
+    const m={0:M[0],2:'Tense and unstable. It usually leads to the v or V chord.',3:`The relative major: brighter, and it shares two notes with ${home}.`,
+      5:'Moves away from home, darker.',7:`Leans back toward home, ${home}, more gently than a major V.`,
+      8:`A lift away from home that shares two notes with ${home}.`,10:`One step below home. It rocks back to ${home}.`};
+    return (E.minor?m:M)[d];
+  }
+  const par=E.minor?MAJ:[0,2,3,5,7,8,10];
+  if(c.tones.every(t=>par.includes(t))) return `Borrowed from ${NOTES[E.key]} ${E.minor?'major':'minor'}, the key with the same root. A common way to add color.`;
+  if(E.minor&&d===7&&!hm) return `The major V, borrowed from harmonic minor. Its raised note, ${NOTES[(E.key+11)%12]}, pulls hard to ${home}.`;
+  const tgt=(d+5)%12;
+  if(!hm&&tgt!==0&&E.scale.includes(tgt)) return `A secondary dominant: the V of ${NOTES[(E.key+tgt)%12]}, so it pulls toward that chord.`;
+  return 'From outside the key. It adds a color the key on its own doesn\'t have.';
+}
+function exCard(E){
+  const c=E.c, sel=E.sel, key=E.key, kname=`${NOTES[key]} ${E.minor?'minor':'major'}`;
+  const pcs=c.rel.map(r=>(c.root+r)%12), outs=c.tones.filter(t=>!E.scale.includes(t));
+  const notes=c.rel.map((r,k)=>`<span class="exn${E.scale.includes(c.tones[k])?'':' outk'}" style="--c:${r===0?'var(--gold)':COL[r]}"><b>${NOTES[pcs[k]]}</b><small>${labIn(r,exOverRel(E))[0]} of ${esc(NOTES[c.root])} · ${E.scale.includes(c.tones[k])?lab(c.tones[k])[0]+' in key':'outside the key'}</small></span>`).join('');
+  let over;
+  if(!outs.length){
+    const deg=E.scale.indexOf((c.root-key+12)%12), mode=FAMS.major.modes[((E.minor?5:0)+deg)%7][0].replace(/ \(.*\)/,''), col=MODE_COLOR[mode];
+    over=`Over it, play the ${kname} scale as usual. Starting from ${NOTES[c.root]} it's ${term('mode',NOTES[c.root]+' '+mode)}`
+      +(col!==undefined?`, and its ${IV[col][0]} (${NOTES[(c.root+col)%12]}) is the note that gives that sound.`:'.')
+      +` Land on ${pcs.map(p=>NOTES[p]).join(', ')} when the chord changes.`;
+  }else{
+    const sw=outs.map(t=>{const p=(key+t)%12, w=E.swaps.find(x=>x[0]===t); return w?`${NOTES[p]} instead of ${NOTES[(key+w[1])%12]}`:NOTES[p];}), m=exOverMode(E);
+    over=`${outs.length===1?'One of its notes is':'Some of its notes are'} outside ${kname}. While it rings, play ${sw.join(' and ')}, and keep the rest of the key`
+      +(m?`. That makes ${term('mode',NOTES[c.root]+' '+m)}, shown in pearl on the neck.`:'. The pearl dots on the neck show the result.')
+      +` Its own notes, ${pcs.map(p=>NOTES[p]).join(', ')}, are the safest landing spots.`;
+  }
+  const at=E.seq.indexOf(sel), nx=E.seq.slice(at+1).find(n=>n!==sel)||E.seq.find(n=>n!==sel);
+  let next='';
+  if(nx){
+    const N=chordIn(nx,key), npcs=N.rel.map(r=>(N.root+r)%12), keep=pcs.filter(p=>npcs.includes(p));
+    const moves=pcs.filter(p=>!npcs.includes(p)).map(p=>{let b=null; npcs.forEach(q=>{const dd=((q-p+18)%12)-6; if(!b||Math.abs(dd)<Math.abs(b.d)) b={q,d:dd};}); return b&&Math.abs(b.d)<=2?`${NOTES[p]} to ${NOTES[b.q]}`:null;}).filter(Boolean);
+    next=`<p>Next comes <b>${esc(nx)}</b> (${esc(N.roman)}). ${keep.length?`They share ${keep.map(p=>NOTES[p]).join(' and ')}, so ${keep.length>1?'those notes':'that note'} can ring across the change`:'They share no notes'}${moves.length?`, and ${moves.join(', ')} ${moves.length>1?'are':'is'} a step away`:''}.</p>`;
+  }
+  const f=exVoicing(E,sel);
+  const from=saved.exlab==='notes'?'':saved.exlab==='key'?`, counted from ${NOTES[key]}`:`, counted from ${NOTES[c.root]}`;
+  const legend=`<p class="hint">On the neck: colored dots are its notes and pearl dots are the other notes to play over it${from}.${outs.length?' A dashed edge marks a note from outside the key.':''} Gold rings are the shape you play.</p>`;
+  return `<div class="ex-card"><div class="ex-head"><b class="ex-name">${esc(sel)}</b><span class="rn">${esc(c.roman)}</span><span class="ex-tag${outs.length?' out':''}">${outs.length?'Outside the key':'In the key'}</span></div>
+    <p>${exRole(E,c)}</p><div class="exns">${notes}</div><p>${over}</p>${next}
+    <div class="row ex-play">${f?`<code>${fretText(f)}</code><button class="btn" data-act="exhear">Hear it</button>`:''}</div>${legend}</div>`;
+}
+function exploreSongHTML(E){
+  const sk=E.sk, key=E.key, kname=`${NOTES[key]} ${E.minor?'minor':'major'}`;
+  if(!E.names.length) return `<p class="hint">${esc(sk.name)} has no chords yet. Add them in the Songs tab, and Explore will show what each one does in ${kname} and what to play over it.</p><div class="actions"><button class="btn" data-act="songopen" data-id="${esc(E.id)}">Open in Songs</button></div>`;
+  const pent=(E.minor?[0,3,5,7,10]:[0,2,4,7,9]).map(x=>NOTES[(key+x)%12]).join(' '), rel=NOTES[(key+(E.minor?3:9))%12];
+  const homeC=E.names.find(n=>chordIn(n,key).roman.replace(/[^IViv♭♯]/g,'')===(E.minor?'i':'I'));
+  const sum=`<p class="ex-sum"><b>${esc(sk.name)}</b> is in <b>${kname}</b>${homeC?`, so ${esc(homeC)} is home`:''}. Over the whole song, play ${NOTES[key]} ${E.minor?'minor':'major'} pentatonic (${pent}): the same notes as ${rel} ${E.minor?'major':'minor'} pentatonic${E.minor?'':', so your minor pentatonic shapes work with '+rel+' as the root'}.</p>`;
+  const chips=E.names.map(n=>{const c=chordIn(n,key), out=!exInKey(E,c);
+    return `<button class="cchip ex-ch${out?' outk':''}" data-act="exch" data-n="${esc(n)}" aria-pressed="${n===E.sel}"><b>${esc(n)}</b><small>${esc(c.roman)}${out?' · outside':''}</small></button>`;}).join('');
+  const parts=E.parts.filter(p=>p.chords.length).map(p=>`<div class="ex-part"><span class="seglab">${esc(p.name)}</span><div class="sh-bars ex-bars">${p.chords.map(n=>`<button class="bar" data-act="exch" data-n="${esc(n)}" aria-pressed="${n===E.sel}"><span class="nm">${esc(n)}</span><span class="rn">${esc(chordIn(n,key).roman)}</span></button>`).join('')}</div></div>`).join('');
+  return `<div class="ex-song">${sum}<div class="cchips">${chips}</div>${exCard(E)}<div class="ex-parts">${parts}</div>
+    <div class="row">${seg('Labels','exlab',[['chord','From the chord'],['key','From the key'],['notes','Notes']],saved.exlab||'chord')}</div></div>`;
+}
 function saveParts(id,parts){
   const sk=LOG.skills[id]; if(!sk) return;
   const chords=parts.flatMap(p=>parseChords(p.text).chords);
@@ -1950,6 +2087,7 @@ function renderPanel(){
     renderTab();
     return;
   }
+  if(st.mode==='explore'&&exSong()){panel.innerHTML=exploreSongHTML(exSong()); return;}
   if(st.mode==='explore'){
     const ivs=cur.allowed.map(i=>`<button class="ivchip" style="--c:${COL[i]}" data-act="iv" data-i="${i}" aria-pressed="${st.visible.has(i)}" aria-label="${lab(i)[1]}">${lab(i)[0]}</button>`).join('');
     panel.innerHTML=`<div class="row">${ivs}</div>
@@ -1972,7 +2110,7 @@ function renderPanel(){
 function setMode(m){
   if(m==='quiz') m=saved.quiz==='find'?'find':'name'; // Name it and Find it share the Quiz tab, which remembers the last one
   if(m==='name'||m==='find') saved.quiz=m;
-  clearTimeout(st.timer); stopMet(); st.mode=m; st.q=null; st.sheet=false; panel.scrollTop=0;
+  clearTimeout(st.timer); stopMet(); st.mode=m; st.q=null; st.sheet=false; st.exTap=null; panel.scrollTop=0;
   if(m==='songs'&&focusSong()&&st.song!==saved.fsong){st.song=saved.fsong; st.vpick=null;} // the Songs tab opens on the song in focus
   if(st.mode==='explore'||st.mode==='practice'||st.mode==='songs') render();
   else if(st.mode==='drill'){st.picking=cur.whole; st.seq=genSeq(); render();}
@@ -1989,6 +2127,7 @@ neck.addEventListener('click',e=>{
     return;
   }
   play(p);
+  if(st.mode==='explore'&&exSong()){st.exTap=pc(p.s,p.f); renderPrompt(); return;} // a song keeps its key: the tap just says what the note is
   if(st.mode==='explore'){F.key=pc(p.s,p.f);refresh();fillSelects();save();render();return;}
   if(st.mode==='find'){
     const q=st.q; if(q.answered) return;
@@ -2144,6 +2283,11 @@ const onClick=e=>{
     case 'strum': strumNow(); return;
     case 'move': stopMet(); st.picking=true; render(); return;
     case 'keepbox': st.picking=false; st.seq=genSeq(); render(); return;
+    case 'exch':{const E=exSong(); if(!E) return; st.exName=b.dataset.n; st.exTap=null; render();
+      if(saved.sound){const f=exVoicing(E,b.dataset.n); if(f) hearFrets(f);}
+      if(b.closest('.cchips')){const el=[...document.querySelectorAll('.cchips [data-act="exch"]')].find(x=>x.dataset.n===b.dataset.n); if(el) el.focus();} return;}
+    case 'exhear':{const E=exSong(); const f=E&&E.sel&&exVoicing(E,E.sel); if(f) hearFrets(f); return;}
+    case 'exlab': saved.exlab=b.dataset.v; break;
     case 'iv': st.visible.has(i)?st.visible.delete(i):st.visible.add(i); break;
     case 'show': st.visible=new Set(b.dataset.v==='chord'?chordTones():cur.allowed); break;
     case 'labels': saved.labels=b.dataset.v; break;
@@ -2332,7 +2476,7 @@ const TIPS=[
  ['[data-tip]',el=>el.dataset.tip],
  ['.cell',cellTip],
  ['.tcol',tabTip],
- ['#modes [data-mode="explore"]',()=>'<b>Explore</b>: see every degree of the scale around the key. Click a note to make it the key. (1)'],
+ ['#modes [data-mode="explore"]',()=>focusSong()?'<b>Explore</b>: what each chord of your song does in its key, and what to play over it. (1)':'<b>Explore</b>: see every degree of the scale around the key. Click a note to make it the key. (1)'],
  ['#modes [data-mode="quiz"]',()=>'<b>Quiz</b>: Name it asks which degree a note is; Find it asks you to click where a degree sits. (2)'],
  ['[data-act="quiz"][data-v="name"]',()=>'<b>Name it</b>: say which degree the ? note is, counted up from the root.'],
  ['[data-act="quiz"][data-v="find"]',()=>'<b>Find it</b>: click where a given degree sits inside the lit frets.'],
@@ -2397,6 +2541,11 @@ const TIPS=[
  ['#stats',()=>'Your quiz score and streak from Name it and Find it, and your practice time today.'],
  ['#layoutBtn',()=>`Layout: ${{auto:'automatic, based on the window shape',wide:'always desktop',compact:'always phone (sideways phones get a horizontal neck)'}[saved.layout]}. Click to switch.`],
  ['#soundBtn',()=>`Note sounds are ${saved.sound?'on':'off'} for tapping and quizzes. The drill has its own Click and Notes switches.`],
+ ['[data-act="exch"]',el=>{const E=exSong(), n=el.dataset.n, c=chordIn(n,E?E.key:cur.key);return `<b>${esc(n)}</b> (${esc(c.roman)}): ${c.tones.map((t,k)=>NOTES[(c.root+c.rel[k])%12]).join(' ')}. Click to see it on the neck${saved.sound?' and hear it':''}.`;}],
+ ['[data-act="exhear"]',()=>'Hear the shape ringed on the neck. Set your own shape for a chord in the Songs tab.'],
+ ['[data-act="exlab"][data-v="chord"]',()=>'Count every dot from the chord\'s root, so you see its 3rd, 5th and 7th, and the 2, 4 and 6 around them.'],
+ ['[data-act="exlab"][data-v="key"]',()=>'Count every dot from the key\'s root, the way the scale is numbered.'],
+ ['[data-act="exlab"][data-v="notes"]',()=>'Label each dot by its note name.'],
  ['[data-act="iv"]',el=>{const i=+el.dataset.i;return `<b>${lab(i)[1]}</b>: ${NOTES[(cur.key+i)%12]} in ${NOTES[cur.key]}. Click to ${st.visible.has(i)?'hide':'show'} it.`;}],
  ['[data-act="show"][data-v="all"]',()=>'Show every note of the scale.'],
  ['[data-act="show"][data-v="chord"]',()=>'Show only the 3rd, 5th, and 7th, so the chord inside the scale stands out.'],
@@ -2469,7 +2618,7 @@ document.addEventListener('keydown',e=>{const t=e.target.closest&&e.target.close
 addEventListener('scroll',hideTip,true);
 addEventListener('resize',hideTip);
 
-window.__fretDebug={tipFor,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,get PATH(){return buildPath()},get STEP_BY(){buildPath(); return STEP_BY},setupSkill,stepState,nextStep,followKey,stepWhat,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,progLabel,setProgChord,pschedule};
+window.__fretDebug={tipFor,saveParts,exSong,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,get PATH(){return buildPath()},get STEP_BY(){buildPath(); return STEP_BY},setupSkill,stepState,nextStep,followKey,stepWhat,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,progLabel,setProgChord,pschedule};
 fillSelects();
 render();
 setTimeout(syncNow,300); // does nothing without a token

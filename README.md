@@ -6,7 +6,7 @@ A guitar fretboard trainer that runs as a single page: intervals, scales and mod
 
 ## Modes
 
-- **Explore**: see every degree of a scale around the key.
+- **Explore**: see every degree of a scale around the key. With a song in focus, it explains the song instead: its key and the pentatonic to solo with, what each chord does there, the notes and mode to play over it (with swaps for chords from outside the key), and how it leads into the next chord.
 - **Quiz**: interval quizzes that weight the intervals you miss. **Name it** asks which degree a note is; **Find it** asks where a degree sits.
 - **Drill**: pick a 5-fret box, then either
   - **Scale lines**: play patterns through it against a chord with a count-in, tab, fingerings, a chord diagram, and optional chord hits on beat 1, or
