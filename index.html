@@ -1811,8 +1811,8 @@ function transportHTML(){
 // a step is done when a run of its skill has been marked clean at the goal tempo. The log behind it fills those numbers in.
 // Every step is built from the focus in the header: its key, scale and mode stay put, and a step only moves the position.
 function focusName(){return `${keyName()} ${F.fam==='chrom'?'all notes':modeName()}`;}
-function homePos(){ // the position that starts on the root, where progressions are played
-  return cur.pos.find(p=>(pc(0,p.lo)-cur.key+12)%12===0)||cur.pos[0]||{lo:0,hi:4,label:'Frets 0–4'};
+function homePos(){ // where the path is played: the position picked in the header, or the lowest box on the neck
+  return cur.custom||cur.pos.find(p=>p.lo===F.pos)||cur.pos[0]||{lo:0,hi:4,label:'Frets 0–4'};
 }
 const RHY={follow:true,line:'prog',plan:'strum',sev:false};
 const RHY_STEPS=[
@@ -1825,10 +1825,10 @@ let PATH=[], STEP_BY={}, pathSig='';
 function buildPath(){
   const sig=[F.key,F.fam,F.mode,cur.key,F.pos].join(':'); if(sig===pathSig) return PATH; pathSig=sig;
   const fk={key:cur.key,fam:F.fam,mode:F.mode}, k=followKey(), home=homePos(), tonic=progNames(k,'one')[0], minor=/m(?!aj)/.test(tonic)||/°/.test(tonic);
-  // start from the root position, work up the neck, then the positions below it
-  const ps=[...cur.pos.filter(p=>p.lo>=home.lo),...cur.pos.filter(p=>p.lo<home.lo).reverse()], fr=p=>`frets ${p.lo}–${p.hi}`;
-  const scale=ps.map((p,i)=>({id:'s'+p.lo,title:p===home?`Frets ${p.lo}–${p.hi}, from the root`:`Frets ${p.lo}–${p.hi}`,
-    what:i===0?'Up and down the box in 3rds. Say the interval of each note as you play it.':`The ${p.lo>home.lo?'next':'lower'} position, in 3rds.`,
+  // a position picked in the header keeps every step in it; the whole neck goes box by box from the open strings up
+  const one=F.pos>=0, ps=one?[home]:cur.pos, fr=p=>`frets ${p.lo}–${p.hi}`;
+  const scale=ps.map((p,i)=>({id:'s'+p.lo,title:(pc(0,p.lo)-cur.key+12)%12===0?`Frets ${p.lo}–${p.hi}, from the root`:`Frets ${p.lo}–${p.hi}`,
+    what:i===0?'Up and down the box in 3rds. Say the interval of each note as you play it.':'The next position up, in 3rds.',
     ...fk,pos:p.lo,line:'scale',pattern:'thirds',sub:2,goal:80}));
   const chord=ps.map(p=>({id:'c'+p.lo,title:`${tonic} in ${fr(p)}`,
     what:`The ${tonic} chord as it sits in ${fr(p)}. Strum a bar, then pick the same shape one string at a time.`,
@@ -1836,10 +1836,10 @@ function buildPath(){
   const progs=minor?['two','145','epic','andalusian']:['two','145','pop','50s'];
   const prog=progs.map(id=>({id:'p'+id,title:PROG_BY[id].name,what:`${progNames(k,id).join(' ')}, without leaving frets ${home.lo}–${home.hi}.`,
     ...fk,pos:home.lo,line:'prog',prog:id,plan:'both',rpat:'faithful',sev:false,goal:80}));
-  const pos=F.pos>=0?F.pos:home.lo;
+  const pos=home.lo;
   PATH=[
-    {id:'scale',name:'Scales',sub:`${focusName()}, position by position`,steps:scale},
-    {id:'chord',name:'Home chord in each position',sub:`${tonic}, strummed then arpeggiated`,steps:chord},
+    {id:'scale',name:'Scales',sub:one?`${focusName()} in ${fr(home)}. Pick Whole neck under Position to see every box.`:`${focusName()}, box by box up the neck`,steps:scale},
+    {id:'chord',name:one?'Home chord in this position':'Home chord in each position',sub:`${tonic}, strummed then arpeggiated`,steps:chord},
     {id:'prog',name:'Progressions',sub:`Chord changes in frets ${home.lo}–${home.hi}`,steps:prog},
     {id:'rhythm',name:'Rhythm track',sub:'Strum patterns in your focus, any time alongside the steps above',steps:RHY_STEPS.map(r=>({...r,...fk,pos}))}];
   STEP_BY={}; PATH.forEach(g=>g.steps.forEach(s=>{s.stage=g.id; STEP_BY[s.id]=s;}));
@@ -1890,8 +1890,8 @@ function stepFor(id){ buildPath(); return id==='song'?null:STEP_BY[id]; }
 function pathNote(){
   // in Drill, say when the current setup is a step on the path, and how close it is
   const id=skillNow().id;
-  buildPath(); const s=Object.values(STEP_BY).find(s=>setupSkill(s)===id);
-  const song=!s&&songSteps().find(({id:i,s:x})=>setupSkill(songSetup(x,i))===id);
+  buildPath(); const song=songSteps().find(({id:i,s:x})=>setupSkill(songSetup(x,i))===id); // a song you're playing names itself, even when a path step has the same setup
+  const s=!song&&Object.values(STEP_BY).find(s=>setupSkill(s)===id);
   if(!s&&!song) return '';
   const title=s?s.title:`${esc(song.s.name)}: play the changes`, step=s||songSetup(song.s,song.id), ok=stepState(step).done;
   const b=stepState(step).best;

@@ -75,10 +75,14 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   const nS=X.LOG.sessions.length; w.__clock+=25*60e3;
   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(30); click(d.querySelector('[data-act=play]'));
   ok(X.LOG.sessions.length===nS+1,'new-session',X.LOG.sessions.length);
-  // the path is built from the focus: A minor pentatonic starts at the root position, frets 5–9
+  // the path is built from the focus: over the whole neck it goes box by box from the open strings up
   Object.assign(X.F,{key:9,fam:'pent',mode:1,pos:-1}); X.refresh();
   mode('practice'); ok(!/undefined|NaN|\[object/.test(d.querySelector('.app').textContent),'path-text');
-  ok([...d.querySelectorAll('.psteps [data-act=step][data-id^=s]')].map(e=>e.dataset.id).join(' ')==='s5 s8 s3 s0','path-scale-order');
+  ok([...d.querySelectorAll('.psteps [data-act=step][data-id^=s]')].map(e=>e.dataset.id).join(' ')==='s0 s3 s5 s8','path-scale-order');
+  ok(d.querySelector('.pnext [data-act=step]').dataset.id==='s0','path-next-s0');
+  // a position picked in the header keeps every step in it
+  Object.assign(X.F,{pos:5}); X.refresh(); mode('drill'); mode('practice');
+  ok([...d.querySelectorAll('.psteps [data-act=step][data-id^=s],.psteps [data-act=step][data-id^=c]')].map(e=>e.dataset.id).join(' ')==='s5 c5'&&[...X.PATH.flatMap(g=>g.steps)].every(s=>s.pos===5),'path-one-position');
   ok(d.querySelector('.pnext [data-act=step]').dataset.id==='s5','path-next-s5');
   click(d.querySelector('.pnext [data-act=step]'));
   ok(X.st.mode==='drill'&&X.F.key===9&&X.F.fam==='pent'&&X.F.mode===1&&X.F.pos===5&&X.D.line==='scale'&&X.D.pattern==='thirds','step-setup',[X.st.mode,X.F.key,X.F.fam,X.F.mode,X.F.pos,X.D.line,X.D.pattern].join(' '));
@@ -87,7 +91,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   runClean(70,20); ok(!X.stepState(X.STEP_BY.s5).done,'step-not-done-below-goal');
   runClean(80,20); ok(X.stepState(X.STEP_BY.s5).done,'step-done-at-goal');
   click(d.querySelector('[data-act=topath]')); ok(X.st.mode==='practice'&&d.querySelector('[data-act=step][data-id=s5]').classList.contains('done'),'path-shows-done');
-  ok(d.querySelector('.pnext [data-act=step]').dataset.id==='s8','path-next-s8');
+  ok(d.querySelector('.pnext [data-act=step]').dataset.id==='c5','path-next-c5');
   // a chord step keeps the pentatonic focus and borrows Aeolian's chords
   click(d.querySelector('[data-act=step][data-id=c5]'));
   ok(X.F.fam==='pent'&&X.F.mode===1&&X.D.line==='prog'&&X.D.prog==='one'&&X.D.plan==='both'&&X.R.pat==='quarters'&&X.cur.prog&&X.cur.prog.length===1&&X.cur.prog[0].ch.name==='Am','chord-step',[X.F.fam,X.D.line,X.D.prog,X.D.plan,X.R.pat].join(' '));
@@ -100,7 +104,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   runClean(80,20); ok(X.stepState(X.STEP_BY.r5).done,'rhythm-step-done');
   // a new focus rebuilds the path; rhythm runs count in any key, scale runs don't
   Object.assign(X.F,{key:0,fam:'major',mode:0,pos:-1}); X.refresh();
-  mode('practice'); ok(/C Ionian \(major\), position by position/.test(d.querySelector('.path').textContent),'path-follows-focus');
+  mode('practice'); ok(/C Ionian \(major\), box by box up the neck/.test(d.querySelector('.path').textContent),'path-follows-focus');
   ok(X.stepWhat(X.STEP_BY.r1)==='C F, a bar each. Keep the hand moving down and up.','rhythm-what',X.stepWhat(X.STEP_BY.r1));
   ok(X.stepState(X.STEP_BY.r5).done&&!X.stepState(X.PATH[0].steps[0]).done,'done-per-focus');
   click(d.querySelector('.pnext [data-act=step]')); ok(X.F.key===0&&X.F.fam==='major'&&X.F.mode===0,'step-keeps-focus');
