@@ -56,6 +56,7 @@ setTimeout(async()=>{
         const home=res==='chord'?ch.root:cur.key; const last=notes[notes.length-1];
         const hasHome=X.boxNotes().some(n=>pc(n.s,n.f)===home);
         if(hasHome&&pc(last.s,last.f)!==home) fail('no-resolve',tag);
+        if(hasHome&&pc(notes[0].s,notes[0].f)!==home) fail('no-start-root',tag);
         if(pad&&v){
           const bar=4*sub;
           if(seq.length%bar) fail('pad-length',tag);

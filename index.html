@@ -1185,15 +1185,22 @@ function genSeq(){
   return out;
 }
 function genLine(){
-  // every drill resolves: from its last note, step through the box's scale notes to the nearest root
-  const P=boxNotes(), seq=genRaw();
-  if(!seq.length) return seq;
-  let i=P.findIndex(p=>p.m===seq[seq.length-1].m);
-  const home=D.resolve==='chord'?cur.chord.root:cur.key;
+  // every drill starts and ends on a root: it steps in from the nearest root, and from its last note steps through
+  // the box's scale notes to the nearest root (the key's root, or the chord's when that's chosen)
+  const P=boxNotes(), home=D.resolve==='chord'?cur.chord.root:cur.key;
   const roots=P.map((p,k)=>pc(p.s,p.f)===home?k:-1).filter(k=>k>=0);
-  if(i<0||!roots.length) return seq;
-  const best=roots.reduce((a,b)=>{const da=Math.abs(a-i),db=Math.abs(b-i);return db<da||(db===da&&b<a)?b:a;});
-  const dir=Math.sign(best-i);
+  const near=i=>roots.reduce((a,b)=>{const da=Math.abs(a-i),db=Math.abs(b-i);return db<da||(db===da&&b<a)?b:a;});
+  let seq=genRaw();
+  if(!seq.length||!roots.length) return seq;
+  if(D.pattern==='updown'&&P.length>1){ // from the lowest root up to the top, down to the bottom, and back up to the root
+    const r=roots[0]; seq=[...P.slice(r),...P.slice(0,-1).reverse(),...P.slice(1,r+1)];
+  }else{
+    const f=P.findIndex(p=>p.m===seq[0].m);
+    if(f>=0){const r=near(f), dir=Math.sign(f-r), lead=[]; for(let i=r;i!==f;i+=dir) lead.push(P[i]); seq=[...lead,...seq];}
+  }
+  let i=P.findIndex(p=>p.m===seq[seq.length-1].m);
+  if(i<0) return seq;
+  const best=near(i), dir=Math.sign(best-i);
   while(i!==best){i+=dir; seq.push(P[i]);}
   return seq;
 }
@@ -2244,7 +2251,7 @@ function setsHTML(){
   const play=prog?[line('Each chord',seg('','plan',[['both','Strum, then pick'],['strum','Strum'],['arp','Pick']],D.plan)),sev,
       D.plan!=='strum'?line('Picked notes per beat',`<select data-set="sub" aria-label="Picked notes per beat">${opts(SUBS,D.sub)}</select>`):'']
     :[line('Notes per beat',`<select data-set="sub" aria-label="Notes per beat">${opts(SUBS,D.sub)}</select>`),sev,
-      sw('tog','pad',D.pad,'Strum the chord each bar'),line('End each pass on',seg('','resolve',[['key','Key root'],['chord','Chord root']],D.resolve))];
+      sw('tog','pad',D.pad,'Strum the chord each bar'),line('Start and end on',seg('','resolve',[['key','Key root'],['chord','Chord root']],D.resolve))];
   const hear=[sw('tog','click',D.click,'Click'),sw('tog','notes',D.notes,'Play the notes'),prog?sw('rtog','swing',R.swing,'Shuffle feel'):''];
   const neck=[line('Dot labels',seg('','lbl',[['key','Key'],['chord','Chord'],['notes','Notes']],saved.labels==='notes'?'notes':D.ref)),
     line('While playing',`<select data-set="guide" aria-label="While playing">${opts(GUIDES,D.guide)}</select>`)];
@@ -2618,7 +2625,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElemen
 
 // ---------- tooltips (mouse hover and keyboard focus) ----------
 const STR_NAME=['low E','A','D','G','B','high E'];
-const PAT_TIP={updown:'Every scale note in the box, lowest to highest and back down.',
+const PAT_TIP={updown:'Every scale note in the box: from the root up to the top, down to the bottom, and back up to the root.',
  strings:'Two strings at a time, up and back, so each string pair locks in on its own.',
  thirds:'Skip every other note (1–3, 2–4, 3–5…) to hear the scale in 3rds.',
  g3:'Runs of three notes, moving up one note each time, then the same coming down.',
@@ -2760,8 +2767,8 @@ const TIPS=[
  ['[data-k="click"]',()=>'The metronome click. The count-in always clicks.'],
  ['[data-k="notes"]',()=>D.line==='prog'?'Hear the strums and arpeggio notes as they come up.':'Hear each drill note as it comes up.'],
  ['[data-k="pad"]',()=>'Put the chord in the drill: strum it on beat 1 of every bar and play the line on beats 2 to 4.'],
- ['[data-act="resolve"][data-v="key"]',()=>`End every pass on the key root, ${keyName()}.`],
- ['[data-act="resolve"][data-v="chord"]',()=>`End every pass on the chord root, ${rootName(cur.chord)}.`],
+ ['[data-act="resolve"][data-v="key"]',()=>`Start and end every pass on the key root, ${keyName()}.`],
+ ['[data-act="resolve"][data-v="chord"]',()=>`Start and end every pass on the chord root, ${rootName(cur.chord)}.`],
  ['[data-act="lbl"][data-v="key"]',()=>`Label degrees from the key root, ${keyName()}.`],
  ['[data-act="lbl"][data-v="chord"]',()=>`Label degrees from the chord root, ${rootName(cur.chord)}, so the same notes read as chord tones and extensions.`],
  ['[data-act="lbl"][data-v="notes"]',()=>'Label each note by name.'],
