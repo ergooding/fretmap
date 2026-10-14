@@ -221,6 +221,11 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(X.cur.prog.map(p=>p.ch.name).join(' ')==='D A E A'&&/Chorus · 4 bars/.test(d.querySelector('#sheet .sh-sub').textContent)&&d.querySelectorAll('#sheet .sh-bars .bar').length===4,'part-chorus',X.cur.prog.map(p=>p.ch.name).join(' '));
   mode('explore'); mode('drill'); ok(X.cur.prog.length===4,'part-remembered');
   X.saveParts('song:here-pavement',[{name:'Verse',text:'(A, E6, Dmaj7) x2, A, E6, D, A'}]); X.refresh(); ok(X.cur.prog.length===10,'part-gone-falls-back',X.cur.prog.length);
+  // a capo'd song
+  mode('songs'); click(d.querySelector('[data-act=songopen][data-id="song:here-pavement"]')); setF('[data-sf=capo]','2');
+  ok(X.LOG.skills['song:here-pavement'].capo===2&&X.capo()===2,'capo-saved');
+  mode('explore'); ok(d.querySelector('.fnum').textContent==='capo 2'&&/capo on fret 2/.test(d.getElementById('panel').textContent)&&/B major/.test(d.getElementById('panel').textContent)&&/capo 2/.test(d.getElementById('focusSub').textContent),'capo-shown',d.querySelector('.fnum').textContent);
+  mode('songs'); setF('[data-sf=capo]','0'); ok(!X.LOG.skills['song:here-pavement'].capo&&X.capo()===0,'capo-cleared'); mode('explore'); ok(d.querySelector('.fnum').textContent==='open','capo-open');
   setF('#selSong','song:song-b');
   mode('songs'); ok(X.st.song==='song:song-b','focus-song-opens-in-songs');
   click(d.querySelector('[data-act=songopen][data-id="song:here-pavement"]')); ok(X.saved.fsong==='song:here-pavement','songs-open-sets-focus');
