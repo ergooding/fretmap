@@ -614,7 +614,13 @@ function chordIn(name,key){ // a typed chord as a chord of this key, with its ro
 function songProg(id){ // a song with typed chords, used as a progression in Drill
   if(!/^song:/.test(id||'')) return null;
   let sk=null; try{sk=LOG.skills[id];}catch(e){return null;}
-  return sk&&sk.chords&&sk.chords.length?{id,name:sk.name,chords:sk.chords,voicings:sk.voicings||{}}:null;
+  if(!sk||!sk.chords||!sk.chords.length) return null;
+  const k=songPart(id), part=k>=0?sk.parts[k]:null;
+  return {id,name:sk.name,chords:part?parseChords(part.text).chords:sk.chords,part:part&&part.name,voicings:sk.voicings||{}};
+}
+function songPart(id){ // the part of a song Drill plays, or -1 for the whole song
+  const sk=LOG.skills[id], k=(saved.spart||{})[id];
+  return sk&&sk.parts&&k>=0&&k<sk.parts.length&&parseChords(sk.parts[k].text).chords.length?k:-1;
 }
 function parseFrets(t){ // "000220", "x02220", "x 0 2 2 2 0" or "10-12-12-11-10-x", low E to high E
   t=String(t||'').trim().toLowerCase(); if(!t) return null;
@@ -2033,14 +2039,16 @@ function renderSheet(){
   }
   if(!cur.prog){el.innerHTML=`${playSeg}<p class="hint">Progressions are built from the chords of a 7-note scale. Pick a mode of Major, Harmonic minor, or Melodic minor in the focus settings.</p>`; return;}
   const S=songProg(D.prog), sk=S&&LOG.skills[D.prog], n=cur.prog.length;
-  const sub=S?`${sk.artist?esc(sk.artist)+' · ':''}${n} bars`:`${progRomans((PROG_BY[D.prog]||PROG_BY.pop).degs).join(' ')} · ${n} bar${n>1?'s':''}`;
+  const parts=S&&sk.parts?sk.parts.map((p,k)=>[String(k),esc(p.name)]).filter(([k])=>parseChords(sk.parts[+k].text).chords.length):[];
+  const partSeg=parts.length>1?`<div class="row">${seg('Part','spart',[['-1','Whole song'],...parts],String(songPart(D.prog)))}</div>`:'';
+  const sub=S?`${sk.artist?esc(sk.artist)+' · ':''}${S.part?esc(S.part)+' · ':''}${n} bar${n>1?'s':''}`:`${progRomans((PROG_BY[D.prog]||PROG_BY.pop).degs).join(' ')} · ${n} bar${n>1?'s':''}`;
   const tiles=cur.prog.map((p,i)=>`<button class="bar${p.voicing&&p.voicing.own?' own':''}" data-pci="${i}" aria-pressed="${i===cur.pci}"><span class="nm">${esc(p.ch.name)}</span><span class="rn">${p.ch.roman}</span><span class="fr">${p.voicing?fretText(p.voicing.frets):'picked'}</span></button>`).join('');
   const missing=[...new Set(cur.prog.filter(p=>!p.voicing).map(p=>p.ch.name))];
   const notes=[missing.length&&D.plan!=='arp'?`No voicing of ${missing.map(esc).join(', ')} fits this box, so ${missing.length===1?'it is':'they are'} picked instead.`:'',
     cur.chords.length!==7&&!S?`${esc(modeName())} has too few notes to build these chords, so they come from ${NOTES[cur.key]} ${FAMS.major.modes[TO_DIATONIC[F.fam][F.mode]||0][0]}, the 7-note mode it sits in.`:''].filter(Boolean).join(' ');
   el.innerHTML=`${playSeg}${pathNote()}
     <div class="sh-top">${sheetSel()}<span class="sh-sub">${sub}</span><span class="sh-no" id="barNo">bar ${cur.pci+1} of ${n}</span></div>
-    <div class="sh-bars" role="group" aria-label="Bars, one chord each">${tiles}</div>
+    ${partSeg}<div class="sh-bars" role="group" aria-label="Bars, one chord each">${tiles}</div>
     ${wide?`<div class="row">${seg('Each chord','plan',[['both','Strum, then pick'],['strum','Strum'],['arp','Pick']],D.plan)}</div>`:''}
     ${notes?`<p class="hint">${notes}</p>`:''}`;
 }
@@ -2228,6 +2236,7 @@ const onClick=e=>{
     case 'tog': D[b.dataset.k]=!D[b.dataset.k]; save(); if(b.dataset.k==='pad') regen(); else render(); return;
     case 'resolve': D.resolve=b.dataset.v; save(); regen(); return;
     case 'line': D.line=b.dataset.v; refresh(); save(); regen(); return;
+    case 'spart': if(!songProg(D.prog)) return; saved.spart={...(saved.spart||{}),[D.prog]:+b.dataset.v}; refresh(); save(); regen(); return;
     case 'plan': D.plan=b.dataset.v; save(); regen(); return;
     case 'lbl': if(b.dataset.v==='notes') saved.labels='notes'; else {saved.labels='iv'; D.ref=b.dataset.v;} save(); render(); return;
     case 'play': togglePlay(); return;
@@ -2500,6 +2509,7 @@ const TIPS=[
  ['[data-act="quiz"][data-v="name"]',()=>'<b>Name it</b>: say which degree the ? note is, counted up from the root.'],
  ['[data-act="quiz"][data-v="find"]',()=>'<b>Find it</b>: click where a given degree sits inside the lit frets.'],
  ['#modes [data-mode="drill"]',()=>'<b>Drill</b>: pick a box, then play scale lines over a chord, or strum and arpeggiate a chord progression, with the metronome. (3)'],
+ ['[data-act="spart"]',el=>el.dataset.v==='-1'?'Play every part of the song, one after another.':`Play only the ${esc(el.textContent)}, so you can work on it on its own.`],
  ['[data-act="line"][data-v="scale"]',()=>'Play scale patterns through the box over one chord.'],
  ['[data-act="line"][data-v="prog"]',()=>'Strum and arpeggiate a chord progression in this key and box, with strum patterns you can count and edit.'],
  ['[data-set="prog"]',()=>{const S=songProg(D.prog); if(S) return `<b>${esc(S.name)}</b>: ${S.chords.length} bars, one chord each, as you typed them in the Songs tab. Pick another song or a common progression here.`; const P=PROG_BY[D.prog]; return `<b>${P.name}</b>: ${progRomans(P.degs).join(' ')}. ${P.degs.length} bar${P.degs.length>1?'s':''} of chords, built from ${NOTES[cur.key]} ${esc(modeName())}, so the same progression works in any key or mode.`;}],

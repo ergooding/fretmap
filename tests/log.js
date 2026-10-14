@@ -214,7 +214,13 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(fv(X.autoVoicing('C/G',0))==='332010'&&fv(X.autoVoicing('D/F#',2))==='2x0232'&&fv(X.autoVoicing('Am/G',0))==='302210'&&X.chordIn('C/G',0).roman==='I/5','slash-voicing',[fv(X.autoVoicing('C/G',0)),fv(X.autoVoicing('D/F#',2)),fv(X.autoVoicing('Am/G',0)),X.chordIn('C/G',0).roman].join(' '));
   X.saveParts('song:here-pavement',[{name:'Verse',text:'A/C#, D, A'}]); mode('drill'); mode('explore');
   ok([...d.querySelectorAll('.cchips [data-act=exch]')].map(e=>e.dataset.n).join(' ')==='A/C♯ D A'&&/C♯ is its lowest note/.test(d.querySelector('.ex-card').textContent),'slash-explore',d.querySelector('.ex-card').textContent.slice(0,200));
-  X.saveParts('song:here-pavement',[{name:'Verse',text:'(A, E6, Dmaj7) x2, A, E6, D, A'}]);
+  // practice one part of a song in Drill
+  X.saveParts('song:here-pavement',[{name:'Verse',text:'(A, E6, Dmaj7) x2'},{name:'Chorus',text:'D A E A'}]); X.refresh(); mode('drill');
+  ok(X.cur.prog.length===10&&d.querySelectorAll('#sheet [data-act=spart]').length===3,'part-whole',X.cur.prog.length);
+  click(d.querySelector('#sheet [data-act=spart][data-v="1"]'));
+  ok(X.cur.prog.map(p=>p.ch.name).join(' ')==='D A E A'&&/Chorus · 4 bars/.test(d.querySelector('#sheet .sh-sub').textContent)&&d.querySelectorAll('#sheet .sh-bars .bar').length===4,'part-chorus',X.cur.prog.map(p=>p.ch.name).join(' '));
+  mode('explore'); mode('drill'); ok(X.cur.prog.length===4,'part-remembered');
+  X.saveParts('song:here-pavement',[{name:'Verse',text:'(A, E6, Dmaj7) x2, A, E6, D, A'}]); X.refresh(); ok(X.cur.prog.length===10,'part-gone-falls-back',X.cur.prog.length);
   setF('#selSong','song:song-b');
   mode('songs'); ok(X.st.song==='song:song-b','focus-song-opens-in-songs');
   click(d.querySelector('[data-act=songopen][data-id="song:here-pavement"]')); ok(X.saved.fsong==='song:here-pavement','songs-open-sets-focus');
