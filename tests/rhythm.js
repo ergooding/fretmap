@@ -50,9 +50,15 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
           const tag=`${L} key=${key} ${fam}/${mode} box=${lo} ${pid} ${plan}`; checked++;
           const C=X.cur, prog=C.prog;
           if(!prog||prog.length!==degs.length){fail('prog-len',tag); continue;}
+          const fx=X.PROG_FIX[pid], fset=fx&&(fx[scale.includes(3)&&!scale.includes(4)?'min':'maj']||fx.maj||fx.min);
           prog.forEach((p,i)=>{
-            if(p.ch.root!==(key+scale[degs[i]])%12) fail('root',`${tag} chord ${i}`);
-            if([...p.pcs].some(x=>!scale.includes((x-key+12)%12))) fail('outside-scale',`${tag} chord ${p.ch.name}`);
+            if(fset){ // a progression named for its own chords keeps them in every mode
+              const [r,tri,sev]=fset[degs[i]];
+              if(p.ch.root!==(key+r)%12||!p.ch.name.endsWith(X.D.sev?sev:tri)) fail('root',`${tag} chord ${i} ${p.ch.name}`);
+            }else{
+              if(p.ch.root!==(key+scale[degs[i]])%12) fail('root',`${tag} chord ${i}`);
+              if([...p.pcs].some(x=>!scale.includes((x-key+12)%12))) fail('outside-scale',`${tag} chord ${p.ch.name}`);
+            }
             const v=p.voicing; if(!v) return;
             const played=v.frets.map((f,s)=>f===null?null:{s,f}).filter(Boolean);
             if(pcOf(played[0].s,played[0].f)!==p.ch.root) fail('bass',`${tag} ${p.ch.name} ${v.frets}`);
@@ -156,7 +162,7 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
       const b=d.querySelector('[data-pci="2"]'); if(!b) fail('preview','no chord strip'); else {click(b); if(X.cur.pci!==2||X.cur.voicing!==X.cur.prog[2].voicing) fail('preview','chord not shown');} }
     // five-note scales borrow the chords of the 7-note mode they sit in, and say so
     d.getElementById('selFam').value='pent'; d.getElementById('selFam').dispatchEvent(new w.Event('change',{bubbles:true}));
-    if(!X.cur.prog||X.cur.prog.length!==4||!/7-note mode it sits in/.test(d.getElementById('sheet').textContent)) fail('pent','no borrowed chords for a 5-note scale');
+    if(!X.cur.prog||X.cur.prog.length!==4||!/nearest 7-note mode/.test(d.getElementById('sheet').textContent)) fail('pent','no borrowed chords for a 5-note scale');
     if(!d.querySelector('[data-act=play]')) fail('pent','no play button for borrowed chords');
     d.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true})); d.dispatchEvent(new w.KeyboardEvent('keyup',{key:' ',bubbles:true}));
     if(!X.st.playing) fail('pent','space did not play borrowed chords');

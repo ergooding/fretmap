@@ -519,9 +519,11 @@ const OPEN=[4,9,2,7,11,4];
 const MIDI=[40,45,50,55,59,64];
 const STR_W=[3.2,2.7,2.2,1.7,1.4,1.1];
 const NOTES=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+const KEY_OPTS=['C','C♯/D♭','D','E♭/D♯','E','F','F♯/G♭','G','A♭/G♯','A','B♭/A♯','B']; // a key's name depends on its scale, so the picker gives both
 const IV=[
  ['R','root'],['♭2','minor 2nd'],['2','major 2nd'],['♭3','minor 3rd'],['3','major 3rd'],['4','perfect 4th'],
  ['♭5','diminished 5th'],['5','perfect 5th'],['♭6','minor 6th'],['6','major 6th'],['♭7','minor 7th'],['7','major 7th']];
+const IV_ALT={'♯2':'augmented 2nd','♯4':'augmented 4th','♯5':'augmented 5th','♭4':'diminished 4th','♭♭7':'diminished 7th'};
 const COL=['#E9A93A','#A79BD6','#C9B8F0','#3FA7B8','#7FD3E3','#8CC56F','#E0677A','#F08F5E','#B07CC6','#E0A8EE','#5B8FD0','#98BDF2'];
 const FAMS={
  major:{name:'Major (diatonic)',steps:[0,2,4,5,7,9,11],modes:[['Ionian (major)',0],['Dorian',1],['Phrygian',2],['Lydian',3],['Mixolydian',4],['Aeolian (natural minor)',5],['Locrian',6]]},
@@ -571,8 +573,23 @@ const PROGS=[
  ['blues','12-bar blues',[0,0,0,0,3,3,0,0,4,3,0,4]]
 ];
 const PROG_BY={}; PROGS.forEach(([id,name,degs])=>PROG_BY[id]={id,name,degs});
-function progRomans(degs){return degs.map(d=>cur.pchords?cur.pchords[d].roman:ROMAN[d]);}
-function progLabel(id){const S=songProg(id); if(S) return `${esc(S.name)}: ${S.chords.length>8?S.chords.slice(0,8).join(' ')+' …':S.chords.join(' ')}`; const P=PROG_BY[id]||PROG_BY.pop; return P.degs.length>6?P.name:`${P.name}: ${progRomans(P.degs).join(' ')}`;}
+// Progressions named for their own chords keep those chords in any mode: [semitones above the key, triad, 7th chord]
+// for each degree they use, with a minor-key version where the progression has one.
+const PROG_FIX={
+ flat7:{maj:{0:[0,'','7'],6:[10,'','maj7'],3:[5,'','maj7']}},
+ epic:{min:{0:[0,'m','m7'],5:[8,'','maj7'],2:[3,'','maj7'],6:[10,'','7']}},
+ andalusian:{min:{0:[0,'m','m7'],6:[10,'','7'],5:[8,'','maj7'],4:[7,'','7']}},
+ blues:{maj:{0:[0,'','7'],3:[5,'','7'],4:[7,'','7']},min:{0:[0,'m','m7'],3:[5,'m','m7'],4:[7,'','7']}},
+ '251':{maj:{1:[2,'m','m7'],4:[7,'','7'],0:[0,'','maj7']},min:{1:[2,'°','m7♭5'],4:[7,'','7'],0:[0,'m','m7']}}
+};
+function progChords(id,k,sev){ // a common progression's chords, bar by bar, in a key and 7-note mode k ({key,fam,mode})
+  const P=PROG_BY[id]||PROG_BY.pop, A=steps7(k.fam,k.mode), sp=spellIn(k.key,A), fx=PROG_FIX[P.id];
+  const at=(p,suf)=>chordIn(parseChord(sp(p)+suf)?sp(p)+suf:NOTES[p]+suf,k.key);
+  if(fx){const set=fx[A.includes(3)&&!A.includes(4)?'min':'maj']||fx.maj||fx.min; return P.degs.map(d=>at((k.key+set[d][0])%12,set[d][sev?2:1]));}
+  return P.degs.map(d=>{const r=A[d], q=QUAL[[2,4].concat(sev?[6]:[]).map(j=>(A[(d+j)%7]-r+12)%12).join(',')]; return q!==undefined?at((k.key+r)%12,q):{name:sp((k.key+r)%12)+'*',roman:ROMAN[d]};});
+}
+function progRomans(id){const P=PROG_BY[id]||PROG_BY.pop; return PROG_FIX[P.id]?progChords(P.id,followKey(),D.sev).map(c=>c.roman):P.degs.map(d=>cur.pchords?cur.pchords[d].roman:ROMAN[d]);}
+function progLabel(id){const S=songProg(id); if(S) return `${esc(S.name)}: ${S.chords.length>8?S.chords.slice(0,8).join(' ')+' …':S.chords.join(' ')}`; const P=PROG_BY[id]||PROG_BY.pop; return P.degs.length>6?P.name:`${P.name}: ${progRomans(P.id).join(' ')}`;}
 // ---------- typed chords (a song's own progression) ----------
 // Chord symbols as people write them: A, E6, Dmaj7, F#m7, Bb, Gsus4, C/G (a slash chord: the note after the slash is the lowest).
 // "(A, E6, Dmaj7) x2" repeats a group; each chord gets one bar, so write a chord twice to hold it for two.
@@ -583,6 +600,57 @@ const CHORD_SUF={'':[0,4,7],'maj':[0,4,7],'M':[0,4,7],'m':[0,3,7],'min':[0,3,7],
  '9':[0,2,4,7,10],'m9':[0,2,3,7,10],'maj9':[0,2,4,7,11],'dim':[0,3,6],'°':[0,3,6],'o':[0,3,6],
  'dim7':[0,3,6,9],'°7':[0,3,6,9],'o7':[0,3,6,9],'m7♭5':[0,3,6,10],'ø':[0,3,6,10],'ø7':[0,3,6,10],'aug':[0,4,8],'+':[0,4,8]};
 const LETTER={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+// ---------- spelling ----------
+// A note's name depends on its key: each scale uses every letter once, so E major has G♯ (not A♭) and D♭ major has G♭.
+const LET='CDEFGAB', LETPC=[0,2,4,5,7,9,11];
+const accOf=(l,p)=>((p-LETPC[((l%7)+7)%7])%12+18)%12-6; // half steps from a letter's natural note to a pitch
+function nm(l,p){const a=accOf(l,p); return LET[((l%7)+7)%7]+(a>0?'♯'.repeat(a):'♭'.repeat(-a));}
+const letterOf=name=>LET.indexOf(String(name)[0]);
+const rootName=c=>(/^[A-G][♯♭]*/.exec(c.name)||[NOTES[c.root]])[0];
+function steps7(fam,mode){const f=FAMS[fam], rot=f.modes[mode][1]; return f.steps.map((_,i)=>(f.steps[(i+rot)%7]-f.steps[rot]+12)%12).sort((a,b)=>a-b);}
+function tonicLetter(key,A){ // a natural note keeps its letter; a black key takes the spelling whose scale needs fewer sharps and flats (F♯ and E♭ on a tie)
+  if(NOTES[key].length===1) return LET.indexOf(NOTES[key]);
+  let best=null;
+  for(let l=0;l<7;l++){
+    if(Math.abs(accOf(l,key))>1) continue;
+    let n=0; A.forEach((x,i)=>{const a=Math.abs(accOf(l+i,(key+x)%12)); n+=a+(a>1?2:0);});
+    if(!best||n<best.n||(n===best.n&&NOTES[key][0]===LET[l])) best={l,n};
+  }
+  return best.l;
+}
+function speller(key,A,tl){ // pitch -> name, seen from a key and its 7-note scale (A: semitones above the key, low to high)
+  tl=tl??tonicLetter(key,A); const S=new Set(A);
+  return p=>{
+    const iv=((p-key)%12+12)%12, i=A.indexOf(iv); if(i>=0) return nm(tl+i,p);
+    const n=nm(tl+(+/\d/.exec(labIn(iv,S)[0])[0])-1,p);
+    return /♯♯|♭♭|E♯|B♯|F♭|C♭/.test(n)?NOTES[p]:n; // a note outside the key takes its plainest name
+  };
+}
+const SPELL={};
+function spellIn(key,A){const k=key+':'+A.join(); return SPELL[k]||(SPELL[k]=speller(key,A));}
+function noteName(p,key=cur.key){return spellIn(key,cur.A7)(p);} // a note's name in the focus key
+function keyName(key=cur.key){return noteName(key,key);}
+function songSpell(sk){ // a song's notes, spelled from its key the way its home chord is written
+  const key=sk.key??0, home=(sk.chords||[]).find(n=>{const c=parseChord(n); return c&&c.root===key;});
+  return speller(key,sk.minor?steps7('major',5):MAJ,home?letterOf(home):undefined);
+}
+function songKey(sk){return `${songSpell(sk)(sk.key??0)} ${sk.minor?'minor':'major'}`;}
+function chordDeg(r,rel){ // which degree of its chord a note is (1 to 7), from its distance above the root
+  const h=x=>rel.includes(x);
+  return [1,2,2,h(4)?2:3,3,4,h(7)?4:5,5,h(4)&&!h(7)?5:6,h(3)&&h(6)&&!h(10)&&!h(11)?7:6,7,7][r];
+}
+function chordIv(c,r){ // a note's degree in a chord, from its formula: ♯5 in an augmented chord, ♭♭7 in a diminished 7th
+  const y=degSym(r,chordDeg(r,c.rel.slice(0,c.core??c.rel.length)));
+  return y==='R'?IV[0]:[y,y===IV[r][0]?IV[r][1]:IV_ALT[y]||IV[r][1]];
+}
+function degSym(r,deg){const a=((r-MAJ[deg-1])%12+18)%12-6; return deg===1&&!a?'R':(a>0?'♯'.repeat(a):'♭'.repeat(-a))+deg;}
+function chordSpell(c){ // each note of a chord with its name and degree, spelled from the chord's root letter
+  const L=letterOf(c.name), core=c.core??c.rel.length, base=c.rel.slice(0,core), bl=c.bass!==undefined?letterOf(c.name.split('/')[1]):-1;
+  return c.rel.map((r,k)=>{
+    const deg=k>=core&&bl>=0?((bl-L+7)%7)+1:chordDeg(r,base), p=(c.root+r)%12;
+    return {p,deg,sym:degSym(r,deg),name:L>=0?nm(L+deg-1,p):NOTES[p]};
+  });
+}
 function parseChord(t){
   const m=/^([A-Ga-g])([#♯b♭]?)([^/]*)(?:\/([A-Ga-g])([#♯b♭]?))?$/.exec(String(t).trim()); if(!m) return null;
   const suf=m[3].replace(/b(?=5)/,'♭').replace(/#(?=5)/,'♯'), rel=CHORD_SUF[suf]; if(!rel) return null;
@@ -615,7 +683,8 @@ const RN12=['I','♭II','II','♭III','III','IV','♯IV','V','♭VI','VI','♭VI
 const DEG12=['1','♭2','2','♭3','3','4','♯4','5','♭6','6','♭7','7'];
 function chordIn(name,key){ // a typed chord as a chord of this key, with its roman numeral
   const c=parseChord(name), d=(c.root-key+12)%12, rel=[...c.rel], suf=c.name.replace(/^[A-G][♯♭]?/,'').replace(/\/.*/,'');
-  const rn=RN12[d], minor=rel.includes(3)&&!rel.includes(4), out={root:c.root,rel,name:c.name,roman:(minor?rn.toLowerCase():rn)+suf.replace(/^(m|min|-)(?!aj)/,'')};
+  const rn=RN12[d], minor=rel.includes(3)&&!rel.includes(4), q=QUAL[rel.slice(1).join(',')]; // dim, aug and half-diminished get °, + and ø
+  const out={root:c.root,rel,name:c.name,roman:(minor?rn.toLowerCase():rn)+(q!==undefined?RN_SUF[q]??q:suf.replace(/^(m|min|-)(?!aj)/,''))};
   if(c.bass!==undefined){ // over another bass note: C/G is C with G lowest; C/B adds the B
     const b=(c.bass-c.root+12)%12; out.bass=c.bass; out.core=rel.length; if(!rel.includes(b)) rel.push(b);
     out.roman+='/'+DEG12[(c.bass-key+12)%12];
@@ -694,15 +763,7 @@ function scaleSet(){
   return new Set(out);
 }
 function modeName(){return FAMS[F.fam].modes[F.mode][0];}
-function lab(iv){
-  const S=cur.set, h=x=>S.has(x);
-  if(F.fam!=='chrom'){
-    if(iv===6&&!h(5)&&(h(7)||!h(3))) return ['♯4','augmented 4th'];
-    if(iv===8&&!h(7)&&h(9)) return ['♯5','augmented 5th'];
-    if(iv===3&&h(4)&&!h(2)) return ['♯2','augmented 2nd'];
-  }
-  return IV[iv];
-}
+function lab(iv){return F.fam==='chrom'?IV[iv]:labIn(iv,cur.set);}
 function positions(key){
   const out=[];
   if(key<0||F.fam==='chrom'){
@@ -724,8 +785,8 @@ function buildChords(){
       const rel=tones.map(t=>(t-d+12)%12);
       const q=QUAL[rel.slice(1).join(',')]??null;
       let rn=ROMAN[i]; if(rel[1]===3) rn=rn.toLowerCase();
-      const acc=d<MAJ[i]?'♭':d>MAJ[i]?'♯':'';
-      return {root:(key+d)%12,tones,rel,name:NOTES[(key+d)%12]+qname(q,rel),roman:acc+rn+(q===null?'*':(RN_SUF[q]??''))};
+      const a=d-MAJ[i], acc=a<0?'♭'.repeat(-a):'♯'.repeat(a);
+      return {root:(key+d)%12,tones,rel,name:noteName((key+d)%12)+qname(q,rel),roman:acc+rn+(q===null?'*':(RN_SUF[q]??''))};
     });
   }
   let list=FIXED.filter(([q,r])=>r.every(x=>cur.set.has(x)));
@@ -733,7 +794,7 @@ function buildChords(){
     const r=[A[0],A[2],A[4]].filter(x=>x!==undefined);
     list=[[QUAL[r.slice(1).join(',')]??null,r]];
   }
-  return list.map(([q,r])=>({root:key,tones:r,rel:r,name:NOTES[key]+qname(q,r),roman:(r[1]===3?'i':'I')+(q===null?'*':(RN_SUF[q]??''))}));
+  return list.map(([q,r])=>({root:key,tones:r,rel:r,name:keyName(key)+qname(q,r),roman:(r[1]===3?'i':'I')+(q===null?'*':(RN_SUF[q]??''))}));
 }
 function parentChords(){ // a smaller scale borrows the chords of the 7-note mode it sits in, for progressions
   const m=TO_DIATONIC[F.fam]; if(!m) return null;
@@ -746,6 +807,7 @@ function refresh(){
   if(typeof syncStrum==='function') syncStrum();
   cur.set=scaleSet();
   cur.key=F.key>=0?F.key:(cur.lastKey??0);
+  {const fk=followKey(); cur.A7=steps7(fk.fam,fk.mode);} // the 7-note scale that spells every note name
   cur.pos=positions(F.key);
   let p=cur.pos.find(p=>p.lo===F.pos);
   if(!p&&F.pos>=0){const lo=Math.min(8,F.pos); p={lo,hi:lo+4,label:`Frets ${lo}–${lo+4}`,custom:true};}
@@ -764,6 +826,7 @@ function refresh(){
     // each chord of the progression, voiced inside the box (frets 0–4 gives open chords); a song brings its own chords
     // a bar split between chords gives each chord its own entry, with the part of the bar it covers (from and to, 0 to 1)
     const items=song?song.bars.flatMap((b,bar)=>b.segs.map(x=>({ch:chordIn(x.name,cur.key),bar,from:x.from,to:x.to,part:b.part})))
+      :PROG_FIX[D.prog]?progChords(D.prog,followKey(),D.sev).map((ch,bar)=>({ch,bar,from:0,to:1,part:-1}))
       :(PROG_BY[D.prog]||PROG_BY.pop).degs.map((d,bar)=>({ch:cur.pchords[d],bar,from:0,to:1,part:-1}));
     cur.prog=items.map((it,d)=>{
       const ch=it.ch; cur.chord=ch; cur.chordPcs=new Set(ch.tones.map(t=>(cur.key+t)%12));
@@ -809,11 +872,11 @@ function voicingOK(frets,R,want,fifths){
   if(!played.length||played[0]!==R) return false;           // root in the bass (or a slash chord's own bass note)
   if(played.some(x=>!want.has(x))) return false;
   const missing=[...want].filter(x=>!played.includes(x));
-  return missing.every(x=>want.size===4&&fifths.has(x));      // a 7th chord may drop its 5th
+  return missing.every(x=>want.size>=4&&fifths.has(x));      // a chord of 4 or more notes may drop a perfect 5th, never a ♭5 or ♯5
 }
 function findVoicing(){
   const ch=cur.chord, R=ch.root, B=ch.bass??R, want=cur.chordPcs, lo=cur.lo, hi=cur.hi;
-  const fifths=new Set(ch.rel.filter(r=>r>=6&&r<=8).map(r=>(R+r)%12));
+  const fifths=new Set(ch.rel.filter(r=>r===7).map(r=>(R+r)%12));
   const inPos=f=>f===0?lo<=1:(f>=Math.max(1,lo-1)&&f<=hi);
   let best=null;
   const withBass=frets=>{ // a slash chord: put its bass note under the shape, or start the shape from it
@@ -887,7 +950,7 @@ let zoom=[0,12], wide=false, land=false, horiz=false, woodEl, strsEl;
     for(let f=0;f<=12;f++){
       const b=document.createElement('button');
       b.className='cell'; b.dataset.s=s; b.dataset.f=f;
-      b.setAttribute('aria-label',['low E','A','D','G','B','high E'][s]+' string, '+(f?'fret '+f:'open')+', '+NOTES[pc(s,f)]);
+      b.setAttribute('aria-label',['low E','A','D','G','B','high E'][s]+' string, '+(f?'fret '+f:'open')+', '+noteName(pc(s,f)));
       neck.appendChild(b); cells[s][f]=b;
     }}
   if(window.ResizeObserver) new ResizeObserver(sizeDots).observe(neck); else addEventListener('resize',sizeDots);
@@ -960,7 +1023,7 @@ const inWin=f=>f>=cur.lo&&f<=cur.hi;
 // ---------- focus controls ----------
 const selKey=document.getElementById('selKey'),selFam=document.getElementById('selFam'),selMode=document.getElementById('selMode'),selPos=document.getElementById('selPos');
 function fillSelects(){
-  selKey.innerHTML='<option value="-1">Random</option>'+NOTES.map((n,i)=>`<option value="${i}">${n}</option>`).join('');
+  selKey.innerHTML='<option value="-1">Random</option>'+KEY_OPTS.map((n,i)=>`<option value="${i}">${n}</option>`).join('');
   selKey.value=F.key;
   selFam.innerHTML=Object.entries(FAMS).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('');
   selFam.value=F.fam;
@@ -980,9 +1043,9 @@ function focusText(){
   document.getElementById('goal').classList.toggle('fsong',!!fs);
   if(fs){const sk=fs.sk;
     document.getElementById('focusTitle').textContent=sk.name;
-    document.getElementById('focusSub').textContent=[sk.artist,`${NOTES[sk.key??0]} ${sk.minor?'minor':'major'}`,sk.capo?`capo ${sk.capo}`:'',sk.tempo?sk.tempo+' bpm':'',cur.posLabel.split(',')[0]].filter(Boolean).join(' · ')+tap;
+    document.getElementById('focusSub').textContent=[sk.artist,songKey(sk),sk.capo?`capo ${sk.capo}`:'',sk.tempo?sk.tempo+' bpm':'',cur.posLabel.split(',')[0]].filter(Boolean).join(' · ')+tap;
     return;}
-  const k=F.key>=0?NOTES[F.key]:'Random key';
+  const k=F.key>=0?keyName(F.key):'Random key';
   const scale=F.fam==='chrom'?'all notes':modeName();
   document.getElementById('focusTitle').textContent=`${k} ${scale}`;
   document.getElementById('focusSub').textContent=cur.posLabel+tap;
@@ -1293,7 +1356,7 @@ const RPATS=[
   ['revgallop','Two 16ths and an 8th (1 e &)',16,'xxx.xxx.xxx.xxx.'],
   ['funkchuck','1 & a, chucks on 2 and 4',16,'x.xxm.xxx.xxm.xx']]],
  ['Syncopated',[
-  ['tresillo','3-3-2 (tresillo)',16,'x..x..x.x..x..x.'],
+  ['tresillo','3-3-2 (tresillo)',16,'x.....x.....x...'],
   ['anticip','Push into beat 3',16,'x.x....x..x.x.x.'],
   ['funkstab','Funk stabs',16,'x..x..x...x..x..'],
   ['offbeat16','16th offbeats (e and a)',16,'.x.x.x.x.x.x.x.x']]],
@@ -1353,9 +1416,9 @@ function skillNow(){
   if(D.line==='prog'&&cur.prog){
     const P=curPat(), pat=P.id==='custom'?`custom-${P.res}-${P.steps}`:P.id, plan=D.plan==='arp'?'':`, ${P.id==='custom'?'your pattern':P.name.toLowerCase()}`;
     return {id:`prog:${k}:${F.fam}:${F.mode}:${cur.whole?'w':cur.lo}:${D.prog}:${D.plan}:${D.plan==='arp'?'-':pat}`,kind:'prog',
-      name:`${NOTES[k]} ${modeName()}: ${progLabel(D.prog)}, ${where}${plan}`};
+      name:`${keyName(k)} ${modeName()}: ${progLabel(D.prog)}, ${where}${plan}`};
   }
-  return {id:`box:${k}:${F.fam}:${F.mode}:${cur.whole?'w':cur.lo}`,kind:'box',name:`${NOTES[k]} ${F.fam==='chrom'?'all notes':modeName()}, ${where}`};
+  return {id:`box:${k}:${F.fam}:${F.mode}:${cur.whole?'w':cur.lo}`,kind:'box',name:`${keyName(k)} ${F.fam==='chrom'?'all notes':modeName()}, ${where}`};
 }
 function logStart(){
   const sk=skillNow(), t=now();
@@ -1501,7 +1564,7 @@ const picking=()=>st.mode==='drill'&&(st.picking||cur.whole);
 function drillLabel(p){
   const ivK=ivOf(p,cur.key), ivC=ivOf(p,cur.chord.root);
   const ref=D.ref==='chord'?ivC:ivK;
-  const t=saved.labels==='notes'?NOTES[pc(p.s,p.f)]:(D.ref==='chord'?IV[ivC][0]:lab(ivK)[0]);
+  const t=saved.labels==='notes'?noteName(pc(p.s,p.f)):(D.ref==='chord'?chordIv(cur.chord,ivC)[0]:lab(ivK)[0]);
   return {ref,t};
 }
 function renderBoard(){
@@ -1520,7 +1583,7 @@ function renderBoard(){
       const n=pc(s,f), ghost=(!cur.whole&&!inWin(f))?' ghost':'', kiv=(n-E.key+12)%12, inK=E.scale.includes(kiv);
       if(!E.c){dot(c,inK?{t:kiv===0?'R':lab(kiv)[0],c:COL[kiv],cls:(kiv===0?'root':'')+ghost}:null); continue;}
       const civ=(n-E.c.root+12)%12, inC=E.c.rel.includes(civ), ref=saved.exlab==='key'?kiv:civ, inO=E.over.includes(kiv);
-      const t=saved.exlab==='notes'?NOTES[n]:saved.exlab==='key'?lab(kiv)[0]:labIn(civ,ERel)[0];
+      const t=saved.exlab==='notes'?exNote(E,n):saved.exlab==='key'?labIn(kiv,new Set(E.over))[0]:exDeg(E,n)[0];
       const vc=EV&&EV[s]===f?' vc':'';
       if(inC) dot(c,{t,c:COL[ref],cls:(ref===0?'root':'')+(inK?'':' outk')+ghost+vc});
       else if(inO) dot(c,{t,cls:'pass'+ghost+vc});
@@ -1530,7 +1593,7 @@ function renderBoard(){
     if(st.mode==='explore'||picking()){
       c.classList.toggle('out',!cur.whole&&!inWin(f)&&!picking());
       const iv=ivOf({s,f},cur.key), ghost=(!cur.whole&&!inWin(f))?' ghost':'';
-      const t=saved.labels==='notes'?NOTES[pc(s,f)]:lab(iv)[0];
+      const t=saved.labels==='notes'?noteName(pc(s,f)):lab(iv)[0];
       if(iv===0) dot(c,{t,cls:'root'+ghost});
       else if(cur.set.has(iv)&&(picking()||st.visible.has(iv))) dot(c,{t,c:COL[iv],cls:ghost+(picking()?' faint':'')});
       else dot(c,null);
@@ -1566,7 +1629,7 @@ function renderBoard(){
     }
   }
 }
-function ctx(key){return F.fam==='chrom'?'':` in ${NOTES[key]} ${modeName()}`;}
+function ctx(key){return F.fam==='chrom'?'':` in ${keyName(key)} ${modeName()}`;}
 function renderPrompt(){
   const q=st.q;
   promptEl.hidden=false;
@@ -1580,16 +1643,16 @@ function renderPrompt(){
   if(E&&E.c){
     const t=st.exTap;
     promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${esc(E.sel)}</span><span>`+(t!=null
-      ?`<b>${NOTES[t]}</b> is the ${labIn((t-E.c.root+12)%12,exOverRel(E))[1]} of ${esc(E.sel)}${E.c.rel.includes((t-E.c.root+12)%12)?', one of its notes':''}, and ${E.scale.includes((t-E.key+12)%12)?`the ${lab((t-E.key+12)%12)[1]} of ${NOTES[E.key]} ${E.minor?'minor':'major'}`:`outside ${NOTES[E.key]} ${E.minor?'minor':'major'}`}.`
-      :`${esc(E.c.roman)} in ${NOTES[E.key]} ${E.minor?'minor':'major'}. Tap a note to see what it is here.`)+`</span>`;
+      ?`<b>${exNote(E,t)}</b> is the ${exDeg(E,t)[1]} of ${esc(E.sel)}${E.c.rel.includes((t-E.c.root+12)%12)?', one of its notes':''}, and ${E.scale.includes((t-E.key+12)%12)?`the ${labIn((t-E.key+12)%12,new Set(E.scale))[1]} of ${songKey(E.sk)}`:`outside ${songKey(E.sk)}`}.`
+      :`${esc(E.c.roman)} in ${songKey(E.sk)}. Tap a note to see what it is here.`)+`</span>`;
   }else if(E){
-    promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${NOTES[E.key]}</span><span>${esc(E.sk.name)} has no chords yet, so this shows the ${NOTES[E.key]} ${E.minor?'minor':'major'} scale.</span>`;
+    promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${E.sp(E.key)}</span><span>${esc(E.sk.name)} has no chords yet, so this shows the ${songKey(E.sk)} scale.</span>`;
   }else if(st.mode==='explore'){
-    promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${NOTES[cur.key]}</span><span>Tap any note to make it the key. Faded notes sit outside the position.</span>`;
+    promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${keyName()}</span><span>Tap any note to make it the key. Faded notes sit outside the position.</span>`;
   }else if(st.mode==='name'){
-    const rn=NOTES[q.key], L=lab(q.iv);
+    const rn=keyName(q.key), L=lab(q.iv);
     promptEl.innerHTML=q.answered
-      ?`<span class="big" style="color:${COL[q.iv]}">${L[0]}</span><span>${q.picked===q.iv?'Right.':'Not quite.'} It's the ${term(IVKEY[q.iv],L[1])}${ctx(q.key)}, ${q.iv} half step${q.iv===1?'':'s'} above the root: ${NOTES[(q.key+q.iv)%12]}.</span>`
+      ?`<span class="big" style="color:${COL[q.iv]}">${L[0]}</span><span>${q.picked===q.iv?'Right.':'Not quite.'} It's the ${term(IVKEY[q.iv],L[1])}${ctx(q.key)}, ${q.iv} half step${q.iv===1?'':'s'} above the root: ${noteName((q.key+q.iv)%12,q.key)}.</span>`
       :`<span class="big">?</span><span>Which degree is the ?${ctx(q.key)}?<br><span class="sub">Counted up from ${rn}, in any octave.</span></span>`;
   }else{
     const L=lab(q.iv);
@@ -1605,7 +1668,7 @@ function chordTones(){
   const pick=o=>o.find(x=>cur.set.has(x));
   return [pick([4,3]),pick([7,6,8]),pick([10,11,9])].filter(x=>x!==undefined);
 }
-function voiceSVG(v,root=cur.chord.root){
+function voiceSVG(v,root=cur.chord.root,ch=cur.chord){
   const fr=v.frets, fretted=fr.filter(f=>f!==null&&f>0);
   const maxF=fretted.length?Math.max(...fretted):1, minF=fretted.length?Math.min(...fretted):1;
   const base=maxF<=5?1:minF, L=38, G=30, T=40, RH=36, N=5, W=L+G*5+30, H=T+RH*N+38;
@@ -1621,7 +1684,7 @@ function voiceSVG(v,root=cur.chord.root){
   fr.forEach((f,s)=>{
     const x=L+s*G;
     if(f===null){o+=`<text x="${x}" y="${T-12}" text-anchor="middle" font-size="15" fill="currentColor" opacity=".6">×</text>`;return;}
-    const iv=(pc(s,f)-root+12)%12, t=IV[iv][0];
+    const iv=(pc(s,f)-root+12)%12, t=ch&&ch.root===root?chordIv(ch,iv)[0]:IV[iv][0];
     if(f===0) o+=`<circle cx="${x}" cy="${T-16}" r="7" fill="none" stroke="${COL[iv]}" stroke-width="2.5"/>`;
     else{const y=T+(f-base+0.5)*RH; o+=`<circle cx="${x}" cy="${y}" r="13" fill="${COL[iv]}"/><text x="${x}" y="${y+4.5}" text-anchor="middle" font-size="12" font-weight="700" fill="#14110d">${t}</text>`;}
     o+=`<text x="${x}" y="${T+RH*N+24}" text-anchor="middle" font-size="12" font-weight="700" fill="${COL[iv]}">${t}</text>`;
@@ -1629,11 +1692,10 @@ function voiceSVG(v,root=cur.chord.root){
   return o+'</svg>';
 }
 function chordFormula(v){
-  const rel=cur.chord.rel, has=x=>rel.includes(x);
-  const sym=r=>r===8&&has(4)&&!has(7)?'♯5':r===9&&has(6)&&has(3)&&!has(10)&&rel.length===4?'♭♭7':IV[r][0];
+  const rel=cur.chord.rel, sym=r=>chordIv(cur.chord,r)[0];
   const played=v?new Set(v.frets.map((f,s)=>f===null?null:(pc(s,f)-cur.chord.root+12)%12)):null;
   const chips=rel.map(r=>{const off=played&&!played.has(r);
-    return `<span class="fchip${off?' off':''}" style="--c:${COL[r]}" data-tip="<b>${sym(r)}</b>: ${r?IV[r][1]+', '+r+' half step'+(r===1?'':'s')+' above the root':'the root'}${off?'. This voicing leaves it out.':''}">${sym(r)}</span>`;}).join('');
+    return `<span class="fchip${off?' off':''}" style="--c:${COL[r]}" data-tip="<b>${sym(r)}</b>: ${r?chordIv(cur.chord,r)[1]+', '+r+' half step'+(r===1?'':'s')+' above the root':'the root'}${off?'. This voicing leaves it out.':''}">${sym(r)}</span>`;}).join('');
   const STEP={1:'m2',2:'M2',3:'m3',4:'M3',5:'P4',6:'TT',7:'P5'};
   const ladder=rel.map((r,i)=>{
     const deg=`<span class="st-deg" style="color:${COL[r]}">${sym(r)}</span>`;
@@ -1651,7 +1713,7 @@ function renderVoice(){
   const show=wide&&st.mode==='drill'&&!picking()&&D.line!=='prog';
   el.hidden=!show; if(!show) return;
   const v=cur.voicing;
-  const ctxt=`${F.fam==='chrom'?'':' in '+NOTES[cur.key]+' '+modeName()}`;
+  const ctxt=`${F.fam==='chrom'?'':' in '+keyName()+' '+modeName()}`;
   const head=`<div class="vc-head"><b>${cur.chord.name}</b><b class="rn term" data-term="roman" tabindex="0">${cur.chord.roman}</b><span>${ctxt.trim()}</span></div>`;
   if(!v){el.innerHTML=`${head}${chordFormula(null)}<p>No playable voicing with the root in the bass fits frets ${cur.lo}–${cur.hi}. Try the next position.</p>`;return;}
   const tabTxt=v.frets.some(f=>f!==null&&f>9)?v.frets.map(f=>f===null?'x':f).join(' '):v.frets.map(f=>f===null?'x':f).join('');
@@ -1748,7 +1810,7 @@ function transportHTML(){
 // Scale, then chords, then progressions, then songs, with a rhythm track alongside. Each step is a Drill setup with a goal;
 // a step is done when a run of its skill has been marked clean at the goal tempo. The log behind it fills those numbers in.
 // Every step is built from the focus in the header: its key, scale and mode stay put, and a step only moves the position.
-function focusName(){return `${F.key>=0?NOTES[F.key]:NOTES[cur.key]} ${F.fam==='chrom'?'all notes':modeName()}`;}
+function focusName(){return `${keyName()} ${F.fam==='chrom'?'all notes':modeName()}`;}
 function homePos(){ // the position that starts on the root, where progressions are played
   return cur.pos.find(p=>(pc(0,p.lo)-cur.key+12)%12===0)||cur.pos[0]||{lo:0,hi:4,label:'Frets 0–4'};
 }
@@ -1766,10 +1828,10 @@ function buildPath(){
   // start from the root position, work up the neck, then the positions below it
   const ps=[...cur.pos.filter(p=>p.lo>=home.lo),...cur.pos.filter(p=>p.lo<home.lo).reverse()], fr=p=>`frets ${p.lo}–${p.hi}`;
   const scale=ps.map((p,i)=>({id:'s'+p.lo,title:p===home?`Frets ${p.lo}–${p.hi}, from the root`:`Frets ${p.lo}–${p.hi}`,
-    what:i===0?'Up and down in 3rds, string by string. Say the interval of each note as you play it.':`The ${p.lo>home.lo?'next':'lower'} position, in 3rds.`,
+    what:i===0?'Up and down the box in 3rds. Say the interval of each note as you play it.':`The ${p.lo>home.lo?'next':'lower'} position, in 3rds.`,
     ...fk,pos:p.lo,line:'scale',pattern:'thirds',sub:2,goal:80}));
   const chord=ps.map(p=>({id:'c'+p.lo,title:`${tonic} in ${fr(p)}`,
-    what:`The ${tonic} shape that sits in ${fr(p)}. Strum a bar, then pick the same shape one string at a time.`,
+    what:`The ${tonic} chord as it sits in ${fr(p)}. Strum a bar, then pick the same shape one string at a time.`,
     ...fk,pos:p.lo,line:'prog',prog:'one',plan:'both',rpat:'quarters',sev:false,goal:80}));
   const progs=minor?['two','145','epic','andalusian']:['two','145','pop','50s'];
   const prog=progs.map(id=>({id:'p'+id,title:PROG_BY[id].name,what:`${progNames(k,id).join(' ')}, without leaving frets ${home.lo}–${home.hi}.`,
@@ -1777,7 +1839,7 @@ function buildPath(){
   const pos=F.pos>=0?F.pos:home.lo;
   PATH=[
     {id:'scale',name:'Scales',sub:`${focusName()}, position by position`,steps:scale},
-    {id:'chord',name:'Chords in each position',sub:`${tonic}, strummed then arpeggiated`,steps:chord},
+    {id:'chord',name:'Home chord in each position',sub:`${tonic}, strummed then arpeggiated`,steps:chord},
     {id:'prog',name:'Progressions',sub:`Chord changes in frets ${home.lo}–${home.hi}`,steps:prog},
     {id:'rhythm',name:'Rhythm track',sub:'Strum patterns in your focus, any time alongside the steps above',steps:RHY_STEPS.map(r=>({...r,...fk,pos}))}];
   STEP_BY={}; PATH.forEach(g=>g.steps.forEach(s=>{s.stage=g.id; STEP_BY[s.id]=s;}));
@@ -1789,10 +1851,7 @@ function followKey(){
   const seven=FAMS[F.fam].steps.length===7;
   return {key:cur.key,fam:seven?F.fam:'major',mode:seven?F.mode:(TO_DIATONIC[F.fam]||[0])[F.mode]||0};
 }
-function progNames(k,prog){ // chord names of a progression in a key, without touching the current focus
-  const steps=FAMS[k.fam].steps, rot=FAMS[k.fam].modes[k.mode][1], iv=steps.map((_,i)=>(steps[(rot+i)%7]-steps[rot]+12)%12);
-  return PROG_BY[prog].degs.map(d=>{const r=iv[d], q=QUAL[`${(iv[(d+2)%7]-r+12)%12},${(iv[(d+4)%7]-r+12)%12}`]; return NOTES[(k.key+r)%12]+(q??'');});
-}
+function progNames(k,prog){return progChords(prog,k,false).map(c=>c.name);} // chord names of a progression in a key, without touching the current focus
 function stepWhat(s){ return s.follow?s.what.replace('{ch}',progNames(followKey(),s.prog).join(' ')):s.what; }
 function setupSkill(s){
   return s.line==='prog'?`prog:${s.key}:${s.fam}:${s.mode}:${s.pos}:${s.prog}:${s.plan}:${s.plan==='arp'?'-':s.rpat}`:`box:${s.key}:${s.fam}:${s.mode}:${s.pos}`;
@@ -1863,7 +1922,7 @@ function songsHTML(){
 function songParts(sk){ return sk.parts&&sk.parts.length?sk.parts:[{name:'Verse',text:sk.chordText||''}]; }
 // ---------- explore a song ----------
 // In Song mode, Explore explains the song: what key it's in, what each chord does there, and what to play over it.
-const MODE_COLOR={Dorian:9,Phrygian:1,Lydian:6,Mixolydian:10,Aeolian:8,Locrian:6}; // the note that gives each mode its sound
+const MODE_COLOR={Dorian:[9,'6'],Phrygian:[1,'♭2'],Lydian:[6,'♯4'],Mixolydian:[10,'♭7'],Aeolian:[8,'♭6'],Locrian:[6,'♭5']}; // the note that gives each mode its sound
 function exSong(){
   if(st.mode!=='explore') return null;
   const fs=focusSong(); if(!fs) return null;
@@ -1872,17 +1931,24 @@ function exSong(){
   const seq=parts.flatMap(p=>p.chords), names=[...new Set(seq)];
   const scale=minor?[0,2,3,5,7,8,10]:MAJ;
   const sel=names.includes(st.exName)?st.exName:names[0]||null, c=sel?chordIn(sel,key):null;
-  // the notes to play over the chosen chord: the key, with any note it clashes with swapped for the chord's own
+  // the notes to play over the chosen chord: the key, with each chord note from outside it replacing the key's note
+  // of the same letter (E in A minor turns G into G♯; B♭ in C turns B into B♭)
+  const sp=songSpell(sk), cs=c?chordSpell(c):null, kl=letterOf(sp(key));
   let over=[...scale]; const swaps=[];
-  if(c) c.tones.filter(t=>!scale.includes(t)).forEach(t=>{
-    const ok=x=>{const S=new Set(over.filter(y=>y!==x).concat(t)); return ![...S].some(n=>S.has((n+1)%12)&&S.has((n+2)%12));};
-    const cand=[(t+1)%12,(t+11)%12].filter(x=>over.includes(x)&&!c.tones.includes(x)), x=cand.find(ok);
-    if(x!==undefined){over=over.filter(y=>y!==x); swaps.push([t,x]);} over.push(t);
+  if(c) cs.forEach(x=>{
+    const t=(x.p-key+12)%12; if(over.includes(t)) return;
+    const y=scale[(letterOf(x.name)-kl+7)%7];
+    if(!c.tones.includes(y)){over=over.filter(z=>z!==y); swaps.push([t,y]);}
+    over.push(t);
   });
-  return {id:fs.id,sk,key,minor,parts,seq,names,scale,sel,c,over,swaps};
+  return {id:fs.id,sk,key,minor,parts,seq,names,scale,sel,c,cs,sp,over,swaps};
 }
-function labIn(iv,S){ // a degree's name in a 7-note set, sharps where the set calls for them
+function labIn(iv,S){ // a degree's name in a scale: in a 7-note scale each note takes the next letter, so sharps where it calls for them
   const h=x=>S.has(x);
+  if(S.size===7&&h(iv)){
+    const i=[...S].sort((a,b)=>a-b).indexOf(iv), y=degSym(iv,i+1);
+    if(Math.abs(((iv-MAJ[i])%12+18)%12-6)<=2) return y===IV[iv][0]?IV[iv]:[y,IV_ALT[y]||IV[iv][1]];
+  }
   if(iv===6&&!h(5)&&(h(7)||!h(3))) return ['♯4','augmented 4th'];
   if(iv===8&&!h(7)&&h(9)) return ['♯5','augmented 5th'];
   if(iv===3&&h(4)&&!h(2)) return ['♯2','augmented 2nd'];
@@ -1891,13 +1957,19 @@ function labIn(iv,S){ // a degree's name in a 7-note set, sharps where the set c
 function exOverRel(E){return new Set(E.over.map(t=>(t+E.key-E.c.root+24)%12));}
 function exOverMode(E){ // name the notes over an outside chord as a mode of its root, when they make one
   const R=[...exOverRel(E)].sort((a,b)=>a-b).join();
-  for(let i=0;i<7;i++){const m=MAJ.map(x=>(x-MAJ[i]+12)%12).sort((a,b)=>a-b).join(); if(m===R) return FAMS.major.modes[i][0].replace(/ \(.*\)/,'');}
+  for(const f of ['major','harm','mel']) for(let i=0;i<7;i++) if(steps7(f,i).join()===R) return FAMS[f].modes[i][0].replace(/ \(.*\)/,'');
   return null;
+}
+function exNote(E,p){const x=E.cs&&E.cs.find(y=>y.p===p); return x?x.name:E.sp(p);} // chord notes spelled from the chord, the rest from the key
+function exDeg(E,p){ // a note's degree name counted from the chosen chord: from its formula when it's a chord note
+  const r=(p-E.c.root+12)%12, x=E.cs.find(y=>y.p===p);
+  if(!x) return labIn(r,exOverRel(E));
+  return x.sym==='R'?IV[0]:[x.sym,x.sym===IV[r][0]?IV[r][1]:IV_ALT[x.sym]||IV[r][1]];
 }
 function exVoicing(E,n){const own=E.sk.voicings&&E.sk.voicings[n]; return (own&&parseFrets(own))||autoVoicing(n,E.key);}
 function exInKey(E,c){return c.tones.every(t=>E.scale.includes(t));}
 function exRole(E,c){ // what the chord does in the song's key
-  const d=(c.root-E.key+12)%12, home=NOTES[E.key]+(E.minor?'m':''), hm=c.rel.includes(3)&&!c.rel.includes(4);
+  const d=(c.root-E.key+12)%12, home=E.sp(E.key)+(E.minor?'m':''), hm=c.rel.includes(3)&&!c.rel.includes(4);
   if(exInKey(E,c)){
     const M={0:'Home. The song rests here, and lines feel finished when they land on its root.',
       2:'Moves away from home, and usually sets up the V chord.',4:`A soft stand-in for home: it shares two notes with ${home}.`,
@@ -1909,49 +1981,49 @@ function exRole(E,c){ // what the chord does in the song's key
     return (E.minor?m:M)[d];
   }
   const par=E.minor?MAJ:[0,2,3,5,7,8,10];
-  if(c.tones.every(t=>par.includes(t))) return `Borrowed from ${NOTES[E.key]} ${E.minor?'major':'minor'}, the key with the same root. A common way to add color.`;
-  if(E.minor&&d===7&&!hm) return `The major V, borrowed from harmonic minor. Its raised note, ${NOTES[(E.key+11)%12]}, pulls hard to ${home}.`;
+  if(E.minor&&d===7&&!hm) return `The major V, borrowed from harmonic minor. Its raised note, ${E.sp((E.key+11)%12)}, pulls hard to ${home}.`;
+  if(c.tones.every(t=>par.includes(t))) return `Borrowed from ${E.sp(E.key)} ${E.minor?'major':'minor'}, the key with the same root. A common way to add color.`;
   const tgt=(d+5)%12;
-  if(!hm&&tgt!==0&&E.scale.includes(tgt)) return `A secondary dominant: the V of ${NOTES[(E.key+tgt)%12]}, so it pulls toward that chord.`;
+  if(!hm&&tgt!==0&&E.scale.includes(tgt)) return `A secondary dominant: the V of ${E.sp((E.key+tgt)%12)}, so it pulls toward that chord.`;
   return 'From outside the key. It adds a color the key on its own doesn\'t have.';
 }
 function exCard(E){
-  const c=E.c, sel=E.sel, key=E.key, kname=`${NOTES[key]} ${E.minor?'minor':'major'}`;
+  const c=E.c, sel=E.sel, key=E.key, kname=songKey(E.sk), cn=rootName(c), N=p=>exNote(E,p);
   const pcs=c.rel.map(r=>(c.root+r)%12), outs=c.tones.filter(t=>!E.scale.includes(t));
-  const notes=c.rel.map((r,k)=>`<span class="exn${E.scale.includes(c.tones[k])?'':' outk'}" style="--c:${r===0?'var(--gold)':COL[r]}"><b>${NOTES[pcs[k]]}</b><small>${labIn(r,exOverRel(E))[0]} of ${esc(NOTES[c.root])} · ${E.scale.includes(c.tones[k])?lab(c.tones[k])[0]+' in key':'outside the key'}</small></span>`).join('');
+  const notes=E.cs.map((x,k)=>`<span class="exn${E.scale.includes(c.tones[k])?'':' outk'}" style="--c:${x.sym==='R'?'var(--gold)':COL[c.rel[k]]}"><b>${x.name}</b><small>${x.sym} of ${esc(cn)} · ${E.scale.includes(c.tones[k])?labIn(c.tones[k],new Set(E.scale))[0]+' in key':'outside the key'}</small></span>`).join('');
   let over;
   if(!outs.length){
     const deg=E.scale.indexOf((c.root-key+12)%12), mode=FAMS.major.modes[((E.minor?5:0)+deg)%7][0].replace(/ \(.*\)/,''), col=MODE_COLOR[mode];
-    over=`Over it, play the ${kname} scale as usual. Starting from ${NOTES[c.root]} it's ${term('mode',NOTES[c.root]+' '+mode)}`
-      +(col!==undefined?`, and its ${IV[col][0]} (${NOTES[(c.root+col)%12]}) is the note that gives that sound.`:'.')
-      +` Land on ${pcs.map(p=>NOTES[p]).join(', ')} when the chord changes.`;
+    over=`Over it, play the ${kname} scale as usual. Starting from ${cn} it's ${term('mode',cn+' '+mode)}`
+      +(col?`, and its ${col[1]} (${E.sp((c.root+col[0])%12)}) is the note that gives that sound.`:'.')
+      +` Land on ${pcs.map(N).join(', ')} when the chord changes.`;
   }else{
-    const sw=outs.map(t=>{const p=(key+t)%12, w=E.swaps.find(x=>x[0]===t); return w?`${NOTES[p]} instead of ${NOTES[(key+w[1])%12]}`:NOTES[p];}), m=exOverMode(E);
+    const sw=outs.map(t=>{const p=(key+t)%12, w=E.swaps.find(x=>x[0]===t); return w?`${N(p)} instead of ${E.sp((key+w[1])%12)}`:N(p);}), m=exOverMode(E);
     over=`${outs.length===1?'One of its notes is':'Some of its notes are'} outside ${kname}. While it rings, play ${sw.join(' and ')}, and keep the rest of the key`
-      +(m?`. That makes ${term('mode',NOTES[c.root]+' '+m)}, shown in pearl on the neck.`:'. The pearl dots on the neck show the result.')
-      +` Its own notes, ${pcs.map(p=>NOTES[p]).join(', ')}, are the safest landing spots.`;
+      +(m?`. That makes ${term('mode',cn+' '+m)}, shown in pearl on the neck.`:'. The pearl dots on the neck show the result.')
+      +` Its own notes, ${pcs.map(N).join(', ')}, are the safest landing spots.`;
   }
   const at=E.seq.indexOf(sel), nx=E.seq.slice(at+1).find(n=>n!==sel)||E.seq.find(n=>n!==sel);
   let next='';
   if(nx){
-    const N=chordIn(nx,key), npcs=N.rel.map(r=>(N.root+r)%12), keep=pcs.filter(p=>npcs.includes(p));
-    const moves=pcs.filter(p=>!npcs.includes(p)).map(p=>{let b=null; npcs.forEach(q=>{const dd=((q-p+18)%12)-6; if(!b||Math.abs(dd)<Math.abs(b.d)) b={q,d:dd};}); return b&&Math.abs(b.d)<=2?`${NOTES[p]} to ${NOTES[b.q]}`:null;}).filter(Boolean);
-    next=`<p>Next comes <b>${esc(nx)}</b> (${esc(N.roman)}). ${keep.length?`They share ${keep.map(p=>NOTES[p]).join(' and ')}, so ${keep.length>1?'those notes':'that note'} can ring across the change`:'They share no notes'}${moves.length?`, and ${moves.join(', ')} ${moves.length>1?'are':'is'} a step away`:''}.</p>`;
+    const C2=chordIn(nx,key), ns=chordSpell(C2), npcs=ns.map(x=>x.p), keep=pcs.filter(p=>npcs.includes(p)), N2=p=>ns.find(x=>x.p===p).name;
+    const moves=pcs.filter(p=>!npcs.includes(p)).map(p=>{let b=null; npcs.forEach(q=>{const dd=((q-p+18)%12)-6; if(!b||Math.abs(dd)<Math.abs(b.d)) b={q,d:dd};}); return b&&Math.abs(b.d)<=2?`${N(p)} to ${N2(b.q)}`:null;}).filter(Boolean);
+    next=`<p>Next comes <b>${esc(nx)}</b> (${esc(C2.roman)}). ${keep.length?`They share ${keep.map(N).join(' and ')}, so ${keep.length>1?'those notes':'that note'} can ring across the change`:'They share no notes'}${moves.length?`, and ${moves.join(', ')} ${moves.length>1?'are':'is'} a step away`:''}.</p>`;
   }
   const f=exVoicing(E,sel);
-  const from=saved.exlab==='notes'?'':saved.exlab==='key'?`, counted from ${NOTES[key]}`:`, counted from ${NOTES[c.root]}`;
+  const from=saved.exlab==='notes'?'':saved.exlab==='key'?`, counted from ${E.sp(key)}`:`, counted from ${cn}`;
   const legend=`<p class="hint">On the neck: colored dots are its notes and pearl dots are the other notes to play over it${from}.${outs.length?' A dashed edge marks a note from outside the key.':''} Gold rings are the shape you play.</p>`;
   return `<div class="ex-card"><div class="ex-head"><b class="ex-name">${esc(sel)}</b><span class="rn">${esc(c.roman)}</span><span class="ex-tag${outs.length?' out':''}">${outs.length?'Outside the key':'In the key'}</span></div>
-    <p>${exRole(E,c)}${c.bass!==undefined?` ${NOTES[c.bass]} is its lowest note: ${c.rel.slice(0,c.core).includes((c.bass-c.root+12)%12)?`the chord's own ${IV[(c.bass-c.root+12)%12][1]}, moved to the bottom`:'an extra note under the chord'}.`:''}</p><div class="exns">${notes}</div><p>${over}</p>${next}
+    <p>${exRole(E,c)}${c.bass!==undefined?` ${N(c.bass)} is its lowest note: ${c.rel.slice(0,c.core).includes((c.bass-c.root+12)%12)?`the chord's own ${exDeg(E,c.bass)[1]}, moved to the bottom`:'an extra note under the chord'}.`:''}</p><div class="exns">${notes}</div><p>${over}</p>${next}
     <div class="row ex-play">${f?`<code>${fretText(f)}</code><button class="btn" data-act="exhear">Hear it</button>`:''}</div>${legend}</div>`;
 }
 function exploreSongHTML(E){
-  const sk=E.sk, key=E.key, kname=`${NOTES[key]} ${E.minor?'minor':'major'}`;
+  const sk=E.sk, key=E.key, kname=songKey(sk);
   if(!E.names.length) return `<p class="hint">${esc(sk.name)} has no chords yet. Add them in the Songs tab, and Explore will show what each one does in ${kname} and what to play over it.</p><div class="actions"><button class="btn" data-act="songopen" data-id="${esc(E.id)}">Open in Songs</button></div>`;
-  const pent=(E.minor?[0,3,5,7,10]:[0,2,4,7,9]).map(x=>NOTES[(key+x)%12]).join(' '), rel=NOTES[(key+(E.minor?3:9))%12];
+  const pent=(E.minor?[0,3,5,7,10]:[0,2,4,7,9]).map(x=>E.sp((key+x)%12)).join(' '), rel=E.sp((key+(E.minor?3:9))%12);
   const homeC=E.names.find(n=>chordIn(n,key).roman.replace(/[^IViv♭♯]/g,'')===(E.minor?'i':'I'));
-  const cp=sk.capo?`<p class="ex-sum">Played with a capo on fret ${sk.capo}: everything here is in the shapes you play, in ${kname}. It sounds ${sk.capo} half step${sk.capo>1?'s':''} higher, in ${NOTES[(key+sk.capo)%12]} ${E.minor?'minor':'major'}.</p>`:'';
-  const sum=`${cp}<p class="ex-sum"><b>${esc(sk.name)}</b> is in <b>${kname}</b>${homeC?`, so ${esc(homeC)} is home`:''}. Over the whole song, play ${NOTES[key]} ${E.minor?'minor':'major'} pentatonic (${pent}): the same notes as ${rel} ${E.minor?'major':'minor'} pentatonic${E.minor?'':', so your minor pentatonic shapes work with '+rel+' as the root'}.</p>`;
+  const cp=sk.capo?`<p class="ex-sum">Played with a capo on fret ${sk.capo}: everything here is in the shapes you play, in ${kname}. It sounds ${sk.capo} half step${sk.capo>1?'s':''} higher, in ${songKey({key:(key+sk.capo)%12,minor:E.minor})}.</p>`:'';
+  const sum=`${cp}<p class="ex-sum"><b>${esc(sk.name)}</b> is in <b>${kname}</b>${homeC?`, so ${esc(homeC)} is home`:''}. Over the whole song, play ${kname} pentatonic (${pent}): the same notes as ${rel} ${E.minor?'major':'minor'} pentatonic${E.minor?'':', so your minor pentatonic shapes work with '+rel+' as the root'}.</p>`;
   const chips=E.names.map(n=>{const c=chordIn(n,key), out=!exInKey(E,c);
     return `<button class="cchip ex-ch${out?' outk':''}" data-act="exch" data-n="${esc(n)}" aria-pressed="${n===E.sel}"><b>${esc(n)}</b><small>${esc(c.roman)}${out?' · outside':''}</small></button>`;}).join('');
   const parts=E.parts.filter(p=>p.chords.length).map(p=>`<div class="ex-part"><span class="seglab">${esc(p.name)}</span><div class="sh-bars ex-bars">${p.chords.map(n=>`<button class="bar" data-act="exch" data-n="${esc(n)}" aria-pressed="${n===E.sel}"><span class="nm">${esc(n)}</span><span class="rn">${esc(chordIn(n,key).roman)}</span></button>`).join('')}</div></div>`).join('');
@@ -2001,7 +2073,7 @@ function vpickHTML(sk,n){
   if(ownF&&!list.some(v=>fretText(v.frets)===fretText(ownF))) list.push({name:'Yours',frets:ownF});
   const now_=ownF?fretText(ownF):(list[0]?fretText(list[0].frets):'');
   return `<div class="vpop" role="group" aria-label="Voicing for ${esc(n)}"><div class="vp-top"><b>${esc(n)} in this song</b>${own?`<button class="chip" data-act="vclear" data-n="${esc(n)}">Let Fretmap choose</button>`:''}</div>
-    <div class="shapes">${list.map(v=>{const t=fretText(v.frets); return `<button class="shape" data-act="vset" data-n="${esc(n)}" data-f="${t}" aria-pressed="${t===now_}" aria-label="${esc(v.name)}, ${t}">${voiceSVG(v,c.root)}<code>${t}</code><span>${esc(t===fretText(ownF||[])?'Yours':v.name)}</span></button>`;}).join('')}</div>
+    <div class="shapes">${list.map(v=>{const t=fretText(v.frets); return `<button class="shape" data-act="vset" data-n="${esc(n)}" data-f="${t}" aria-pressed="${t===now_}" aria-label="${esc(v.name)}, ${t}">${voiceSVG(v,c.root,c)}<code>${t}</code><span>${esc(t===fretText(ownF||[])?'Yours':v.name)}</span></button>`;}).join('')}</div>
     <div class="vp-type"><label class="seglab" for="vType">Or type</label><input id="vType" value="${own?esc(own):''}" placeholder="${now_||'x02220'}" autocomplete="off" spellcheck="false" aria-label="${esc(n)} voicing, low E to high E"><button class="btn" data-act="vtype" data-n="${esc(n)}">Use it</button><button class="btn" data-act="vhear" data-n="${esc(n)}">Hear it</button></div>
     <p class="hint" id="vMsg" role="status">Frets from low E to high E. x mutes a string.</p></div>`;
 }
@@ -2014,7 +2086,7 @@ function songEditor(id){
       <label class="field grow">Songsterr link<input data-sf="link" inputmode="url" value="${esc(sk.link||'')}" placeholder="https://www.songsterr.com/…" autocomplete="off"></label>
       <button class="btn primary se-go" data-act="songplay" data-id="${esc(id)}">▶ Practice</button></div>
     <p class="hint bad" id="sfMsg" role="status"></p>
-    <div class="se-meta"><label class="field">Key<select data-sf="key">${NOTES.map((x,i)=>`<option value="${i}"${i===key?' selected':''}>${x}</option>`).join('')}</select></label>
+    <div class="se-meta"><label class="field">Key<select data-sf="key">${KEY_OPTS.map((x,i)=>`<option value="${i}"${i===key?' selected':''}>${x}</option>`).join('')}</select></label>
       <label class="field">Tempo (bpm)<input data-sf="tempo" type="number" inputmode="numeric" min="30" max="260" step="1" value="${sk.tempo||''}" placeholder="80" class="tempo-in"></label>
       <label class="field">Capo<select data-sf="capo">${[0,1,2,3,4,5,6,7,8,9].map(i=>`<option value="${i}"${i===(sk.capo||0)?' selected':''}>${i?'Fret '+i:'None'}</option>`).join('')}</select></label>
       <label class="field">Major or minor<select data-sf="minor"><option value="0">Major</option><option value="1"${sk.minor?' selected':''}>Minor</option></select></label>
@@ -2059,7 +2131,7 @@ function songsPage(){
   const list=songSteps();
   if(st.song&&!(LOG.skills[st.song]&&!LOG.skills[st.song].gone)) st.song=null;
   if(!st.song&&!st.newSong&&list.length) st.song=list[0].id;
-  const items=list.map(({id,s})=>`<button class="sl-item" data-act="songopen" data-id="${esc(id)}" aria-pressed="${id===st.song&&!st.newSong}"><b>${esc(s.name)}</b><small>${[s.artist&&esc(s.artist),NOTES[s.key??0]+(s.minor?' minor':'')].filter(Boolean).join(' · ')}</small></button>`).join('');
+  const items=list.map(({id,s})=>`<button class="sl-item" data-act="songopen" data-id="${esc(id)}" aria-pressed="${id===st.song&&!st.newSong}"><b>${esc(s.name)}</b><small>${[s.artist&&esc(s.artist),songKey(s).replace(' major','')].filter(Boolean).join(' · ')}</small></button>`).join('');
   return `<div class="songs"><nav class="songlist" aria-label="Your songs"><p class="st-lab">Your songs</p>${items}<button class="sl-item sl-add" data-act="songform" aria-pressed="${!!(st.newSong||!list.length)}">+ Add a song</button></nav>
     <div class="song-ed">${st.newSong||!st.song?newSongHTML():songEditor(st.song)}</div></div>`;
 }
@@ -2104,7 +2176,7 @@ function renderSheet(){
     const chips=cur.chords.map((c,i)=>`<button class="chip" data-act="chord" data-i="${i}" aria-pressed="${i===D.chord}">${c.roman?c.roman+' ':''}${c.name}</button>`).join('');
     const per=[0,0,0,0,0,0]; boxNotes().forEach(n=>per[n.s]++);
     el.innerHTML=`${playSeg}${pathNote()}
-      <div class="sh-head"><b class="sh-name">${cur.chord.name}</b><span>${cur.chord.roman?cur.chord.roman+' in ':'Over '}${NOTES[cur.key]} ${F.fam==='chrom'?'':esc(modeName())}</span></div>
+      <div class="sh-head"><b class="sh-name">${cur.chord.name}</b><span>${cur.chord.roman?cur.chord.roman+' in ':'Over '}${keyName()} ${F.fam==='chrom'?'':esc(modeName())}</span></div>
       <div class="row sh-chips" role="group" aria-label="Chord to drill over">${chips}</div>
       <div class="drow"><select data-set="pattern" aria-label="Pattern">${opts(PATTERNS,D.pattern)}</select></div>
       <p class="hint">Solid dots are ${term('chordtone','chord tones')}, pearl dots ${term('passing','passing tones')}. Notes per string, low to high: ${per.join(' ')}.${D.pad&&!cur.voicing?' No voicing fits this box, so the chord step is skipped.':''} Tap the chosen chord again to hear it.</p>`;
@@ -2114,12 +2186,12 @@ function renderSheet(){
   const S=songProg(D.prog), sk=S&&LOG.skills[D.prog], n=cur.nbars;
   const parts=S&&sk.parts?sk.parts.map((p,k)=>[String(k),esc(p.name)]).filter(([k])=>parseChords(sk.parts[+k].text).chords.length):[];
   const partSeg=parts.length>1?`<div class="row">${seg('Part','spart',[['-1','Whole song'],...parts],String(songPart(D.prog)))}</div>`:'';
-  const sub=S?`${sk.artist?esc(sk.artist)+' · ':''}${S.part?esc(S.part)+' · ':''}${n} bar${n>1?'s':''}`:`${progRomans((PROG_BY[D.prog]||PROG_BY.pop).degs).join(' ')} · ${n} bar${n>1?'s':''}`;
+  const sub=S?`${sk.artist?esc(sk.artist)+' · ':''}${S.part?esc(S.part)+' · ':''}${n} bar${n>1?'s':''}`:`${progRomans(D.prog).join(' ')} · ${n} bar${n>1?'s':''}`;
   const part=p=>p.to-p.from<1?` <span class="bt">${beatsText(p.to-p.from)}</span>`:'';
   const tiles=cur.prog.map((p,i)=>`<button class="bar${p.voicing&&p.voicing.own?' own':''}${p.to-p.from<1?' split'+(p.from>0?' cont':''):''}" data-pci="${i}" aria-pressed="${i===cur.pci}"><span class="nm">${esc(p.ch.name)}</span><span class="rn">${p.ch.roman}${part(p)}</span><span class="fr">${p.voicing?fretText(p.voicing.frets):'picked'}</span></button>`).join('');
   const missing=[...new Set(cur.prog.filter(p=>!p.voicing).map(p=>p.ch.name))];
   const notes=[missing.length&&D.plan!=='arp'?`No voicing of ${missing.map(esc).join(', ')} fits this box, so ${missing.length===1?'it is':'they are'} picked instead.`:'',
-    cur.chords.length!==7&&!S?`${esc(modeName())} has too few notes to build these chords, so they come from ${NOTES[cur.key]} ${FAMS.major.modes[TO_DIATONIC[F.fam][F.mode]||0][0]}, the 7-note mode it sits in.`:''].filter(Boolean).join(' ');
+    cur.chords.length!==7&&!S?`${esc(modeName())} has too few notes to build these chords, so they come from ${keyName()} ${FAMS.major.modes[TO_DIATONIC[F.fam][F.mode]||0][0]}, the nearest 7-note mode${F.fam==='blues'?' (the blue note sits outside it)':''}.`:''].filter(Boolean).join(' ');
   el.innerHTML=`${playSeg}${pathNote()}
     <div class="sh-top">${sheetSel()}<span class="sh-sub">${sub}</span><span class="sh-no" id="barNo">bar ${cur.prog[cur.pci].bar+1} of ${n}</span></div>
     ${partSeg}<div class="sh-bars" role="group" aria-label="Bars, one chord each">${tiles}</div>
@@ -2188,7 +2260,7 @@ function renderPanel(){
   if(st.mode==='songs'){panel.innerHTML=songsPage(); return;}
   if(st.mode==='drill'){
     if(picking()){
-      panel.innerHTML=`<p class="hint">Scale notes for ${NOTES[cur.key]} ${F.fam==='chrom'?'':modeName()} are shown faintly. Pick a spot near the root to start.</p>
+      panel.innerHTML=`<p class="hint">Scale notes for ${keyName()} ${F.fam==='chrom'?'':modeName()} are shown faintly. Pick a spot near the root to start.</p>
         ${!cur.whole?'<div class="actions"><button class="btn" data-act="keepbox">Keep '+cur.posLabel.split(',')[0]+'</button></div>':''}`;
       return;
     }
@@ -2445,7 +2517,7 @@ const GLOSS_GROUPS=[
  ['Intervals',[
   ['half','Half step','The smallest step in Western music: one fret on the guitar. Also called a semitone. Two half steps make a whole step.'],
   ['interval','Interval','The distance between two notes. It has a size in half steps and a number for how many letter names it spans: C up to E spans C, D, E, so it’s a 3rd.'],
-  ['quality','Major, minor, perfect','2nds, 3rds, 6ths, and 7ths come in major and minor versions. Minor is one half step smaller. 4ths, 5ths, and octaves are called perfect. Augmented (♯) means a half step wider, diminished (♭ or ♭♭) a half step narrower.'],
+  ['quality','Major, minor, perfect','2nds, 3rds, 6ths, and 7ths come in major and minor versions. Minor is one half step smaller. 4ths, 5ths, and octaves are called perfect. Augmented (♯) is a half step wider than major or perfect; diminished (♭, or ♭♭ for a 7th) is a half step narrower than minor or perfect.'],
   ['m2','Minor 2nd (m2, ♭2)','1 half step: one fret up the same string. The tensest, crunchiest interval.',1],
   ['M2','Major 2nd (M2, 2)','2 half steps, a whole step: two frets up the same string.',2],
   ['m3','Minor 3rd (m3, ♭3)','3 half steps: three frets up the same string, or one string higher and two frets back (one fret back when crossing from G to B). The sound that makes a chord minor. When a scale spells it as ♯2, it’s the same size with a different name.',3],
@@ -2467,10 +2539,10 @@ const GLOSS_GROUPS=[
   ['mode','Mode','A scale played from a different note of a parent scale. Dorian uses the same notes as the major scale but starts on its 2nd degree, which gives it a different home note and a different sound.'],
   ['diatonic','Diatonic','Using only the notes of the current scale. Diatonic chords are the chords you can build from those notes alone.'],
   ['pentatonic','Pentatonic','A five-note scale. Minor pentatonic (R ♭3 4 5 ♭7) is the backbone of most rock and blues soloing.'],
-  ['position','Position (box)','A hand position covering about five frets across all six strings, with the index finger on the lowest fret. Learning a scale as a few connected boxes is how most guitarists map the neck.']
+  ['position','Position (box)','A hand position covering about five frets across all six strings, with the index finger on the lowest fret. Learning a scale box by box is how most guitarists map the neck. Here a box starts on each scale note of the low E string, so neighbouring boxes overlap; learn them in Path order.']
  ]],
  ['Chords',[
-  ['chordtone','Chord tone','A note that belongs to the chord: its root, 3rd, 5th, and 7th. Other scale notes are passing tones or extensions.'],
+  ['chordtone','Chord tone','A note that belongs to the chord: its root, 3rd and 5th, plus the 7th in a 7th chord. Other scale notes are passing tones or extensions.'],
   ['passing','Passing tone','A scale note that isn’t in the chord, used to move between chord tones.'],
   ['extension','Extension','A scale note above the 7th, counted an octave up: the 2 becomes the 9th, the 4 the 11th, the 6 the 13th.'],
   ['triad','Triad','A three-note chord: root, 3rd, and 5th.'],
@@ -2483,7 +2555,7 @@ const GLOSS_GROUPS=[
   ['aug','Augmented (+)','R 3 ♯5, stacked M3 + M3. Symmetrical and restless.'],
   ['maj7','Major 7th (maj7)','A major triad plus a major 7th: R 3 5 7. Lush and settled.'],
   ['dom7','Dominant 7th (7)','A major triad plus a minor 7th: R 3 5 ♭7. Its 3rd and ♭7 form a tritone that wants to resolve, which is the sound of the V chord.'],
-  ['m7','Minor 7th (m7)','A minor triad plus a minor 7th: R ♭3 5 ♭7.'],
+  ['min7','Minor 7th (m7)','A minor triad plus a minor 7th: R ♭3 5 ♭7.'],
   ['halfdim','Half-diminished (ø7, m7♭5)','A diminished triad plus a minor 7th: R ♭3 ♭5 ♭7. The vii chord of a major key.'],
   ['dim7','Diminished 7th (°7)','Minor 3rds stacked all the way: R ♭3 ♭5 ♭♭7. It’s symmetrical, so the same shape repeats every 3 frets.'],
   ['sus','Suspended (sus2, sus4)','The 3rd is swapped for a 2nd or 4th, so the chord is neither major nor minor.'],
@@ -2495,29 +2567,29 @@ const GLOSS_GROUPS=[
  ]],
  ['Practice',[
   ['arpeggio','Arpeggio','A chord’s notes played one at a time.'],
-  ['progression','Chord progression','A series of chords that repeats, written in roman numerals so it works in any key. I V vi IV in C is C G Am F; in G it’s G D Em C. The same numerals in another mode give different chord qualities, which is much of what makes a mode sound the way it does.'],
+  ['progression','Chord progression','A series of chords that repeats, written in roman numerals so it works in any key. I V vi IV in C is C G Am F; in G it’s G D Em C. The same numerals in another mode give different chord qualities, which is much of what makes a mode sound the way it does. A few progressions, like the Andalusian cadence and the 12-bar blues, are defined by their chords, so they keep them in every mode.'],
   ['sequence','Sequence','A short pattern repeated from each scale step, like groups of 3 or 4.'],
-  ['enclosure','Enclosure','Approaching a target note from the scale notes above and below it before landing on it.'],
+  ['enclosure','Enclosure','Approaching a target note from the scale notes above and below it before landing on it. Jazz players often use a chromatic note below instead.'],
   ['resolve','Resolve','Move to a stable note, usually the root, so a line sounds finished.'],
   ['beat','Beat, bar, bpm','The beat is the pulse you tap your foot to. A bar (measure) here is four beats. bpm is beats per minute.'],
   ['subdivision','Subdivision','Splitting each beat into smaller, even notes: 8ths are 2 per beat, triplets 3, 16ths 4.'],
   ['countin','Count-in','A bar of clicks before the drill starts so you can feel the tempo.'],
   ['tab','Tab','Guitar notation: six lines for the strings, high E on top, with fret numbers showing where to play.'],
   ['strum','Strumming pattern','Which beats and in-between beats you strike the strings on, and in which direction. Here a pattern sits on a grid of 8ths or 16ths.'],
-  ['motion','Constant motion','The strumming hand never stops: down on every beat number, up in between, even when it misses the strings. It keeps your time steady and makes the direction of every strum automatic.'],
+  ['motion','Constant motion','The strumming hand never stops: down on the beats and the &s, up on the steps in between (the & in 8ths, the e and a in 16ths), even when it misses the strings. It keeps your time steady and makes the direction of every strum automatic.'],
   ['counting','Counting 8ths and 16ths','Say the beat number on each beat. 8ths add “and” (&) between beats: 1 & 2 &. 16ths add “e” and “a” as well: 1 e & a 2 e & a.'],
   ['ghost','Ghost strum','The hand keeps moving through the strum but misses the strings, so the motion stays even. Faded in the grid and in brackets when counted.'],
   ['chuck','Chuck (muted strum)','A percussive strum with the fretting hand resting on the strings so they don’t ring. Shown as × in the grid.'],
   ['syncopation','Syncopation','Stressing the in-between beats instead of the beat numbers, often by skipping the strum on a beat. It gives a pattern its push.'],
   ['clean','Clean run','A run with no missed, buzzed, or extra notes, and no rushing or dragging against the click. Your best clean tempo is the honest measure of progress, so only mark a run clean when it was.'],
-  ['shuffle','Shuffle (swing) feel','Each pair of 8ths is played long then short: the second lands two thirds of the way through the beat, like a triplet with the middle note left out. Blues and a lot of rock use it.']
+  ['shuffle','Shuffle (swing) feel','Each pair of notes on the grid is played long then short: the second lands two thirds of the way through the pair, like a triplet with the middle note left out. On the 8ths grid that’s swung 8ths, the usual shuffle; on 16ths it swings the 16ths. Blues and a lot of rock use it.']
  ]]
 ];
 const GLOSS={}; GLOSS_GROUPS.forEach(([g,list])=>list.forEach(([k,t,d,hs])=>GLOSS[k]={t,d,hs}));
 function term(k,text){return `<span class="term" data-term="${k}" tabindex="0">${text??GLOSS[k].t}</span>`;}
 function qualityTerm(c){
   const r=c.rel.slice(1,c.core).join(',');
-  return {'4,7':'major','3,7':'minor','3,6':'dim','4,8':'aug','4,7,11':'maj7','4,7,10':'dom7','3,7,10':'m7','3,6,10':'halfdim','3,6,9':'dim7','5,7':'sus','2,7':'sus'}[r]||'formula';
+  return {'4,7':'major','3,7':'minor','3,6':'dim','4,8':'aug','4,7,11':'maj7','4,7,10':'dom7','3,7,10':'min7','3,6,10':'halfdim','3,6,9':'dim7','5,7':'sus','2,7':'sus'}[r]||'formula';
 }
 function renderGloss(){
   const el=document.getElementById('gloss');
@@ -2557,14 +2629,14 @@ const PAT_TIP={updown:'Every scale note in the box, lowest to highest and back d
 const GUIDE_TIP={full:'The whole box stays visible while you play.',next:'While playing, only the current note and the next one are shown.',
  blind:'While playing, the shape is hidden. Follow the tab or play it from memory.'};
 const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
-function formulaText(c){return c.rel.map(r=>IV[r][0]).join(' ');}
+function formulaText(c){return c.rel.map(r=>chordIv(c,r)[0]).join(' ');}
 function degreeText(p){
-  const ivK=ivOf(p,cur.key), n=NOTES[pc(p.s,p.f)];
-  let t=`<b>${n}</b>: ${lab(ivK)[1]} of ${NOTES[cur.key]}`;
+  const ivK=ivOf(p,cur.key), n=noteName(pc(p.s,p.f));
+  let t=`<b>${n}</b>: ${lab(ivK)[1]} of ${keyName()}`;
   if(!cur.set.has(ivK)) t+=`, outside ${modeName()}`;
   if(st.mode==='drill'&&!picking()){
     const ivC=ivOf(p,cur.chord.root);
-    t+=cur.chordPcs.has(pc(p.s,p.f))?`, and the ${IV[ivC][1]} of ${cur.chord.name}`:`. Not in ${cur.chord.name}`;
+    t+=cur.chordPcs.has(pc(p.s,p.f))?`, and the ${chordIv(cur.chord,ivC)[1]} of the ${cur.chord.name} chord`:`. Not in the ${cur.chord.name} chord`;
   }
   return t+'.';
 }
@@ -2601,7 +2673,7 @@ const TIPS=[
  ['[data-act="spart"]',el=>el.dataset.v==='-1'?'Play every part of the song, one after another.':`Play only the ${esc(el.textContent)}, so you can work on it on its own.`],
  ['[data-act="line"][data-v="scale"]',()=>'Play scale patterns through the box over one chord.'],
  ['[data-act="line"][data-v="prog"]',()=>'Strum and arpeggiate a chord progression in this key and box, with strum patterns you can count and edit.'],
- ['[data-set="prog"]',()=>{const S=songProg(D.prog); if(S) return `<b>${esc(S.name)}</b>: ${S.bars.length} bars, as you typed them in the Songs tab. Pick another song or a common progression here.`; const P=PROG_BY[D.prog]; return `<b>${P.name}</b>: ${progRomans(P.degs).join(' ')}. ${P.degs.length} bar${P.degs.length>1?'s':''} of chords, built from ${NOTES[cur.key]} ${esc(modeName())}, so the same progression works in any key or mode.`;}],
+ ['[data-set="prog"]',()=>{const S=songProg(D.prog); if(S) return `<b>${esc(S.name)}</b>: ${S.bars.length} bars, as you typed them in the Songs tab. Pick another song or a common progression here.`; const P=PROG_BY[D.prog]; return `<b>${P.name}</b>: ${progRomans(P.id).join(' ')}. ${P.degs.length} bar${P.degs.length>1?'s':''} of chords, `+(PROG_FIX[P.id]?`built on ${keyName()}. Its chords are part of what makes it this progression, so they stay the same in any mode.`:`built from ${keyName()} ${esc(modeName())}, so the same progression works in any key or mode.`);}],
  ['[data-act="plan"][data-v="both"]',()=>`Strum each chord for a bar, then pick the same shape for a bar, one string at a time (an ${term('arpeggio','arpeggio')}).`],
  ['[data-act="plan"][data-v="strum"]',()=>'Strum each chord for a bar with the pattern below.'],
  ['[data-act="plan"][data-v="arp"]',()=>'Pick each chord’s shape one string at a time for a bar, low to high and back.'],
@@ -2615,7 +2687,7 @@ const TIPS=[
  ['[data-act="songform"]',()=>'Add a song you’re learning, with its chords, in the Songs tab.'],
  ['[data-act="songadd"]',()=>'Add this song. It shows up on the Path too.'],
  ['[data-act="songcancel"]',()=>'Close the form without adding a song.'],
- ['[data-act="rate"]',el=>`Rate how well you play it: ${el.dataset.v} of 5. Learned at 4. Click your current rating again to lower it.`],
+ ['[data-act="rate"]',el=>`Rate how well you play it: ${el.dataset.v} of 5. Click your current rating again to lower it.`],
  ['[data-act="songplay"]',el=>{const sk=LOG.skills[el.dataset.id]; return sk?`Practice: open Drill on ${esc(sk.name)}’s ${sk.chords&&sk.chords.length?'chords':'key and progression'}, in open position: strum each chord, then arpeggiate it.`:'';}],
  ['[data-act="songopen"]',el=>{const sk=LOG.skills[el.dataset.id]; return sk?`Open ${esc(sk.name)} in the Songs tab to change its chords, voicings and strum pattern.`:'';}],
  ['#modes [data-mode="songs"]',()=>'<b>Songs</b>: your songs, with their chords in parts, a voicing for each chord, and a strum pattern. Practice takes one straight to Drill. (5)'],
@@ -2646,7 +2718,7 @@ const TIPS=[
  ['[data-set="rpat"]',()=>{const P=curPat();return `<b>${P.name}</b>: ${counting(P)}. Patterns run from plain 8ths through ghost strums, 16ths, syncopation, and shuffle.`;}],
  ['[data-act="rres"][data-v="8"]',()=>'Put your pattern on 8 steps a bar: 1 & 2 & 3 & 4 &.'],
  ['[data-act="rres"][data-v="16"]',()=>'Put your pattern on 16 steps a bar: 1 e & a, four times.'],
- ['[data-act="rtog"][data-k="swing"]',()=>'Shuffle feel: the second strum of each pair lands late, two thirds of the way through, like a triplet with the middle note left out.'],
+ ['[data-act="rtog"][data-k="swing"]',()=>'Shuffle feel: the second note of each pair lands late, two thirds of the way through the pair, like a triplet with the middle note left out.'],
  ['#focusBtn',()=>(focusSong()?'Your focus is a song: every tab uses its key, and Drill plays its chords with its strum pattern and tempo.':'Your focus: every tab uses this key, scale, mode, and position, so it stays put as you move between them.')+(wide?'':' Tap to show or hide the settings.')],
  ['[data-fm="key"]',()=>'Focus on a key, scale, mode and position.'+(focusSong()?' Puts back the ones you had before picking a song.':'')],
  ['[data-fm="song"]',()=>songSteps().length?'Focus on one of your songs: its key for every tab, and its chords, strum pattern and tempo in Drill.':'Focus on one of your songs. Add one in the Songs tab first.'],
@@ -2660,14 +2732,14 @@ const TIPS=[
  ['#stats',()=>'Your quiz score and streak from Name it and Find it, and your practice time today.'],
  ['#layoutBtn',()=>`Layout: ${{auto:'automatic, based on the window shape',wide:'always desktop',compact:'always phone (sideways phones get a horizontal neck)'}[saved.layout]}. Click to switch.`],
  ['#soundBtn',()=>`Note sounds are ${saved.sound?'on':'off'} for tapping and quizzes. The drill has its own Click and Notes switches.`],
- ['[data-act="exch"]',el=>{const E=exSong(), n=el.dataset.n, c=chordIn(n,E?E.key:cur.key);return `<b>${esc(n)}</b> (${esc(c.roman)}): ${c.tones.map((t,k)=>NOTES[(c.root+c.rel[k])%12]).join(' ')}. Click to see it on the neck${saved.sound?' and hear it':''}.`;}],
+ ['[data-act="exch"]',el=>{const E=exSong(), n=el.dataset.n, c=chordIn(n,E?E.key:cur.key);return `<b>${esc(n)}</b> (${esc(c.roman)}): ${chordSpell(c).map(x=>x.name).join(' ')}. Click to see it on the neck${saved.sound?' and hear it':''}.`;}],
  ['[data-act="exhear"]',()=>'Hear the shape ringed on the neck. Set your own shape for a chord in the Songs tab.'],
  ['[data-act="exlab"][data-v="chord"]',()=>'Count every dot from the chord\'s root, so you see its 3rd, 5th and 7th, and the 2, 4 and 6 around them.'],
  ['[data-act="exlab"][data-v="key"]',()=>'Count every dot from the key\'s root, the way the scale is numbered.'],
  ['[data-act="exlab"][data-v="notes"]',()=>'Label each dot by its note name.'],
- ['[data-act="iv"]',el=>{const i=+el.dataset.i;return `<b>${lab(i)[1]}</b>: ${NOTES[(cur.key+i)%12]} in ${NOTES[cur.key]}. Click to ${st.visible.has(i)?'hide':'show'} it.`;}],
+ ['[data-act="iv"]',el=>{const i=+el.dataset.i;return `<b>${lab(i)[1]}</b>: ${noteName((cur.key+i)%12)} in ${keyName()}. Click to ${st.visible.has(i)?'hide':'show'} it.`;}],
  ['[data-act="show"][data-v="all"]',()=>'Show every note of the scale.'],
- ['[data-act="show"][data-v="chord"]',()=>'Show only the 3rd, 5th, and 7th, so the chord inside the scale stands out.'],
+ ['[data-act="show"][data-v="chord"]',()=>'Show only the chord tones above the root (3rd, 5th and 7th, or the nearest notes the scale has), so the chord inside the scale stands out.'],
  ['[data-act="labels"][data-v="iv"]',()=>'Label each dot by its scale degree.'],
  ['[data-act="labels"][data-v="notes"]',()=>'Label each dot by its note name.'],
  ['[data-act="answer"]',el=>`${lab(+el.dataset.i)[1]}`],
@@ -2681,17 +2753,17 @@ const TIPS=[
  ['[data-set="guide"]',()=>GUIDE_TIP[D.guide]],
  ['[data-act="slower"]',()=>'4 bpm slower.'],
  ['[data-act="faster"]',()=>'4 bpm faster.'],
- ['[data-act="tap"]',()=>'Tap this 3 or more times in rhythm to set the tempo.'],
- ['[data-set="sub"]',()=>D.line==='prog'?'How many arpeggio notes to play per beat.':'How many drill notes to play per click.'],
+ ['[data-act="tap"]',()=>'Tap this a few times in rhythm to set the tempo.'],
+ ['[data-set="sub"]',()=>D.line==='prog'?'How many arpeggio notes to play per beat.':'How many drill notes to play per beat.'],
  ['[data-act="play"]',()=>st.playing?'Pause. Shortcut: space':st.paused?'Resume with a one-bar count-in, repeating the bar you paused in. Shortcut: space':'Start, with a one-bar count-in. Shortcut: space'],
  ['[data-act="restart"]',()=>'Start over from the beginning of the drill.'],
  ['[data-k="click"]',()=>'The metronome click. The count-in always clicks.'],
  ['[data-k="notes"]',()=>D.line==='prog'?'Hear the strums and arpeggio notes as they come up.':'Hear each drill note as it comes up.'],
  ['[data-k="pad"]',()=>'Put the chord in the drill: strum it on beat 1 of every bar and play the line on beats 2 to 4.'],
- ['[data-act="resolve"][data-v="key"]',()=>`End every pass on the key root, ${NOTES[cur.key]}.`],
- ['[data-act="resolve"][data-v="chord"]',()=>`End every pass on the chord root, ${NOTES[cur.chord.root]}.`],
- ['[data-act="lbl"][data-v="key"]',()=>`Label degrees from the key root, ${NOTES[cur.key]}.`],
- ['[data-act="lbl"][data-v="chord"]',()=>`Label degrees from the chord root, ${NOTES[cur.chord.root]}, so the same notes read as chord tones and extensions.`],
+ ['[data-act="resolve"][data-v="key"]',()=>`End every pass on the key root, ${keyName()}.`],
+ ['[data-act="resolve"][data-v="chord"]',()=>`End every pass on the chord root, ${rootName(cur.chord)}.`],
+ ['[data-act="lbl"][data-v="key"]',()=>`Label degrees from the key root, ${keyName()}.`],
+ ['[data-act="lbl"][data-v="chord"]',()=>`Label degrees from the chord root, ${rootName(cur.chord)}, so the same notes read as chord tones and extensions.`],
  ['[data-act="lbl"][data-v="notes"]',()=>'Label each note by name.'],
  ['[data-set="ramp"]',()=>'Raise the tempo automatically after every full pass.'],
  ['[data-act="strum"]',()=>'Hear the chord voicing and see it on the neck.'],
@@ -2737,7 +2809,7 @@ document.addEventListener('keydown',e=>{const t=e.target.closest&&e.target.close
 addEventListener('scroll',hideTip,true);
 addEventListener('resize',hideTip);
 
-window.__fretDebug={tipFor,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,get PATH(){return buildPath()},get STEP_BY(){buildPath(); return STEP_BY},setupSkill,stepState,nextStep,followKey,stepWhat,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,progLabel,setProgChord,pschedule};
+window.__fretDebug={tipFor,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,get PATH(){return buildPath()},get STEP_BY(){buildPath(); return STEP_BY},setupSkill,stepState,nextStep,followKey,stepWhat,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule};
 fillSelects();
 render();
 setTimeout(syncNow,300); // does nothing without a token

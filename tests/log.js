@@ -214,6 +214,30 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(fv(X.autoVoicing('C/G',0))==='332010'&&fv(X.autoVoicing('D/F#',2))==='2x0232'&&fv(X.autoVoicing('Am/G',0))==='302210'&&X.chordIn('C/G',0).roman==='I/5','slash-voicing',[fv(X.autoVoicing('C/G',0)),fv(X.autoVoicing('D/F#',2)),fv(X.autoVoicing('Am/G',0)),X.chordIn('C/G',0).roman].join(' '));
   X.saveParts('song:here-pavement',[{name:'Verse',text:'A/C#, D, A'}]); mode('drill'); mode('explore');
   ok([...d.querySelectorAll('.cchips [data-act=exch]')].map(e=>e.dataset.n).join(' ')==='A/C♯ D A'&&/C♯ is its lowest note/.test(d.querySelector('.ex-card').textContent),'slash-explore',d.querySelector('.ex-card').textContent.slice(0,200));
+  // note names follow the key, and the music text holds up (the accuracy audit)
+  { const sk=X.LOG.skills['song:here-pavement'], keep={minor:sk.minor,key:sk.key};
+    X.saveParts('song:here-pavement',[{name:'Verse',text:'Am E7 B7 F'}]); sk.minor=true; sk.key=9; mode('drill'); mode('explore');
+    const card=()=>d.querySelector('.ex-card').textContent;
+    click(d.querySelector('.cchips [data-act=exch][data-n="E7"]'));
+    ok(/G♯ instead of G\b/.test(card())&&/harmonic minor/.test(card())&&/E Phrygian dominant/.test(card()),'audit-explore-v7',card().slice(0,400));
+    click(d.querySelector('.cchips [data-act=exch][data-n="B7"]'));
+    ok(/D♯ instead of D and F♯ instead of F/.test(card()),'audit-explore-b7',card().slice(0,400));
+    click(d.querySelector('.cchips [data-act=exch][data-n="F"]'));
+    ok(/F Lydian, and its ♯4 \(B\)/.test(card()),'audit-explore-lydian',card().slice(0,400));
+    Object.assign(sk,keep); X.saveParts('song:here-pavement',[{name:'Verse',text:'A/C#, D, A'}]); mode('drill'); mode('explore'); }
+  { const f0={...X.F}, sev=X.D.sev, line=X.D.line, prog=X.D.prog, fm=X.saved.fmode;
+    X.saved.fmode='key'; X.D.sev=false;
+    const at=(key,fam,m)=>{Object.assign(X.F,{key,fam,mode:m,pos:-1}); X.refresh(); return X.cur.chords.map(c=>c.name).join(' ');};
+    ok(at(4,'major',0)==='E F♯m G♯m A B C♯m D♯°','audit-spell-e',at(4,'major',0));
+    ok(at(1,'major',0)==='D♭ E♭m Fm G♭ A♭ B♭m C°','audit-spell-db',at(1,'major',0));
+    ok(at(8,'major',5).startsWith('G♯m A♯° B')&&at(0,'major',2).startsWith('Cm D♭ E♭'),'audit-spell-modes',at(8,'major',5)+' / '+at(0,'major',2));
+    at(0,'harm',6); ok(X.cur.chords[6].roman.startsWith('♭♭VII'),'audit-superlocrian',X.cur.chords.map(c=>c.roman).join(' '));
+    const pr=(id,k,fam,m,s)=>{Object.assign(X.F,{key:k,fam,mode:m,pos:-1}); X.D.line='prog'; X.D.prog=id; X.D.sev=s; X.refresh(); return X.cur.prog.map(p=>p.ch.name).join(' ');};
+    ok(pr('andalusian',9,'major',5,false)==='Am G F E','audit-andalusian',pr('andalusian',9,'major',5,false));
+    ok(pr('blues',0,'major',0,true).split(' ').every(n=>/^[CFG]7$/.test(n)),'audit-blues7',pr('blues',0,'major',0,true));
+    ok(pr('251',9,'major',5,true)==='Bm7♭5 E7 Am7 Am7','audit-minor-251',pr('251',9,'major',5,true));
+    ok(['Bdim','Bm7b5','Gdim7','Caug'].map(n=>X.chordIn(n,0).roman).join(' ')==='vii° viiø7 v°7 I+','audit-romans',['Bdim','Bm7b5','Gdim7','Caug'].map(n=>X.chordIn(n,0).roman).join(' '));
+    Object.assign(X.F,f0); Object.assign(X.D,{sev,line,prog}); X.saved.fmode=fm; X.refresh(); mode('drill'); mode('explore'); }
   // practice one part of a song in Drill
   X.saveParts('song:here-pavement',[{name:'Verse',text:'(A, E6, Dmaj7) x2'},{name:'Chorus',text:'D A E A'}]); X.refresh(); mode('drill');
   ok(X.cur.prog.length===10&&d.querySelectorAll('#sheet [data-act=spart]').length===3,'part-whole',X.cur.prog.length);
