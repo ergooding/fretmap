@@ -126,7 +126,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   // a song with its own typed chords
   const pc=X.parseChords('(A, E6, Dmaj7) x 2, A, E6, D, A');
   ok(pc.chords.join(' ')==='A E6 Dmaj7 A E6 Dmaj7 A E6 D A'&&!pc.bad.length,'parse-chords',JSON.stringify(pc));
-  ok(X.parseChords('F#m7 Bb C/G Gsus4 x2 Bm7b5').chords.join(' ')==='F♯m7 B♭ C Gsus4 Gsus4 Bm7♭5','parse-chords-2',X.parseChords('F#m7 Bb C/G Gsus4 x2 Bm7b5').chords.join(' '));
+  ok(X.parseChords('F#m7 Bb C/G Gsus4 x2 Bm7b5').chords.join(' ')==='F♯m7 B♭ C/G Gsus4 Gsus4 Bm7♭5','parse-chords-2',X.parseChords('F#m7 Bb C/G Gsus4 x2 Bm7b5').chords.join(' '));
   mode('songs'); click(d.querySelector('[data-act=songform]'));
   d.getElementById('sgName').value='Here'; d.getElementById('sgArtist').value='Pavement'; d.getElementById('sgChords').value='(A, E6, Dmaj7) x2, A, Q7, D, A';
   click(d.querySelector('[data-act=songadd]')); ok(/can't read “Q7”/.test(d.getElementById('sgMsg').textContent)&&!X.LOG.skills['song:here-pavement'],'chords-bad-token');
@@ -208,6 +208,12 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   X.saveParts('song:here-pavement',[{name:'Verse',text:'(A, E6, Dmaj7) x2'},{name:'Chorus',text:'A C G D'}]); mode('drill'); mode('explore');
   click(d.querySelector('.cchips [data-act=exch][data-n="C"]'));
   ok(/C instead of C♯/.test(d.querySelector('.ex-card').textContent)&&/Borrowed from A minor/.test(d.querySelector('.ex-card').textContent)&&d.querySelector('.cell[data-s="1"][data-f="3"] .dot.outk'),'explore-song-outside',d.querySelector('.ex-card').textContent.slice(0,300));
+  // slash chords keep their bass note
+  const sl=X.parseChords('C/G, F, F, C/G').chords; ok(sl.join(' ')==='C/G F F C/G','slash-parse',sl.join(' '));
+  const fv=f=>f?f.map(x=>x===null?'x':x).join(''):'none';
+  ok(fv(X.autoVoicing('C/G',0))==='332010'&&fv(X.autoVoicing('D/F#',2))==='2x0232'&&fv(X.autoVoicing('Am/G',0))==='302210'&&X.chordIn('C/G',0).roman==='I/5','slash-voicing',[fv(X.autoVoicing('C/G',0)),fv(X.autoVoicing('D/F#',2)),fv(X.autoVoicing('Am/G',0)),X.chordIn('C/G',0).roman].join(' '));
+  X.saveParts('song:here-pavement',[{name:'Verse',text:'A/C#, D, A'}]); mode('drill'); mode('explore');
+  ok([...d.querySelectorAll('.cchips [data-act=exch]')].map(e=>e.dataset.n).join(' ')==='A/C♯ D A'&&/C♯ is its lowest note/.test(d.querySelector('.ex-card').textContent),'slash-explore',d.querySelector('.ex-card').textContent.slice(0,200));
   X.saveParts('song:here-pavement',[{name:'Verse',text:'(A, E6, Dmaj7) x2, A, E6, D, A'}]);
   setF('#selSong','song:song-b');
   mode('songs'); ok(X.st.song==='song:song-b','focus-song-opens-in-songs');

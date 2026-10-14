@@ -572,7 +572,7 @@ const PROG_BY={}; PROGS.forEach(([id,name,degs])=>PROG_BY[id]={id,name,degs});
 function progRomans(degs){return degs.map(d=>cur.pchords?cur.pchords[d].roman:ROMAN[d]);}
 function progLabel(id){const S=songProg(id); if(S) return `${esc(S.name)}: ${S.chords.length>8?S.chords.slice(0,8).join(' ')+' …':S.chords.join(' ')}`; const P=PROG_BY[id]||PROG_BY.pop; return P.degs.length>6?P.name:`${P.name}: ${progRomans(P.degs).join(' ')}`;}
 // ---------- typed chords (a song's own progression) ----------
-// Chord symbols as people write them: A, E6, Dmaj7, F#m7, Bb, Gsus4, C/G (the bass note is dropped).
+// Chord symbols as people write them: A, E6, Dmaj7, F#m7, Bb, Gsus4, C/G (a slash chord: the note after the slash is the lowest).
 // "(A, E6, Dmaj7) x2" repeats a group; each chord gets one bar, so write a chord twice to hold it for two.
 const CHORD_SUF={'':[0,4,7],'maj':[0,4,7],'M':[0,4,7],'m':[0,3,7],'min':[0,3,7],'-':[0,3,7],'5':[0,7],
  '6':[0,4,7,9],'m6':[0,3,7,9],'7':[0,4,7,10],'maj7':[0,4,7,11],'M7':[0,4,7,11],'Δ':[0,4,7,11],'Δ7':[0,4,7,11],
@@ -582,10 +582,12 @@ const CHORD_SUF={'':[0,4,7],'maj':[0,4,7],'M':[0,4,7],'m':[0,3,7],'min':[0,3,7],
  'dim7':[0,3,6,9],'°7':[0,3,6,9],'o7':[0,3,6,9],'m7♭5':[0,3,6,10],'ø':[0,3,6,10],'ø7':[0,3,6,10],'aug':[0,4,8],'+':[0,4,8]};
 const LETTER={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
 function parseChord(t){
-  const m=/^([A-Ga-g])([#♯b♭]?)([^/]*)(?:\/[A-Ga-g][#♯b♭]?)?$/.exec(String(t).trim()); if(!m) return null;
+  const m=/^([A-Ga-g])([#♯b♭]?)([^/]*)(?:\/([A-Ga-g])([#♯b♭]?))?$/.exec(String(t).trim()); if(!m) return null;
   const suf=m[3].replace(/b(?=5)/,'♭').replace(/#(?=5)/,'♯'), rel=CHORD_SUF[suf]; if(!rel) return null;
-  const root=(LETTER[m[1].toUpperCase()]+(/[#♯]/.test(m[2])?1:/[b♭]/.test(m[2])?-1:0)+12)%12;
-  return {root,rel,name:m[1].toUpperCase()+(m[2]?(/[#♯]/.test(m[2])?'♯':'♭'):'')+suf};
+  const note=(l,a)=>(LETTER[l.toUpperCase()]+(/[#♯]/.test(a)?1:/[b♭]/.test(a)?-1:0)+12)%12, acc=a=>a?(/[#♯]/.test(a)?'♯':'♭'):'';
+  const root=note(m[1],m[2]), name=m[1].toUpperCase()+acc(m[2])+suf;
+  if(!m[4]||note(m[4],m[5])===root) return {root,rel,name};
+  return {root,rel,name:`${name}/${m[4].toUpperCase()}${acc(m[5])}`,bass:note(m[4],m[5])}; // a slash chord: the note after the slash is the lowest
 }
 function parseChords(text){
   let t=String(text||'');
@@ -599,10 +601,15 @@ function parseChords(text){
   return {chords:out.slice(0,64),bad};
 }
 const RN12=['I','♭II','II','♭III','III','IV','♯IV','V','♭VI','VI','♭VII','VII'];
+const DEG12=['1','♭2','2','♭3','3','4','♯4','5','♭6','6','♭7','7'];
 function chordIn(name,key){ // a typed chord as a chord of this key, with its roman numeral
-  const c=parseChord(name), d=(c.root-key+12)%12, rel=[...c.rel], suf=c.name.replace(/^[A-G][♯♭]?/,'');
-  const rn=RN12[d], minor=rel.includes(3)&&!rel.includes(4);
-  return {root:c.root,tones:rel.map(x=>(d+x)%12),rel,name:c.name,roman:(minor?rn.toLowerCase():rn)+suf.replace(/^(m|min|-)(?!aj)/,'')};
+  const c=parseChord(name), d=(c.root-key+12)%12, rel=[...c.rel], suf=c.name.replace(/^[A-G][♯♭]?/,'').replace(/\/.*/,'');
+  const rn=RN12[d], minor=rel.includes(3)&&!rel.includes(4), out={root:c.root,rel,name:c.name,roman:(minor?rn.toLowerCase():rn)+suf.replace(/^(m|min|-)(?!aj)/,'')};
+  if(c.bass!==undefined){ // over another bass note: C/G is C with G lowest; C/B adds the B
+    const b=(c.bass-c.root+12)%12; out.bass=c.bass; out.core=rel.length; if(!rel.includes(b)) rel.push(b);
+    out.roman+='/'+DEG12[(c.bass-key+12)%12];
+  }
+  out.tones=rel.map(x=>(d+x)%12); return out;
 }
 function songProg(id){ // a song with typed chords, used as a progression in Drill
   if(!/^song:/.test(id||'')) return null;
@@ -753,25 +760,35 @@ function click(t,freq,vol){
 const play=(p,d)=>tone(MIDI[p.s]+p.f,d);
 function voicingOK(frets,R,want,fifths){
   const played=frets.map((f,s)=>f===null?null:pc(s,f)).filter(x=>x!==null);
-  if(!played.length||played[0]!==R) return false;           // root in the bass
+  if(!played.length||played[0]!==R) return false;           // root in the bass (or a slash chord's own bass note)
   if(played.some(x=>!want.has(x))) return false;
   const missing=[...want].filter(x=>!played.includes(x));
   return missing.every(x=>want.size===4&&fifths.has(x));      // a 7th chord may drop its 5th
 }
 function findVoicing(){
-  const ch=cur.chord, R=ch.root, want=cur.chordPcs, lo=cur.lo, hi=cur.hi;
+  const ch=cur.chord, R=ch.root, B=ch.bass??R, want=cur.chordPcs, lo=cur.lo, hi=cur.hi;
   const fifths=new Set(ch.rel.filter(r=>r>=6&&r<=8).map(r=>(R+r)%12));
   const inPos=f=>f===0?lo<=1:(f>=Math.max(1,lo-1)&&f<=hi);
   let best=null;
-  (SHAPES[ch.rel.slice(1).join(',')]||[]).forEach(([name,off],pri)=>{
+  const withBass=frets=>{ // a slash chord: put its bass note under the shape, or start the shape from it
+    if(B===R) return [frets];
+    const out=[], s0=frets.findIndex(f=>f!==null);
+    for(const s of [s0-1,s0-2]) if(s>=0) for(let f=0;f<=12;f++) if(inPos(f)&&pc(s,f)===B) out.push(frets.map((x,i)=>i===s?f:x));
+    for(let s=s0+1;s<6;s++) if(frets[s]!==null&&pc(s,frets[s])===B){if(frets.slice(s).filter(f=>f!==null).length>=4) out.push(frets.map((f,i)=>i<s?null:f)); break;}
+    return out;
+  };
+  (SHAPES[ch.rel.slice(1,ch.core).join(',')]||[]).forEach(([name,off],pri)=>{
     const rs=off.findIndex(o=>o!==null);
     for(let rf=0;rf<=12;rf++){
       if(pc(rs,rf)!==R) continue;
-      const frets=off.map(o=>o===null?null:rf+o);
-      if(frets.some(f=>f!==null&&(f<0||f>12||!inPos(f)))) continue;
-      if(!voicingOK(frets,R,want,fifths)) continue;
-      const score=pri*10+frets.filter(f=>f!==null&&f>0&&f<lo).length*3;
-      if(!best||score<best.score) best={name,frets,score};
+      const base=off.map(o=>o===null?null:rf+o);
+      if(base.some(f=>f!==null&&(f<0||f>12||!inPos(f)))) continue;
+      withBass(base).forEach((frets,k)=>{
+        if(!voicingOK(frets,B,want,fifths)) return;
+        const fr=frets.filter(f=>f!==null&&f>0); if(fr.length&&Math.max(...fr)-Math.min(...fr)>4) return;
+        const score=pri*10+k+frets.filter(f=>f!==null&&f>0&&f<lo).length*3;
+        if(!best||score<best.score) best={name,frets,score};
+      });
     }
   });
   if(best) return best;
@@ -785,7 +802,7 @@ function findVoicing(){
       if(idx.length<3) return;
       const first=idx[0], last=idx[idx.length-1];
       const gaps=last-first+1-idx.length; if(gaps>1) return;
-      if(!voicingOK(frets,R,want,fifths)) return;
+      if(!voicingOK(frets,B,want,fifths)) return;
       const fr=frets.filter(f=>f!==null&&f>0);
       const span=fr.length?Math.max(...fr)-Math.min(...fr):0; if(span>3) return;
       const mn=Math.min(...fr), atMin=fr.filter(f=>f===mn).length;
@@ -1252,6 +1269,8 @@ const now=()=>Date.now();
 const rid=p=>p+now().toString(36)+Math.random().toString(36).slice(2,6);
 let LOG={v:1,sessions:[],skills:{},gist:null};
 try{const raw=localStorage.getItem(LOG_KEY); if(raw){const o=JSON.parse(raw); if(o&&o.v===1) LOG=Object.assign(LOG,o);}}catch(e){}
+Object.values(LOG.skills).forEach(sk=>{ // older versions read C/G as C: read the parts again
+  if(sk&&sk.kind==='song'&&sk.parts&&sk.parts.length){const ch=sk.parts.flatMap(p=>parseChords(p.text).chords); if(ch.length) sk.chords=ch;}});
 if(songProg(D.prog)) refresh(); // the first refresh ran before the log, which holds the song's chords
 function storeLog(){try{localStorage.setItem(LOG_KEY,JSON.stringify(LOG));}catch(e){}}
 function saveLog(){storeLog(); syncSoon();}
@@ -1856,7 +1875,7 @@ function exCard(E){
   const from=saved.exlab==='notes'?'':saved.exlab==='key'?`, counted from ${NOTES[key]}`:`, counted from ${NOTES[c.root]}`;
   const legend=`<p class="hint">On the neck: colored dots are its notes and pearl dots are the other notes to play over it${from}.${outs.length?' A dashed edge marks a note from outside the key.':''} Gold rings are the shape you play.</p>`;
   return `<div class="ex-card"><div class="ex-head"><b class="ex-name">${esc(sel)}</b><span class="rn">${esc(c.roman)}</span><span class="ex-tag${outs.length?' out':''}">${outs.length?'Outside the key':'In the key'}</span></div>
-    <p>${exRole(E,c)}</p><div class="exns">${notes}</div><p>${over}</p>${next}
+    <p>${exRole(E,c)}${c.bass!==undefined?` ${NOTES[c.bass]} is its lowest note: ${c.rel.slice(0,c.core).includes((c.bass-c.root+12)%12)?`the chord's own ${IV[(c.bass-c.root+12)%12][1]}, moved to the bottom`:'an extra note under the chord'}.`:''}</p><div class="exns">${notes}</div><p>${over}</p>${next}
     <div class="row ex-play">${f?`<code>${fretText(f)}</code><button class="btn" data-act="exhear">Hear it</button>`:''}</div>${legend}</div>`;
 }
 function exploreSongHTML(E){
@@ -1932,7 +1951,7 @@ function songEditor(id){
     const pc=parseChords(p.text), n=pc.chords.length;
     return `<section class="sbox"><div class="sb-top"><input class="pname" data-part-name="${k}" value="${esc(p.name)}" aria-label="Part name" autocomplete="off"><small id="pbars${k}">${n?`${n} bar${n>1?'s':''}`:'type its chords'}</small>${parts.length>1?`<button class="chip" data-act="partdel" data-part="${k}">Remove</button>`:''}</div>
       <textarea data-part="${k}" rows="2" placeholder="(A, E6, Dmaj7) x2, A, E6, D, A" aria-label="${esc(p.name)} chords, a bar each" spellcheck="false">${esc(p.text)}</textarea>
-      <p class="hint bad" id="pbad${k}">${pc.bad.length?`Fretmap can't read ${pc.bad.slice(0,4).map(x=>`“${esc(x)}”`).join(', ')}. Write chords like A, E6, Dmaj7, F#m or Bb7.`:''}</p>
+      <p class="hint bad" id="pbad${k}">${pc.bad.length?`Fretmap can't read ${pc.bad.slice(0,4).map(x=>`“${esc(x)}”`).join(', ')}. Write chords like A, E6, Dmaj7, F#m, Bb7 or C/G.`:''}</p>
       <div class="cchips" id="cchips${k}" role="group" aria-label="Chords in ${esc(p.name)}, tap one to pick its voicing">${chordChips(sk,k,p.text)}</div>
       ${st.vpick&&st.vpick.part===k&&pc.chords.includes(st.vpick.n)?vpickHTML(sk,st.vpick.n):''}</section>`;
   }).join('');
@@ -2160,7 +2179,7 @@ function songChange(e){
     const parts=songParts(sk).map(p=>({...p})), k=+(t.dataset.part??t.dataset.partName);
     if(t.dataset.partName!==undefined) parts[k].name=t.value; else{
       const bad=parseChords(t.value).bad, el=document.getElementById('pbad'+k);
-      if(bad.length){if(el) el.textContent=`Fretmap can't read ${bad.slice(0,4).map(x=>`“${x}”`).join(', ')}. Write chords like A, E6, Dmaj7, F#m or Bb7.`; return true;} // keep what's typed, don't save it yet
+      if(bad.length){if(el) el.textContent=`Fretmap can't read ${bad.slice(0,4).map(x=>`“${x}”`).join(', ')}. Write chords like A, E6, Dmaj7, F#m, Bb7 or C/G.`; return true;} // keep what's typed, don't save it yet
       parts[k].text=t.value;}
     saveParts(id,parts); if(D.line==='prog'&&D.prog===id) refresh(); render(); return true;}
   if(t.dataset.sg==='pat'){const v=t.value, P=songPat(sk);
@@ -2225,7 +2244,7 @@ const onClick=e=>{
       const say=m=>{const el=document.getElementById('sgMsg'); if(el) el.textContent=m;}; // nothing typed is lost
       const text=val('sgChords'), bad=parseChords(text).bad;
       if(!val('sgName').trim()){say('Give it a title first.'); return;}
-      if(bad.length){say(`Fretmap can't read ${bad.slice(0,4).map(x=>`“${x}”`).join(', ')}. Write chords like A, E6, Dmaj7, F#m or Bb7.`); return;}
+      if(bad.length){say(`Fretmap can't read ${bad.slice(0,4).map(x=>`“${x}”`).join(', ')}. Write chords like A, E6, Dmaj7, F#m, Bb7 or C/G.`); return;}
       const id=addSong(val('sgName'),val('sgArtist'),val('sgLink'),-1,0,'pop',text,{});
       saveParts(id,[{name:'Verse',text}]); st.song=id; st.newSong=false; render(); return;}
     case 'rate':{const id=b.dataset.id, r=+b.dataset.v, sk=LOG.skills[id]; if(sk) setSong(id,{rating:sk.rating===r?r-1:r}); render(); return;}
@@ -2401,7 +2420,7 @@ const GLOSS_GROUPS=[
 const GLOSS={}; GLOSS_GROUPS.forEach(([g,list])=>list.forEach(([k,t,d,hs])=>GLOSS[k]={t,d,hs}));
 function term(k,text){return `<span class="term" data-term="${k}" tabindex="0">${text??GLOSS[k].t}</span>`;}
 function qualityTerm(c){
-  const r=c.rel.slice(1).join(',');
+  const r=c.rel.slice(1,c.core).join(',');
   return {'4,7':'major','3,7':'minor','3,6':'dim','4,8':'aug','4,7,11':'maj7','4,7,10':'dom7','3,7,10':'m7','3,6,10':'halfdim','3,6,9':'dim7','5,7':'sus','2,7':'sus'}[r]||'formula';
 }
 function renderGloss(){
@@ -2618,7 +2637,7 @@ document.addEventListener('keydown',e=>{const t=e.target.closest&&e.target.close
 addEventListener('scroll',hideTip,true);
 addEventListener('resize',hideTip);
 
-window.__fretDebug={tipFor,saveParts,exSong,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,get PATH(){return buildPath()},get STEP_BY(){buildPath(); return STEP_BY},setupSkill,stepState,nextStep,followKey,stepWhat,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,progLabel,setProgChord,pschedule};
+window.__fretDebug={tipFor,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,get PATH(){return buildPath()},get STEP_BY(){buildPath(); return STEP_BY},setupSkill,stepState,nextStep,followKey,stepWhat,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,progLabel,setProgChord,pschedule};
 fillSelects();
 render();
 setTimeout(syncNow,300); // does nothing without a token
