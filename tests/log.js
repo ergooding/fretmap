@@ -253,7 +253,19 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     posAt(0,'major',0); Object.assign(X.D,{line:'scale',pattern:'updown'}); X.refresh(); mode('drill');
     const run=X.genSeq().filter(n=>!n.chord&&!n.rest), pcOf=n=>(n.s===undefined?-1:([4,9,2,7,11,4][n.s]+n.f)%12);
     ok(!X.st.picking&&!d.querySelector('[data-act=keepbox]')&&run.length>20&&pcOf(run[0])===0&&pcOf(run[run.length-1])===0&&Math.max(...run.map(n=>n.f))>=10&&Math.min(...run.map(n=>n.f))<=3,'whole-neck-run',run.map(n=>n.s+'/'+n.f).join(' '));
+    // strumming over the whole neck starts at once, each chord in the usual shape closest to the nut
+    Object.assign(X.F,{key:3,fam:'mel',mode:0,pos:-1}); Object.assign(X.D,{line:'prog',prog:'pop',sev:true}); X.refresh(); mode('drill');
+    const pv=X.cur.prog.map(p=>p.voicing&&p.voicing.frets);
+    ok(!d.querySelector('[data-act=keepbox]')&&d.querySelector('#tab')&&pv.every(f=>f&&Math.max(...f.filter(x=>x!==null))<=5),'whole-neck-strum',JSON.stringify(pv));
+    Object.assign(X.F,{key:0,fam:'chrom',mode:0,pos:-1}); X.D.line='scale'; X.refresh(); mode('drill');
+    const cr=X.genSeq().filter(n=>!n.chord&&!n.rest); ok(cr.length>40&&Math.max(...cr.map(n=>n.f))>=10,'whole-neck-chrom',cr.length);
     Object.assign(X.F,f0); Object.assign(X.D,{sev,line,prog}); X.saved.fmode=fm; X.refresh(); mode('drill'); mode('explore'); }
+  // the browser's Back button returns to the previous tab, and closing the settings sheet doesn't leave an entry behind
+  { mode('explore'); mode('drill'); const n=w.history.length; click(d.querySelector('[data-act=sheet]')); ok(X.st.sheet&&w.history.length===n+1,'back-sheet-entry',w.history.length-n);
+    click(d.querySelector('[data-act=sheetclose]')); await sleep(80); ok(!X.st.sheet&&w.history.state.fm.mode==='drill'&&!w.history.state.fm.sheet,'back-sheet-close',JSON.stringify(w.history.state));
+    mode('songs'); w.history.back(); await sleep(80); ok(X.st.mode==='drill'&&!X.st.sheet,'back-tab',X.st.mode);
+    w.history.back(); await sleep(80); ok(X.st.mode==='explore','back-tab-2',X.st.mode);
+    w.history.forward(); await sleep(80); ok(X.st.mode==='drill','forward-tab',X.st.mode); mode('explore'); }
   // practice one part of a song in Drill
   X.saveParts('song:here-pavement',[{name:'Verse',text:'(A, E6, Dmaj7) x2'},{name:'Chorus',text:'D A E A'}]); X.refresh(); mode('drill');
   ok(X.cur.prog.length===10&&d.querySelectorAll('#sheet [data-act=spart]').length===3,'part-whole',X.cur.prog.length);

@@ -827,7 +827,7 @@ function refresh(){
   if(D.chord>=cur.chords.length) D.chord=0;
   cur.chord=cur.chords[D.chord];
   cur.chordPcs=new Set(cur.chord.tones.map(t=>(cur.key+t)%12));
-  cur.voicing=findVoicing();
+  cur.voicing=cur.whole?neckVoicing():findVoicing();
   cur.pchords=cur.chords.length===7?cur.chords:parentChords();
   cur.prog=null;
   const song=D.line==='prog'&&songProg(D.prog);
@@ -840,11 +840,20 @@ function refresh(){
     cur.prog=items.map((it,d)=>{
       const ch=it.ch; cur.chord=ch; cur.chordPcs=new Set(ch.tones.map(t=>(cur.key+t)%12));
       const own=song&&parseFrets(song.voicings[ch.name]); // the song's own voicing wins, wherever it sits on the neck
-      return {...it,d,pcs:cur.chordPcs,voicing:own?{name:`Your voicing for ${song.name}`,frets:own,own:true}:findVoicing()};
+      return {...it,d,pcs:cur.chordPcs,voicing:own?{name:`Your voicing for ${song.name}`,frets:own,own:true}:cur.whole?neckVoicing():findVoicing()};
     });
     cur.nbars=items.length?items[items.length-1].bar+1:0;
     setProgChord(0);
   }
+}
+function vFrets(v){ // where a voicing sits: its box, or with the whole neck, the frets it actually uses
+  if(!cur.whole) return `${cur.lo}–${cur.hi}`;
+  const fr=v.frets.filter(f=>f!==null); return `${Math.min(...fr)}–${Math.max(...fr)}`;
+}
+function neckVoicing(){ // whole neck: the usual shape closest to the nut, open chords first, then each position up the neck
+  const keep={lo:cur.lo,hi:cur.hi}; let v=null;
+  for(const w of [{lo:0,hi:4},...cur.pos]){Object.assign(cur,{lo:w.lo,hi:w.hi}); v=findVoicing(); if(v) break;}
+  Object.assign(cur,keep); return v;
 }
 function setProgChord(i){const p=cur.prog[i]; cur.pci=i; cur.chord=p.ch; cur.chordPcs=p.pcs; cur.voicing=p.voicing;}
 refresh();
@@ -1148,7 +1157,7 @@ function record(ok){
 
 // ---------- drill generation ----------
 function boxNotes(){
-  if(cur.whole&&D.line!=='prog'&&F.fam!=='chrom'&&cur.pos.length) return climbNotes();
+  if(cur.whole&&D.line!=='prog'&&cur.pos.length) return climbNotes();
   const list=[];
   for(let s=0;s<6;s++)for(let f=cur.lo;f<=cur.hi;f++) if(cur.set.has(ivOf({s,f},cur.key))) list.push({s,f,m:MIDI[s]+capo()+f});
   list.sort((a,b)=>a.m-b.m||b.s-a.s); // same pitch twice: keep the higher string (less stretching)
@@ -1157,7 +1166,7 @@ function boxNotes(){
 function climbNotes(){
   // the whole neck as one run: every scale note from the lowest root of the first shape up to the top of the last,
   // shifting up through the shapes in order, so each shape gets its share of the run (each note keeps its box for fingering)
-  const S=cur.pos, all=[];
+  const S=F.fam==='chrom'?cur.pos.filter(p=>p.lo%4===0):cur.pos, all=[]; // all 12 notes: three boxes, frets 0–4, 4–8 and 8–12
   for(let s=0;s<6;s++)for(let f=0;f<=12;f++) if(cur.set.has(ivOf({s,f},cur.key))) all.push({s,f,m:MIDI[s]+capo()+f});
   const inBox=(n,b)=>n.f>=b.lo-(b.lo?0:1)&&n.f<=b.hi;
   const first=all.filter(n=>inBox(n,S[0])&&pc(n.s,n.f)===cur.key).sort((a,b)=>a.m-b.m)[0];
@@ -1596,9 +1605,9 @@ function render(){
   document.querySelectorAll('#modes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===st.mode||(b.dataset.mode==='quiz'&&(st.mode==='name'||st.mode==='find'))));
   appEl.classList.toggle('m-practice',st.mode==='practice'||st.mode==='songs'); appEl.classList.toggle('m-songs',st.mode==='songs'); appEl.classList.toggle('m-drill',st.mode==='drill');
   if(saved.fmode==='song'&&!focusSong()) saved.fmode='key'; // the song was removed
-  fillSongSel(); renderStats(); focusText(); renderBoard(); renderPrompt(); renderPanel(); renderSheet(); renderVoice(); updateLive();
+  fillSongSel(); renderStats(); focusText(); renderBoard(); renderPrompt(); renderPanel(); renderSheet(); renderVoice(); updateLive(); navSync();
 }
-const picking=()=>st.mode==='drill'&&(st.picking||cur.whole&&(D.line==='prog'||F.fam==='chrom'));
+const picking=()=>st.mode==='drill'&&st.picking;
 function drillLabel(p){
   const ivK=ivOf(p,cur.key), ivC=ivOf(p,cur.chord.root);
   const ref=D.ref==='chord'?ivC:ivK;
@@ -1757,9 +1766,9 @@ function renderVoice(){
   const v=cur.voicing;
   const ctxt=`${F.fam==='chrom'?'':' in '+keyName()+' '+modeName()}`;
   const head=`<div class="vc-head"><b>${cur.chord.name}</b><b class="rn term" data-term="roman" tabindex="0">${cur.chord.roman}</b><span>${ctxt.trim()}</span></div>`;
-  if(!v){el.innerHTML=`${head}${chordFormula(null)}<p>No playable voicing with the root in the bass fits frets ${cur.lo}–${cur.hi}. Try the next position.</p>`;return;}
+  if(!v){el.innerHTML=`${head}${chordFormula(null)}<p>No playable voicing with the root in the bass fits ${cur.whole?'anywhere on the neck':`frets ${cur.lo}–${cur.hi}. Try the next position`}.</p>`;return;}
   const tabTxt=v.frets.some(f=>f!==null&&f>9)?v.frets.map(f=>f===null?'x':f).join(' '):v.frets.map(f=>f===null?'x':f).join('');
-  el.innerHTML=`${head}<p class="vc-shape">${v.own?esc(v.name):`${v.name.startsWith('Drop')?term('drop3',v.name):v.name.startsWith('Found')?v.name:term('shape',v.name)}, frets ${cur.lo}–${cur.hi}`}</p>
+  el.innerHTML=`${head}<p class="vc-shape">${v.own?esc(v.name):`${v.name.startsWith('Drop')?term('drop3',v.name):v.name.startsWith('Found')?v.name:term('shape',v.name)}, frets ${vFrets(v)}`}</p>
     ${chordFormula(v)}
     <button class="vc-diag" aria-label="Play ${cur.chord.name} and show it on the neck">${voiceSVG(v)}</button>
     <p><code>${tabTxt}</code><br>Tap the diagram to hear it and see it on the neck.</p>`;
@@ -2649,9 +2658,9 @@ function openGloss(k){
   const row=k&&document.getElementById('gl-'+k);
   el.querySelectorAll('.gl-row.hl').forEach(r=>r.classList.remove('hl'));
   if(row){row.classList.add('hl'); if(row.scrollIntoView) row.scrollIntoView({block:'center'});} else el.querySelector('.gl-body').scrollTop=0;
-  el.querySelector('[data-gl="close"]').focus();
+  el.querySelector('[data-gl="close"]').focus(); navSync();
 }
-function closeGloss(){document.getElementById('gloss').hidden=true;}
+function closeGloss(){document.getElementById('gloss').hidden=true; navSync();}
 document.getElementById('gloss').addEventListener('click',e=>{
   if(e.target.id==='gloss'){closeGloss();return;}
   const b=e.target.closest('[data-gl]'); if(!b) return;
@@ -2660,6 +2669,35 @@ document.getElementById('gloss').addEventListener('click',e=>{
 });
 document.getElementById('glossBtn').onclick=()=>openGloss();
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('gloss').hidden) closeGloss();});
+
+// ---------- browser history ----------
+// The app stays one page, but each tab, the song open in Songs, the settings sheet and the glossary get an entry in the browser's history, so Back returns to the previous screen.
+function navNow(){return {mode:st.mode,song:st.mode==='songs'?(st.newSong?'+':st.song||null):null,sheet:!!st.sheet&&st.mode==='drill',gloss:!document.getElementById('gloss').hidden};}
+const navKey=s=>s?[s.mode,s.song,s.sheet,s.gloss].join('|'):'';
+function navSync(){
+  if(st.navBusy||!window.history||!history.replaceState) return;
+  const now=navNow(), hs=history.state, was=hs&&hs.fm;
+  if(!was){history.replaceState({fm:now},''); return;} // the entry the page loaded into
+  if(navKey(now)===navKey(was)) return;
+  // closing the sheet or the glossary steps back over the entry that opening it added
+  if(hs.pushed&&(was.sheet||was.gloss)&&navKey({...was,sheet:now.sheet,gloss:now.gloss})===navKey(now)){history.back(); return;}
+  history.pushState({fm:now,pushed:true},'');
+}
+addEventListener('popstate',e=>{
+  const s=e.state&&e.state.fm; if(!s) return;
+  st.navBusy=true;
+  try{
+    if(!s.gloss&&!document.getElementById('gloss').hidden) closeGloss();
+    if(s.mode!==st.mode) setMode(s.mode);
+    if(s.mode==='songs'){
+      st.newSong=s.song==='+'; st.vpick=null;
+      if(s.song&&s.song!=='+'&&LOG.skills[s.song]){st.song=s.song; if(focusSong()&&saved.fsong!==s.song) setFocusSong(s.song);}
+    }
+    st.sheet=s.sheet&&st.mode==='drill'; render();
+    if(s.gloss&&document.getElementById('gloss').hidden) openGloss();
+  }finally{st.navBusy=false;}
+  const now=navNow(); if(navKey(now)!==navKey(s)) history.replaceState({...e.state,fm:now},''); // the song it named is gone
+});
 
 // ---------- tooltips (mouse hover and keyboard focus) ----------
 const STR_NAME=['low E','A','D','G','B','high E'];
@@ -2773,7 +2811,7 @@ const TIPS=[
  ['#selKey',()=>'The key center. Random picks a new key for each quiz question.'],
  ['#selFam',()=>'The scale family. Each family has its own set of modes.'],
  ['#selMode',()=>`<b>${esc(modeName())}</b>: R ${cur.allowed.map(i=>lab(i)[0]).join(' ')}`],
- ['#selPos',()=>'A 5-fret box built around one CAGED shape of the home chord, or the whole neck: in Drill, scale lines then run up through every shape.'],
+ ['#selPos',()=>'A 5-fret box built around one CAGED shape of the home chord, or the whole neck: in Drill, scale lines then run up through every shape, and strummed chords take the usual shape closest to the nut.'],
  ['#stats',()=>'Your quiz score and streak from Name it and Find it, and your practice time today.'],
  ['#layoutBtn',()=>`Layout: ${{auto:'automatic, based on the window shape',wide:'always desktop',compact:'always phone (sideways phones get a horizontal neck)'}[saved.layout]}. Click to switch.`],
  ['#soundBtn',()=>`Note sounds are ${saved.sound?'on':'off'} for tapping and quizzes. The drill has its own Click and Notes switches.`],
