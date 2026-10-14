@@ -221,6 +221,26 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(X.cur.prog.map(p=>p.ch.name).join(' ')==='D A E A'&&/Chorus · 4 bars/.test(d.querySelector('#sheet .sh-sub').textContent)&&d.querySelectorAll('#sheet .sh-bars .bar').length===4,'part-chorus',X.cur.prog.map(p=>p.ch.name).join(' '));
   mode('explore'); mode('drill'); ok(X.cur.prog.length===4,'part-remembered');
   X.saveParts('song:here-pavement',[{name:'Verse',text:'(A, E6, Dmaj7) x2, A, E6, D, A'}]); X.refresh(); ok(X.cur.prog.length===10,'part-gone-falls-back',X.cur.prog.length);
+  // split bars and a strum pattern per part
+  const pb=X.parseChords('[C G] [C . . G] (D) x2').bars; ok(pb.length===4&&pb[0].length===2&&pb[0][1].from===0.5&&pb[1][0].to===0.75&&pb[1][1].name==='G'&&pb[3][0].name==='D','split-parse',JSON.stringify(pb.slice(0,2)));
+  ok(X.parseChords('[. G]').bad.length===1&&X.parseChords('[C Q7]').bad.join()==='Q7','split-bad');
+  X.saveParts('song:here-pavement',[{name:'Verse',text:'[A E] D'},{name:'Chorus',text:'G A'}]); X.saved.spart={}; X.refresh(); mode('drill');
+  X.D.plan='strum'; X.refresh(); X.st.seq=X.genSeq();
+  ok(X.cur.prog.length===5&&X.cur.nbars===4&&/4 bars/.test(d.querySelector('#sheet .sh-sub').textContent)&&d.querySelectorAll('#sheet .bar.split').length===2,'split-drill',X.cur.prog.length+' '+X.cur.nbars);
+  {const b0=X.st.seq.filter(n=>n.bar===0), h=b0.length/2; ok(b0.slice(0,h).every(n=>n.ci===0)&&b0.slice(h).every(n=>n.ci===1)&&b0[0].head&&b0[h].head&&!b0[1].head,'split-steps',b0.map(n=>n.ci).join(''));}
+  const songPatBefore=JSON.stringify(X.LOG.skills['song:here-pavement'].strum||null);
+  mode('songs'); click(d.querySelector('[data-act=songopen][data-id="song:here-pavement"]')); click(d.querySelector('[data-act=pown][data-part="1"]'));
+  ok(!!X.LOG.skills['song:here-pavement'].parts[1].strum&&d.querySelector('[data-sg=pat][data-sp="1"]'),'part-own-on');
+  const otherPat=Object.keys(X.RPAT).find(k=>k!==X.curPat().id&&X.RPAT[k].res===16); setF('[data-sg=pat][data-sp="1"]',otherPat);
+  ok(X.LOG.skills['song:here-pavement'].parts[1].strum.pat===otherPat&&JSON.stringify(X.LOG.skills['song:here-pavement'].strum||null)===songPatBefore,'part-own-pattern',otherPat);
+  mode('drill'); X.st.seq=X.genSeq();
+  {const ch=X.st.seq.filter(n=>n.chord&&X.cur.prog[n.ci].part===1), vs=X.st.seq.filter(n=>n.chord&&X.cur.prog[n.ci].part===0);
+   ok(ch.length&&ch.every(n=>n.n===16)&&ch.map(n=>n.strum).slice(0,16).join('')===X.RPAT[otherPat].steps&&vs.every(n=>n.n===X.curPat().res),'part-own-plays',ch.slice(0,16).map(n=>n.strum).join(''));}
+  click(d.querySelector('#sheet [data-act=spart][data-v="1"]')); ok(X.R.pat===otherPat&&/Saved with Chorus/.test(d.getElementById('panel').textContent),'part-own-live',X.R.pat);
+  click(d.querySelector('.rstep[data-i="1"]')); ok(X.LOG.skills['song:here-pavement'].parts[1].strum.pat==='custom'&&JSON.stringify(X.LOG.skills['song:here-pavement'].strum||null)===songPatBefore,'part-own-edit');
+  click(d.querySelector('[data-act=spown]')); ok(!X.LOG.skills['song:here-pavement'].parts[1].strum&&X.R.owner==='song:here-pavement','part-own-off',X.R.owner);
+  click(d.querySelector('#sheet [data-act=spart][data-v="-1"]')); X.D.plan='both';
+  X.saveParts('song:here-pavement',[{name:'Verse',text:'(A, E6, Dmaj7) x2, A, E6, D, A'}]); X.refresh();
   // a capo'd song
   mode('songs'); click(d.querySelector('[data-act=songopen][data-id="song:here-pavement"]')); setF('[data-sf=capo]','2');
   ok(X.LOG.skills['song:here-pavement'].capo===2&&X.capo()===2,'capo-saved');

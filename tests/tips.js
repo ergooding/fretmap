@@ -38,7 +38,10 @@ async function run(wide){
      goMode(d,click,'practice'); check('path with song');
      click(d.querySelector('[data-fm=song]')); check('focus on song'); goMode(d,click,'drill'); check('drill focused on song');
      {const sk=X.LOG.skills[X.saved.fsong]; X.saveParts(X.saved.fsong,[{name:'Verse',text:'C D'},{name:'Chorus',text:'Am G'}]); goMode(d,click,'explore'); goMode(d,click,'drill'); check('drill song parts');
-      const sp=d.querySelector('[data-act=spart][data-v="1"]'); if(sp){click(sp); check('drill song chorus');} else {bad++; console.log('NO PART SEG');}}
+      const sp=d.querySelector('[data-act=spart][data-v="1"]'); if(sp){click(sp); check('drill song chorus');} else {bad++; console.log('NO PART SEG');}
+      click(d.querySelector('[data-act=spown]')); check('drill part own strum'); click(d.querySelector('[data-act=spart][data-v="-1"]')); check('drill whole song with part strum');
+      X.saveParts(X.saved.fsong,[{name:'Verse',text:'[C G] D'},{name:'Chorus',text:'Am [G . . F]'}]); goMode(d,click,'explore'); goMode(d,click,'drill'); check('drill split bars');
+      X.st.newSong=false; X.st.song=X.saved.fsong; goMode(d,click,'songs'); check('songs part strum'); click(d.querySelector('[data-act=pown]')); check('songs part strum on');}
      goMode(d,click,'explore'); check('explore song'); click(d.querySelector('.cchips [data-act=exch]:last-child')); check('explore song chord');
      click(d.querySelector('[data-act=exlab][data-v=key]')); check('explore song key labels'); click(d.querySelector('.cell[data-s="1"][data-f="3"]')); check('explore song tap'); click(d.querySelector('[data-fm=key]')); goMode(d,click,'practice'); check('focus back on key');
      click(d.querySelector('.pnext [data-act=step]')); check('drill from path');

@@ -374,6 +374,8 @@ button.bar .nm{font-weight:700;font-size:.98rem}
 button.bar .rn{font-family:"Times New Roman",Georgia,serif;color:var(--muted);font-size:.88rem;line-height:1.1}
 button.bar .fr{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.74rem;color:var(--muted);letter-spacing:.04em}
 button.bar.own .fr{color:color-mix(in srgb,var(--gold) 72%,var(--ink));font-weight:700}
+button.bar .bt{font-family:"Sora",system-ui,sans-serif;font-size:.7rem}
+button.bar.split{border-style:dashed}
 button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);background:color-mix(in srgb,var(--gold) 20%,var(--surface))}
 .app.wide .sh-bars{display:grid;grid-template-columns:1fr 1fr;overflow:visible}
 .app.wide button.bar{display:grid;grid-template-columns:1fr auto;grid-template-areas:"nm fr" "rn fr";align-items:center;column-gap:8px;padding:6px 10px}
@@ -590,15 +592,24 @@ function parseChord(t){
   return {root,rel,name:`${name}/${m[4].toUpperCase()}${acc(m[5])}`,bass:note(m[4],m[5])}; // a slash chord: the note after the slash is the lowest
 }
 function parseChords(text){
-  let t=String(text||'');
+  // each chord is a bar; [C G] splits one bar between chords, and [C . . G] gives C three beats and G one
+  let t=String(text||'').replace(/\[([^\[\]]*)\]/g,(_,g)=>' '+(g.trim().split(/[\s,]+/).filter(Boolean).join('~')||'[]')+' ');
   for(let i=0;i<5&&/\(/.test(t);i++) t=t.replace(/\(([^()]*)\)\s*(?:[x×*]\s*(\d+))?/g,(_,g,n)=>Array(Math.min(+n||1,16)).fill(g).join(','));
-  const out=[], bad=[];
+  const bars=[], bad=[];
   t.split(/[\s,|]+/).filter(Boolean).forEach(tok=>{
     const rep=/^[x×*](\d+)$/.exec(tok);
-    if(rep){const last=out[out.length-1]; if(last) for(let i=1;i<Math.min(+rep[1],16);i++) out.push(last); return;}
-    const c=parseChord(tok); if(c) out.push(c.name); else bad.push(tok);
+    if(rep){const last=bars[bars.length-1]; if(last) for(let i=1;i<Math.min(+rep[1],16);i++) bars.push(last); return;}
+    if(tok.includes('~')){
+      const names=[]; let ok=true;
+      tok.split('~').forEach(x=>{ if(/^[.\/%]$/.test(x)){ if(names.length) names.push(names[names.length-1]); else ok=false; } else {const c=parseChord(x); if(c) names.push(c.name); else {ok=false; bad.push(x);}} });
+      if(!ok){ if(!bad.length) bad.push(`[${tok.split('~').join(' ')}]`); return; }
+      const segs=[]; names.forEach((n,i)=>{const L=segs[segs.length-1], a=i/names.length, b=(i+1)/names.length; if(L&&L.name===n) L.to=b; else segs.push({name:n,from:a,to:b});});
+      bars.push(segs); return;
+    }
+    const c=parseChord(tok); if(c) bars.push([{name:c.name,from:0,to:1}]); else bad.push(tok);
   });
-  return {chords:out.slice(0,64),bad};
+  const B=bars.slice(0,64);
+  return {chords:B.flatMap(b=>b.map(x=>x.name)),bars:B,bad};
 }
 const RN12=['I','♭II','II','♭III','III','IV','♯IV','V','♭VI','VI','♭VII','VII'];
 const DEG12=['1','♭2','2','♭3','3','4','♯4','5','♭6','6','♭7','7'];
@@ -615,8 +626,29 @@ function songProg(id){ // a song with typed chords, used as a progression in Dri
   if(!/^song:/.test(id||'')) return null;
   let sk=null; try{sk=LOG.skills[id];}catch(e){return null;}
   if(!sk||!sk.chords||!sk.chords.length) return null;
-  const k=songPart(id), part=k>=0?sk.parts[k]:null;
-  return {id,name:sk.name,chords:part?parseChords(part.text).chords:sk.chords,part:part&&part.name,voicings:sk.voicings||{}};
+  const k=songPart(id), bars=[];
+  songParts(sk).forEach((p,j)=>{ if(k<0||j===k) parseChords(p.text).bars.forEach(b=>bars.push({segs:b,part:sk.parts?j:-1})); });
+  if(!bars.length) sk.chords.forEach(n=>bars.push({segs:[{name:n,from:0,to:1}],part:-1}));
+  const B=bars.slice(0,64);
+  return {id,name:sk.name,chords:B.flatMap(b=>b.segs.map(x=>x.name)),bars:B,part:k>=0?sk.parts[k].name:null,voicings:sk.voicings||{}};
+}
+// ---------- strum patterns for a song and its parts ----------
+// A song has one strum pattern; any part can have its own instead. Drill's live pattern belongs to the song,
+// or to the part being practiced when that part has its own.
+function partStrum(id,k){const sk=LOG.skills[id]; return sk&&sk.parts&&sk.parts[k]&&sk.parts[k].strum||null;}
+function strumKey(){const id=songNow(); if(!id) return null; const k=songPart(id); return k>=0&&partStrum(id,k)?`${id}#${k}`:id;}
+function strumAt(key){const [id,k]=key.split('#'), sk=LOG.skills[id]; return (k===undefined?sk.strum:sk.parts[+k].strum)||null;}
+function writeStrum(key,strum){
+  const [id,k]=key.split('#'), sk=LOG.skills[id]; if(!sk) return;
+  if(k===undefined){setSong(id,{strum}); return;}
+  const parts=songParts(sk).map((p,j)=>{const q={...p}; if(j===+k){if(strum) q.strum=strum; else delete q.strum;} return q;});
+  setSong(id,{parts});
+}
+function patOf(sp){const P=sp&&sp.pat==='custom'&&sp.custom?{id:'custom',name:'Your pattern',res:sp.custom.res,steps:sp.custom.steps}:RPAT[sp&&RPAT[sp.pat]?sp.pat:'faithful']; return {...P,swing:sp&&sp.pat?!!sp.swing:!!P.swing};}
+function patFor(part){ // the pattern a bar plays: the live one, its part's own, or the song's
+  const id=songNow(), live={...curPat(),swing:!!R.swing,live:true}; if(!id) return live;
+  const key=part>=0&&partStrum(id,part)?`${id}#${part}`:id;
+  return key===strumKey()?live:patOf(strumAt(key));
 }
 function songPart(id){ // the part of a song Drill plays, or -1 for the whole song
   const sk=LOG.skills[id], k=(saved.spart||{})[id];
@@ -730,11 +762,15 @@ function refresh(){
   const song=D.line==='prog'&&songProg(D.prog);
   if(D.line==='prog'&&(cur.pchords||song)){
     // each chord of the progression, voiced inside the box (frets 0–4 gives open chords); a song brings its own chords
-    cur.prog=(song?song.chords.map(c=>chordIn(c,cur.key)):(PROG_BY[D.prog]||PROG_BY.pop).degs.map(d=>cur.pchords[d])).map((ch,d)=>{
-      cur.chord=ch; cur.chordPcs=new Set(ch.tones.map(t=>(cur.key+t)%12));
+    // a bar split between chords gives each chord its own entry, with the part of the bar it covers (from and to, 0 to 1)
+    const items=song?song.bars.flatMap((b,bar)=>b.segs.map(x=>({ch:chordIn(x.name,cur.key),bar,from:x.from,to:x.to,part:b.part})))
+      :(PROG_BY[D.prog]||PROG_BY.pop).degs.map((d,bar)=>({ch:cur.pchords[d],bar,from:0,to:1,part:-1}));
+    cur.prog=items.map((it,d)=>{
+      const ch=it.ch; cur.chord=ch; cur.chordPcs=new Set(ch.tones.map(t=>(cur.key+t)%12));
       const own=song&&parseFrets(song.voicings[ch.name]); // the song's own voicing wins, wherever it sits on the neck
-      return {ch,d,pcs:cur.chordPcs,voicing:own?{name:`Your voicing for ${song.name}`,frets:own,own:true}:findVoicing()};
+      return {...it,d,pcs:cur.chordPcs,voicing:own?{name:`Your voicing for ${song.name}`,frets:own,own:true}:findVoicing()};
     });
+    cur.nbars=items.length?items[items.length-1].bar+1:0;
     setProgChord(0);
   }
 }
@@ -1053,13 +1089,23 @@ function arpNotes(p){
 }
 function genProg(){
   // every chord gets a bar of the strum pattern, a bar of arpeggio, or both; steps carry their own length (n per bar)
+  // a split bar changes chord partway through: each step plays whichever chord covers it (head marks a chord's first step)
   if(!cur.prog) return [];
-  const P=curPat(), seq=[]; let bar=0;
-  cur.prog.forEach((p,ci)=>{
-    if(D.plan!=='arp'&&p.voicing){ for(let k=0;k<P.res;k++) seq.push({chord:true,strum:P.steps[k],ci,bar,k,n:P.res}); bar++; }
-    if(D.plan!=='strum'||!p.voicing){ const A=arpNotes(p), L=4*D.sub; if(!A.length) return;
-      for(let k=0;k<L;k++) seq.push({...A[k%A.length],ci,bar,k,n:L}); bar++; }
-  });
+  const seq=[]; let bar=0;
+  for(let b=0;b<cur.nbars;b++){
+    const idx=cur.prog.map((p,i)=>p.bar===b?i:-1).filter(i=>i>=0); if(!idx.length) continue;
+    const at=f=>idx.find(i=>f<cur.prog[i].to-1e-9)??idx[idx.length-1];
+    const P=patFor(cur.prog[idx[0]].part), voiced=idx.every(i=>cur.prog[i].voicing);
+    if(D.plan!=='arp'&&voiced){ let prev=-1;
+      for(let k=0;k<P.res;k++){const ci=at(k/P.res); seq.push({chord:true,strum:P.steps[k],ci,bar,k,n:P.res,sw:P.swing,live:!!P.live,head:ci!==prev}); prev=ci;} bar++; }
+    if(D.plan!=='strum'||!voiced){
+      const A={}, L=4*D.sub; idx.forEach(i=>A[i]=arpNotes(cur.prog[i]));
+      if(!idx.some(i=>A[i].length)) continue;
+      let prev=-1, s0=0;
+      for(let k=0;k<L;k++){const ci=at(k/L); if(ci!==prev) s0=k; const a=A[ci];
+        seq.push(a.length?{...a[(k-s0)%a.length],ci,bar,k,n:L,sw:P.swing,head:ci!==prev}:{rest:true,ci,bar,k,n:L,head:ci!==prev}); prev=ci;}
+      bar++; }
+  }
   return seq;
 }
 function genSeq(){
@@ -1200,12 +1246,12 @@ function pschedule(){
       if(D.ramp){saved.bpm=Math.min(260,saved.bpm+D.ramp); met.queue.push({t:t0,bpm:true});}
     }
     const n=st.seq[met.k], dur=60/saved.bpm*4/n.n, per=n.n/4;
-    const t=t0+(R.swing&&(n.n===8||n.n===16)&&n.k%2===1?dur/3:0); // shuffle: the second of each pair lands two thirds of the way through
+    const t=t0+((n.sw??R.swing)&&(n.n===8||n.n===16)&&n.k%2===1?dur/3:0); // shuffle: the second of each pair lands two thirds of the way through
     if(n.k%per===0&&D.click) click(t,n.k===0?1760:1175,n.k===0?0.4:0.25);
     if(D.notes){
       const v=cur.prog[n.ci]&&cur.prog[n.ci].voicing;
       if(n.chord){ if(n.strum!=='.'&&v) rstrum(t,v,n.k%2===0,n.strum,dur); }
-      else toneAt(MIDI[n.s]+capo()+n.f,t,0.26);
+      else if(!n.rest) toneAt(MIDI[n.s]+capo()+n.f,t,0.26);
     }
     met.queue.push({t,k:met.k}); met.k++;
     met.next+=dur; met.step++;
@@ -1261,14 +1307,14 @@ if(R.pat!=='custom'&&!RPAT[R.pat]) R.pat='faithful';
 const STEP_NAME={x:'strum','>':'accented strum',m:'muted strum (chuck)','.':'ghost, the hand moves past the strings'};
 // while Drill plays a song's chords, its strum pattern is the song's own and is kept with the song
 const songNow=()=>D.line==='prog'&&songProg(D.prog)?D.prog:null;
-function keepSongStrum(){const id=songNow(); if(id) setSong(id,{strum:{pat:R.pat,swing:!!R.swing,custom:{...R.custom}}});}
+function keepSongStrum(){const key=strumKey(); if(key) writeStrum(key,{pat:R.pat,swing:!!R.swing,custom:{...R.custom}});}
 function syncStrum(force){
   // Drill has one live strum pattern. While a song plays, it's the song's own (its "Your pattern" included);
   // the general pattern is set aside and comes back when you switch to anything else.
   try{LOG;}catch(e){return;}
-  const id=songNow(); if(!force&&(R.owner||null)===id) return;
+  const id=strumKey(); if(!force&&(R.owner||null)===id) return;
   if(!R.owner) saved.rfree={pat:R.pat,custom:{...R.custom},swing:!!R.swing};
-  if(id){const sp=LOG.skills[id].strum||{}, pat=sp.pat==='custom'||RPAT[sp.pat]?sp.pat:'faithful', P=RPAT[pat]||RPAT.faithful;
+  if(id){const sp=strumAt(id)||{}, pat=sp.pat==='custom'||RPAT[sp.pat]?sp.pat:'faithful', P=RPAT[pat]||RPAT.faithful;
     R.pat=pat==='custom'&&!sp.custom?'faithful':pat; R.custom=sp.custom?{...sp.custom}:{res:P.res,steps:P.steps}; R.swing=sp.pat?!!sp.swing:!!P.swing; R.owner=id;}
   else{const f=saved.rfree; if(f){R.pat=f.pat; R.custom={...f.custom}; R.swing=!!f.swing;} delete R.owner;}
 }
@@ -1636,12 +1682,13 @@ function progTab(el){
     setProgChord(n.ci);
     if(n.chord){
       const L=countLabels(n.n), arrow=n.strum==='m'?'×':n.k%2?'↑':'↓', ghost=n.strum==='.';
-      let rows=''; for(let s=5;s>=0;s--){const f=cur.voicing.frets[s]; rows+=`<span class="ln">${n.k!==0?'':f!==null?'<b>'+f+'</b>':'<b class="mx">x</b>'}</span>`;}
-      return `<div class="tcol strumcol${n.k===0?' chordcol':''}${ghost?' ghost':''}${n.strum==='>'?' acc':''}${cls}" data-j="${j}">${rows}<span class="dg">${arrow}</span><span class="fg">${n.k===0?cur.chord.roman:L[n.k]}</span></div>`;
+      let rows=''; for(let s=5;s>=0;s--){const f=cur.voicing.frets[s]; rows+=`<span class="ln">${!n.head?'':f!==null?'<b>'+f+'</b>':'<b class="mx">x</b>'}</span>`;}
+      return `<div class="tcol strumcol${n.head?' chordcol':''}${ghost?' ghost':''}${n.strum==='>'?' acc':''}${cls}" data-j="${j}">${rows}<span class="dg">${arrow}</span><span class="fg">${n.head?cur.chord.roman:L[n.k]}</span></div>`;
     }
+    if(n.rest) return `<div class="tcol${cls}" data-j="${j}">${'<span class="ln"></span>'.repeat(6)}<span class="dg">·</span><span class="fg"></span></div>`;
     const {ref,t}=drillLabel(n);
     let rows=''; for(let s=5;s>=0;s--) rows+=`<span class="ln">${s===n.s?'<b>'+n.f+'</b>':''}</span>`;
-    const head=n.k===0&&!(j>0&&st.seq[j-1].ci===n.ci&&st.seq[j-1].chord); // name the chord when no strum bar just did
+    const head=n.head&&!(j>0&&st.seq[j-1].ci===n.ci&&st.seq[j-1].chord); // name the chord when no strum bar just did
     return `<div class="tcol${head?' chordcol':''}${cls}" data-j="${j}">${rows}<span class="dg" style="color:${COL[ref]}">${t}</span><span class="fg">${head?cur.chord.roman:finger(n)}</span></div>`;
   }).join('')+'</div>';
   setProgChord(keep);
@@ -1673,16 +1720,16 @@ function updateTab(){
 const quizSeg=()=>`<div class="row">${seg('Quiz','quiz',[['name','Name it'],['find','Find it']],st.mode)}</div>`;
 function seg(label,act,list,v){return `<div class="segw" role="group" aria-label="${label}"><span class="seglab">${label}</span><div class="seg">`+list.map(([k,l])=>`<button data-act="${act}" data-v="${k}" aria-pressed="${k===v}">${l}</button>`).join('')+'</div></div>';}
 function opts(list,v){return list.map(([k,l])=>`<option value="${k}"${String(k)===String(v)?' selected':''}>${l}</option>`).join('');}
-function rgridHTML(P,act='rstep'){
+function rgridHTML(P,act='rstep',extra=''){
   const per=P.res/4, L=countLabels(P.res);
   return P.steps.split('').map((c,k)=>{
     const cls=(k%per===0?' beat onbeat':'')+({'.':' ghost',m:' mute','>':' acc'}[c]||'');
-    return `<button class="rstep${cls}" data-act="${act}" data-i="${k}" aria-label="${L[k]}, ${k%2?'up':'down'}: ${STEP_NAME[c]}"><b>${c==='m'?'×':k%2?'↑':'↓'}</b><small>${L[k]}</small></button>`;
+    return `<button class="rstep${cls}" data-act="${act}" data-i="${k}"${extra} aria-label="${L[k]}, ${k%2?'up':'down'}: ${STEP_NAME[c]}"><b>${c==='m'?'×':k%2?'↑':'↓'}</b><small>${L[k]}</small></button>`;
   }).join('');
 }
 function markProgChord(){
   document.querySelectorAll('[data-pci]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.pci===cur.pci));
-  const no=document.getElementById('barNo'); if(no&&cur.prog) no.textContent=`bar ${cur.pci+1} of ${cur.prog.length}`;
+  const no=document.getElementById('barNo'); if(no&&cur.prog) no.textContent=`bar ${cur.prog[cur.pci].bar+1} of ${cur.nbars}`;
   const strip=document.querySelector('.sh-bars'), b=strip&&strip.querySelector(`[data-pci="${cur.pci}"]`);
   if(b&&strip.scrollWidth>strip.clientWidth+2) strip.scrollLeft=b.offsetLeft-strip.clientWidth/2+b.offsetWidth/2;
 }
@@ -1690,7 +1737,7 @@ function updateRGrid(){
   const g=document.getElementById('rgrid'); if(!g) return;
   g.querySelectorAll('.rstep.now').forEach(e=>e.classList.remove('now'));
   const n=st.playing&&st.idx>=0?st.seq[st.idx]:null;
-  if(n&&n.chord&&n.strum!==undefined){const e=g.querySelector(`[data-i="${n.k}"]`); if(e) e.classList.add('now');}
+  if(n&&n.chord&&n.strum!==undefined&&n.live){const e=g.querySelector(`[data-i="${n.k}"]`); if(e) e.classList.add('now');}
 }
 function transportHTML(){
   return `<button class="icon" data-act="slower" aria-label="Slower">−</button>
@@ -1914,17 +1961,21 @@ function exploreSongHTML(E){
 function saveParts(id,parts){
   const sk=LOG.skills[id]; if(!sk) return;
   const chords=parts.flatMap(p=>parseChords(p.text).chords);
-  const patch={parts:parts.map(p=>({name:String(p.name||'Part').trim().slice(0,40)||'Part',text:String(p.text||'').trim().slice(0,400)}))};
+  const patch={parts:parts.map(p=>({name:String(p.name||'Part').trim().slice(0,40)||'Part',text:String(p.text||'').trim().slice(0,400),...(p.strum?{strum:p.strum}:{})}))};
   if(chords.length){
     if(!sk.chords||!sk.chords.length){const f=parseChord(chords[0]); patch.key=f.root; patch.minor=f.rel.includes(3)&&!f.rel.includes(4);} // the key starts from the first chord
     patch.chords=chords; patch.chordText=patch.parts.map(p=>p.text).filter(Boolean).join(' | ').slice(0,400);
   }else{delete sk.chords; delete sk.chordText;}
   setSong(id,patch);
 }
-function songPat(sk){const sp=sk.strum; return sp&&sp.pat==='custom'&&sp.custom?{id:'custom',name:'Your pattern',res:sp.custom.res,steps:sp.custom.steps}:RPAT[sp&&RPAT[sp.pat]?sp.pat:'faithful'];}
-function setSongStrum(id,strum){
-  setSong(id,{strum});
-  if(songNow()===id){R.pat=strum.pat; if(strum.custom) R.custom={...strum.custom}; R.swing=!!strum.swing; save();} // Drill plays the song's own pattern
+function songPat(sk){return patOf(sk.strum);}
+function setSongStrum(id,strum,k=-1){
+  const key=k>=0?`${id}#${k}`:id; writeStrum(key,strum);
+  if(strumKey()===key){R.pat=strum.pat; if(strum.custom) R.custom={...strum.custom}; R.swing=!!strum.swing; save();} // Drill is playing this pattern
+}
+function setPartOwn(id,k,on){ // give a part its own strum pattern, starting from the song's, or go back to the song's
+  writeStrum(`${id}#${k}`,on?{...(LOG.skills[id].strum||{pat:'faithful',swing:false})}:null);
+  if(songNow()===id){syncStrum(true); save();}
 }
 function voicingChoices(name,key){
   // a few playable shapes up the neck, from the same search Drill uses for a box
@@ -1970,23 +2021,29 @@ function songEditor(id){
       <span class="field">How well you play it<span class="stars" role="group" aria-label="How well you play it">${rate}</span></span>
       ${sk.link?`<a class="se-link" href="${esc(sk.link)}" target="_blank" rel="noopener" data-tip="Open the tab in Songsterr">Open in Songsterr ↗</a>`:''}</div>`;
   const partsHTML=parts.map((p,k)=>{
-    const pc=parseChords(p.text), n=pc.chords.length;
+    const pc=parseChords(p.text), n=pc.bars.length;
     return `<section class="sbox"><div class="sb-top"><input class="pname" data-part-name="${k}" value="${esc(p.name)}" aria-label="Part name" autocomplete="off"><small id="pbars${k}">${n?`${n} bar${n>1?'s':''}`:'type its chords'}</small>${parts.length>1?`<button class="chip" data-act="partdel" data-part="${k}">Remove</button>`:''}</div>
       <textarea data-part="${k}" rows="2" placeholder="(A, E6, Dmaj7) x2, A, E6, D, A" aria-label="${esc(p.name)} chords, a bar each" spellcheck="false">${esc(p.text)}</textarea>
       <p class="hint bad" id="pbad${k}">${pc.bad.length?`Fretmap can't read ${pc.bad.slice(0,4).map(x=>`“${esc(x)}”`).join(', ')}. Write chords like A, E6, Dmaj7, F#m, Bb7 or C/G.`:''}</p>
       <div class="cchips" id="cchips${k}" role="group" aria-label="Chords in ${esc(p.name)}, tap one to pick its voicing">${chordChips(sk,k,p.text)}</div>
-      ${st.vpick&&st.vpick.part===k&&pc.chords.includes(st.vpick.n)?vpickHTML(sk,st.vpick.n):''}</section>`;
+      ${st.vpick&&st.vpick.part===k&&pc.chords.includes(st.vpick.n)?vpickHTML(sk,st.vpick.n):''}
+      <div class="row pstrum"><button class="chip tog" data-act="pown" data-part="${k}" aria-pressed="${!!p.strum}">Own strum pattern</button>${p.strum?'':`<small>Uses the song's strum pattern</small>`}</div>
+      ${p.strum?strumEditor(p.strum,k):''}</section>`;
   }).join('');
-  const P=songPat(sk), sp=sk.strum||{}, swing=sp.pat?!!sp.swing:!!P.swing;
-  const groups=RPATS.map(([g,list])=>`<optgroup label="${g}">${list.map(x=>`<option value="${x[0]}"${x[0]===P.id?' selected':''}>${x[1]}</option>`).join('')}</optgroup>`).join('')
-    +`<optgroup label="Edit the grid to make your own"><option value="custom"${P.id==='custom'?' selected':''}>Your pattern</option></optgroup>`;
-  const strumBox=`<section class="sbox"><div class="sb-top"><b>Strum pattern</b><small>used whenever you practice this song</small></div>
-    <div class="row"><select data-sg="pat" aria-label="Song strum pattern">${groups}</select>${P.id==='custom'?seg('Grid','sgres',[['8','8ths'],['16','16ths']],String(P.res)):''}<button class="chip tog" data-act="sgswing" aria-pressed="${swing}">Shuffle feel</button></div>
-    <div class="rgrid r${P.res}" style="--n:${P.res}">${rgridHTML(P,'sgstep')}</div><p class="hint">Count: ${counting(P)}</p></section>`;
+  const strumBox=`<section class="sbox"><div class="sb-top"><b>Strum pattern</b><small>${parts.some(p=>p.strum)?'used for every part without its own':'used for every part whenever you practice this song'}</small></div>
+    ${strumEditor(sk.strum,-1)}</section>`;
   const noChords=!parts.some(p=>parseChords(p.text).chords.length);
   const progPick=noChords?`<label class="field se-prog">Until you type chords, practice<select data-sf="prog">${PROGS.map(([pid,name])=>`<option value="${pid}"${pid===sk.prog?' selected':''}>${name}</option>`).join('')}</select></label>`:'';
   return `${head}${partsHTML}<div class="row"><button class="chip" data-act="partadd">+ Add a part</button></div>
-    <p class="hint">Each bar is one chord, so write a chord twice to hold it for two bars. Brackets with x2 repeat a phrase. Parts play one after another when you practice.</p>${progPick}${strumBox}`;
+    <p class="hint">Each chord is one bar, so write a chord twice to hold it for two bars. Square brackets share a bar: [C G] gives each chord two beats, and [C . . G] gives C three beats and G one. Round brackets with x2 repeat a phrase. Parts play one after another when you practice.</p>${progPick}${strumBox}`;
+}
+function strumEditor(sp,k){ // pick and edit a strum pattern: the song's (k = -1) or a part's own
+  const P=patOf(sp), x=k>=0?` data-sp="${k}"`:'';
+  const groups=RPATS.map(([g,list])=>`<optgroup label="${g}">${list.map(o=>`<option value="${o[0]}"${o[0]===P.id?' selected':''}>${o[1]}</option>`).join('')}</optgroup>`).join('')
+    +`<optgroup label="Edit the grid to make your own"><option value="custom"${P.id==='custom'?' selected':''}>Your pattern</option></optgroup>`;
+  const sw=seg('Grid','sgres',[['8','8ths'],['16','16ths']],String(P.res)).replace(/data-act="sgres"/g,'data-act="sgres"'+x);
+  return `<div class="row"><select data-sg="pat"${x} aria-label="${k>=0?'Part':'Song'} strum pattern">${groups}</select>${P.id==='custom'?sw:''}<button class="chip tog" data-act="sgswing"${x} aria-pressed="${P.swing}">Shuffle feel</button></div>
+    <div class="rgrid r${P.res}" style="--n:${P.res}">${rgridHTML(P,'sgstep',x)}</div><p class="hint">Count: ${counting(P)}</p>`;
 }
 function newSongHTML(){
   const any=songSteps().length;
@@ -2054,26 +2111,36 @@ function renderSheet(){
     return;
   }
   if(!cur.prog){el.innerHTML=`${playSeg}<p class="hint">Progressions are built from the chords of a 7-note scale. Pick a mode of Major, Harmonic minor, or Melodic minor in the focus settings.</p>`; return;}
-  const S=songProg(D.prog), sk=S&&LOG.skills[D.prog], n=cur.prog.length;
+  const S=songProg(D.prog), sk=S&&LOG.skills[D.prog], n=cur.nbars;
   const parts=S&&sk.parts?sk.parts.map((p,k)=>[String(k),esc(p.name)]).filter(([k])=>parseChords(sk.parts[+k].text).chords.length):[];
   const partSeg=parts.length>1?`<div class="row">${seg('Part','spart',[['-1','Whole song'],...parts],String(songPart(D.prog)))}</div>`:'';
   const sub=S?`${sk.artist?esc(sk.artist)+' · ':''}${S.part?esc(S.part)+' · ':''}${n} bar${n>1?'s':''}`:`${progRomans((PROG_BY[D.prog]||PROG_BY.pop).degs).join(' ')} · ${n} bar${n>1?'s':''}`;
-  const tiles=cur.prog.map((p,i)=>`<button class="bar${p.voicing&&p.voicing.own?' own':''}" data-pci="${i}" aria-pressed="${i===cur.pci}"><span class="nm">${esc(p.ch.name)}</span><span class="rn">${p.ch.roman}</span><span class="fr">${p.voicing?fretText(p.voicing.frets):'picked'}</span></button>`).join('');
+  const part=p=>p.to-p.from<1?` <span class="bt">${beatsText(p.to-p.from)}</span>`:'';
+  const tiles=cur.prog.map((p,i)=>`<button class="bar${p.voicing&&p.voicing.own?' own':''}${p.to-p.from<1?' split'+(p.from>0?' cont':''):''}" data-pci="${i}" aria-pressed="${i===cur.pci}"><span class="nm">${esc(p.ch.name)}</span><span class="rn">${p.ch.roman}${part(p)}</span><span class="fr">${p.voicing?fretText(p.voicing.frets):'picked'}</span></button>`).join('');
   const missing=[...new Set(cur.prog.filter(p=>!p.voicing).map(p=>p.ch.name))];
   const notes=[missing.length&&D.plan!=='arp'?`No voicing of ${missing.map(esc).join(', ')} fits this box, so ${missing.length===1?'it is':'they are'} picked instead.`:'',
     cur.chords.length!==7&&!S?`${esc(modeName())} has too few notes to build these chords, so they come from ${NOTES[cur.key]} ${FAMS.major.modes[TO_DIATONIC[F.fam][F.mode]||0][0]}, the 7-note mode it sits in.`:''].filter(Boolean).join(' ');
   el.innerHTML=`${playSeg}${pathNote()}
-    <div class="sh-top">${sheetSel()}<span class="sh-sub">${sub}</span><span class="sh-no" id="barNo">bar ${cur.pci+1} of ${n}</span></div>
+    <div class="sh-top">${sheetSel()}<span class="sh-sub">${sub}</span><span class="sh-no" id="barNo">bar ${cur.prog[cur.pci].bar+1} of ${n}</span></div>
     ${partSeg}<div class="sh-bars" role="group" aria-label="Bars, one chord each">${tiles}</div>
     ${wide?`<div class="row">${seg('Each chord','plan',[['both','Strum, then pick'],['strum','Strum'],['arp','Pick']],D.plan)}</div>`:''}
     ${notes?`<p class="hint">${notes}</p>`:''}`;
 }
+function strumOwnerHTML(){
+  // where the live pattern is saved: the song, or the part being practiced; a part can take its own pattern here
+  const id=songNow(); if(!id) return '';
+  const S=songProg(id), k=songPart(id), sk=LOG.skills[id], key=strumKey();
+  const own=k>=0?`<button class="chip tog" data-act="spown" aria-pressed="${key!==id}">Own pattern for ${esc(S.part)}</button>`:'';
+  const others=k<0&&sk.parts?sk.parts.filter(p=>p.strum).map(p=>esc(p.name)):[];
+  return `${own}<span class="saved-with" data-tip="Changes to the strum pattern are kept here, and used whenever you practice it.">Saved with ${key!==id?esc(S.part):esc(S.name)}${others.length?`. ${others.join(' and ')} ${others.length>1?'have their':'has its'} own`:''}</span>`;
+}
+function beatsText(f){const b=Math.round(f*4*1000)/1000; return Number.isInteger(b)?`${b} beat${b===1?'':'s'}`:`${b} beats`;}
 function strumCard(){
   if(D.plan==='arp') return `<div class="strum-card"><p class="hint">Each chord is ${term('arpeggio','picked')} one string at a time, so there is no strum pattern. Change <b>Each chord</b> in ⚙ Settings to strum.</p></div>`;
   const P=curPat();
   const groups=RPATS.map(([g,list])=>`<optgroup label="${g}">${list.map(p=>`<option value="${p[0]}"${p[0]===R.pat?' selected':''}>${p[1]}</option>`).join('')}</optgroup>`).join('')
     +`<optgroup label="Edit the grid to make your own"><option value="custom"${R.pat==='custom'?' selected':''}>Your pattern</option></optgroup>`;
-  return `<div class="strum-card"><div class="row sc-top"><span class="seglab">Strum</span><select data-set="rpat" aria-label="Strum pattern">${groups}</select>${R.pat==='custom'?seg('Grid','rres',[['8','8ths'],['16','16ths']],String(P.res)):''}${songNow()?`<span class="saved-with" data-tip="Changes to the strum pattern are kept with this song, and used whenever you practice it.">Saved with ${esc(songProg(D.prog).name)}</span>`:''}</div>
+  return `<div class="strum-card"><div class="row sc-top"><span class="seglab">Strum</span><select data-set="rpat" aria-label="Strum pattern">${groups}</select>${R.pat==='custom'?seg('Grid','rres',[['8','8ths'],['16','16ths']],String(P.res)):''}${strumOwnerHTML()}</div>
     <div class="rgrid r${P.res}" id="rgrid" style="--n:${P.res}">${rgridHTML(P)}</div></div>`;
 }
 function pbarHTML(){
@@ -2183,7 +2250,7 @@ panel.addEventListener('input',e=>{ // a part's chord chips follow the chords as
   const k=e.target.dataset.part; if(k===undefined||e.target.tagName!=='TEXTAREA'||!st.song) return;
   const sk=LOG.skills[st.song], box=document.getElementById('cchips'+k), pc=parseChords(e.target.value);
   if(box) box.innerHTML=chordChips(sk,+k,e.target.value);
-  const nb=document.getElementById('pbars'+k); if(nb) nb.textContent=pc.chords.length?`${pc.chords.length} bar${pc.chords.length>1?'s':''}`:'type its chords';
+  const nb=document.getElementById('pbars'+k); if(nb) nb.textContent=pc.bars.length?`${pc.bars.length} bar${pc.bars.length>1?'s':''}`:'type its chords';
 });
 function songChange(e){
   // the open song saves as you go: each field when you leave it
@@ -2207,9 +2274,10 @@ function songChange(e){
       if(bad.length){if(el) el.textContent=`Fretmap can't read ${bad.slice(0,4).map(x=>`“${x}”`).join(', ')}. Write chords like A, E6, Dmaj7, F#m, Bb7 or C/G.`; return true;} // keep what's typed, don't save it yet
       parts[k].text=t.value;}
     saveParts(id,parts); if(D.line==='prog'&&D.prog===id) refresh(); render(); return true;}
-  if(t.dataset.sg==='pat'){const v=t.value, P=songPat(sk);
-    const own=sk.strum&&sk.strum.custom; // the song's own pattern is kept while another one is picked
-    setSongStrum(id,v==='custom'?{pat:'custom',swing:!!(sk.strum&&sk.strum.swing),custom:own?{...own}:{res:P.res,steps:P.steps}}:{pat:v,swing:!!RPAT[v].swing,...(own?{custom:{...own}}:{})}); render(); return true;}
+  if(t.dataset.sg==='pat'){const v=t.value, k=t.dataset.sp!==undefined?+t.dataset.sp:-1, sp=(k>=0?partStrum(id,k):sk.strum)||null, P=patOf(sp);
+    const own=sp&&sp.custom; // "Your pattern" is kept while another one is picked
+    setSongStrum(id,v==='custom'?{pat:'custom',swing:P.swing,custom:own?{...own}:{res:P.res,steps:P.steps}}:{pat:v,swing:!!RPAT[v].swing,...(own?{custom:{...own}}:{})},k);
+    if(songNow()===id) regen(); else render(); return true;}
   return false;
 }
 const onChange=e=>{
@@ -2292,12 +2360,14 @@ const onClick=e=>{
       if(f) hearFrets(f); render(); return;}
     case 'vhear':{const sk=LOG.skills[st.song], n=b.dataset.n, typed=parseFrets((document.getElementById('vType')||{}).value);
       const f=typed||(sk.voicings&&sk.voicings[n]&&parseFrets(sk.voicings[n]))||autoVoicing(n,sk.key??0); if(f) hearFrets(f); return;}
-    case 'sgstep':{const sk=LOG.skills[st.song]; if(!sk) return; const P=songPat(sk), c=P.steps[i], nx={'.':'x',x:'>','>':'m',m:'.'}[c];
-      setSongStrum(st.song,{pat:'custom',swing:!!(sk.strum&&sk.strum.pat?sk.strum.swing:P.swing),custom:{res:P.res,steps:P.steps.slice(0,i)+nx+P.steps.slice(i+1)}}); render(); return;}
-    case 'sgres':{const sk=LOG.skills[st.song]; if(!sk) return; const P=songPat(sk), res=+b.dataset.v; if(res===P.res) return;
-      setSongStrum(st.song,{pat:'custom',swing:!!(sk.strum&&sk.strum.swing),custom:{res,steps:res===16?P.steps.split('').map(c=>c+'.').join(''):P.steps.split('').filter((c,j)=>j%2===0).join('')}}); render(); return;}
-    case 'sgswing':{const sk=LOG.skills[st.song]; if(!sk) return; const P=songPat(sk), sp=sk.strum&&sk.strum.pat?sk.strum:{pat:P.id,swing:!!P.swing};
-      setSongStrum(st.song,{...sp,swing:!sp.swing}); render(); return;}
+    case 'sgstep': case 'sgres': case 'sgswing':{ // the song's strum pattern, or a part's own (data-sp)
+      const sk=LOG.skills[st.song]; if(!sk) return; const k=b.dataset.sp!==undefined?+b.dataset.sp:-1, sp=(k>=0?partStrum(st.song,k):sk.strum)||null, P=patOf(sp);
+      if(act==='sgstep'){const nx={'.':'x',x:'>','>':'m',m:'.'}[P.steps[i]]; setSongStrum(st.song,{pat:'custom',swing:P.swing,custom:{res:P.res,steps:P.steps.slice(0,i)+nx+P.steps.slice(i+1)}},k);}
+      else if(act==='sgres'){const res=+b.dataset.v; if(res===P.res) return; setSongStrum(st.song,{pat:'custom',swing:P.swing,custom:{res,steps:res===16?P.steps.split('').map(c=>c+'.').join(''):P.steps.split('').filter((c,j)=>j%2===0).join('')}},k);}
+      else setSongStrum(st.song,{...(sp&&sp.pat?sp:{pat:P.id}),swing:!P.swing},k);
+      if(songNow()===st.song) regen(); else render(); return;}
+    case 'pown':{const k=+b.dataset.part; if(!LOG.skills[st.song]) return; setPartOwn(st.song,k,!partStrum(st.song,k)); if(songNow()===st.song) regen(); else render(); return;}
+    case 'spown':{const id=songNow(), k=id?songPart(id):-1; if(k<0) return; setPartOwn(id,k,!partStrum(id,k)); regen(); return;}
     case 'lgtoken':{const t=(document.getElementById('lgToken').value||'').trim(); if(!t) return; setToken(t); sync.state=''; render(); syncNow(); return;}
     case 'lgsync': syncNow(); return;
     case 'lgforget': setToken(''); sync.state=''; render(); return;
@@ -2508,7 +2578,7 @@ function tabTip(el){
   if(cur.prog&&n.ci!==undefined){
     const keep=cur.pci; setProgChord(n.ci); let t;
     if(n.chord){const L=countLabels(n.n)[n.k], dir=n.k%2?'up':'down';
-      t=`<b>${cur.chord.name}</b> (${cur.chord.roman}), ${n.strum==='.'?`(${L})`:L}: ${n.strum==='.'?`ghost, the hand moves ${dir} past the strings`:`${STEP_NAME[n.strum]}, ${dir}`}.`+(n.k===0?` Voicing ${cur.voicing.frets.map(f=>f===null?'x':f).join(' ')}, low to high.`:'');}
+      t=`<b>${cur.chord.name}</b> (${cur.chord.roman}), ${n.strum==='.'?`(${L})`:L}: ${n.strum==='.'?`ghost, the hand moves ${dir} past the strings`:`${STEP_NAME[n.strum]}, ${dir}`}.`+(n.head?` Voicing ${cur.voicing.frets.map(f=>f===null?'x':f).join(' ')}, low to high.`:'');}
     else t=`${degreeText(n)}<br>${STR_NAME[n.s]} string, fret ${n.f}, finger ${finger(n)}.`;
     setProgChord(keep); return t;
   }
@@ -2526,10 +2596,12 @@ const TIPS=[
  ['[data-act="quiz"][data-v="name"]',()=>'<b>Name it</b>: say which degree the ? note is, counted up from the root.'],
  ['[data-act="quiz"][data-v="find"]',()=>'<b>Find it</b>: click where a given degree sits inside the lit frets.'],
  ['#modes [data-mode="drill"]',()=>'<b>Drill</b>: pick a box, then play scale lines over a chord, or strum and arpeggiate a chord progression, with the metronome. (3)'],
+ ['[data-act="spown"]',()=>{const id=songNow(), S=id&&songProg(id); return S&&strumKey()!==id?`${esc(S.part)} has its own strum pattern, saved with it. Click to go back to the song's pattern.`:`Give ${S?esc(S.part):'this part'} its own strum pattern, starting from the song's. The rest of the song keeps the song's pattern.`;}],
+ ['[data-act="pown"]',el=>{const sk=LOG.skills[st.song], p=sk&&songParts(sk)[+el.dataset.part]; return p&&p.strum?`${esc(p.name)} has its own strum pattern. Click to use the song's pattern instead.`:`Give ${p?esc(p.name):'this part'} its own strum pattern, starting from the song's. Every other part keeps the song's pattern.`;}],
  ['[data-act="spart"]',el=>el.dataset.v==='-1'?'Play every part of the song, one after another.':`Play only the ${esc(el.textContent)}, so you can work on it on its own.`],
  ['[data-act="line"][data-v="scale"]',()=>'Play scale patterns through the box over one chord.'],
  ['[data-act="line"][data-v="prog"]',()=>'Strum and arpeggiate a chord progression in this key and box, with strum patterns you can count and edit.'],
- ['[data-set="prog"]',()=>{const S=songProg(D.prog); if(S) return `<b>${esc(S.name)}</b>: ${S.chords.length} bars, one chord each, as you typed them in the Songs tab. Pick another song or a common progression here.`; const P=PROG_BY[D.prog]; return `<b>${P.name}</b>: ${progRomans(P.degs).join(' ')}. ${P.degs.length} bar${P.degs.length>1?'s':''} of chords, built from ${NOTES[cur.key]} ${esc(modeName())}, so the same progression works in any key or mode.`;}],
+ ['[data-set="prog"]',()=>{const S=songProg(D.prog); if(S) return `<b>${esc(S.name)}</b>: ${S.bars.length} bars, as you typed them in the Songs tab. Pick another song or a common progression here.`; const P=PROG_BY[D.prog]; return `<b>${P.name}</b>: ${progRomans(P.degs).join(' ')}. ${P.degs.length} bar${P.degs.length>1?'s':''} of chords, built from ${NOTES[cur.key]} ${esc(modeName())}, so the same progression works in any key or mode.`;}],
  ['[data-act="plan"][data-v="both"]',()=>`Strum each chord for a bar, then pick the same shape for a bar, one string at a time (an ${term('arpeggio','arpeggio')}).`],
  ['[data-act="plan"][data-v="strum"]',()=>'Strum each chord for a bar with the pattern below.'],
  ['[data-act="plan"][data-v="arp"]',()=>'Pick each chord’s shape one string at a time for a bar, low to high and back.'],
