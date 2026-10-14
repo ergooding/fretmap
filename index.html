@@ -111,6 +111,10 @@ h1{font-size:1.05rem;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
 .focus-sum b{display:block;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .focus-sum span{font-size:.76rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 .focus .icon{height:auto;width:40px}
+.seg.fmode{flex:none;flex-direction:column;border-radius:12px;padding:2px;align-items:stretch}
+.seg.fmode button{border-radius:8px;padding:3px 10px;font-size:.78rem}
+.goal:not(.fsong) .fs,.goal.fsong .fk{display:none}
+.app.wide .goal.fsong .focus-grid{grid-template-columns:minmax(0,2fr) minmax(0,1fr);max-width:760px}
 .focus-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px 10px}
 .focus-grid[hidden]{display:none}
 .focus-grid label{display:flex;flex-direction:column;gap:3px;font-size:.74rem;color:var(--muted);min-width:0}
@@ -161,7 +165,7 @@ html.wide{font-size:19px}
 .app.wide .focus-grid[hidden]{display:grid}
 /* wide: the focus is one row under the title, its settings always open beside it */
 .app.wide .goal{grid-area:goal;flex-direction:row;gap:12px;align-items:stretch}
-.app.wide .focus{flex:0 0 380px;min-width:0}
+.app.wide .focus{flex:0 0 440px;min-width:0}
 .app.wide .focus-sum{cursor:default}
 .app.wide .focus-grid{flex:1;grid-template-columns:repeat(4,minmax(0,1fr));max-width:1100px;padding:6px 10px 8px}
 .app.wide .prompt{font-size:1rem;align-items:flex-start}
@@ -456,14 +460,16 @@ html.land{font-size:15px}
   </header>
   <div class="goal" id="goal" role="region" aria-label="Focus: key, scale, mode and position for every tab">
     <div class="focus">
+      <div class="seg fmode" role="group" aria-label="Focus on a key or a song"><button data-fm="key">Key</button><button data-fm="song">Song</button></div>
       <button class="focus-sum" id="focusBtn" aria-expanded="false"><b id="focusTitle"></b><span id="focusSub"></span></button>
       <button class="icon" data-step="-1" aria-label="Previous position">◀</button>
       <button class="icon" data-step="1" aria-label="Next position">▶</button>
     </div>
     <div class="focus-grid" id="focusGrid" hidden>
-      <label>Key<select id="selKey"></select></label>
-      <label>Scale<select id="selFam"></select></label>
-      <label>Mode<select id="selMode"></select></label>
+      <label class="fk">Key<select id="selKey"></select></label>
+      <label class="fk">Scale<select id="selFam"></select></label>
+      <label class="fk">Mode<select id="selMode"></select></label>
+      <label class="fs">Song<select id="selSong"></select></label>
       <label>Position<select id="selPos"></select></label>
     </div>
   </div>
@@ -872,16 +878,55 @@ function fillSelects(){
     +(cur.custom?`<option value="${cur.custom.lo}">${cur.custom.label}</option>`:'');
   selPos.value=F.pos;
 }
+function focusSong(){ // the song the focus is on, in Song mode
+  if(saved.fmode!=='song') return null;
+  const sk=LOG.skills[saved.fsong]; return sk&&sk.kind==='song'&&!sk.gone?{id:saved.fsong,sk}:null;
+}
 function focusText(){
+  const fs=focusSong(), tap=document.querySelector('.app').classList.contains('wide')?'':'. Tap to change.';
+  document.querySelectorAll('[data-fm]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.fm===(fs?'song':'key')));
+  document.getElementById('goal').classList.toggle('fsong',!!fs);
+  if(fs){const sk=fs.sk;
+    document.getElementById('focusTitle').textContent=sk.name;
+    document.getElementById('focusSub').textContent=[sk.artist,`${NOTES[sk.key??0]} ${sk.minor?'minor':'major'}`,sk.tempo?sk.tempo+' bpm':'',cur.posLabel.split(',')[0]].filter(Boolean).join(' · ')+tap;
+    return;}
   const k=F.key>=0?NOTES[F.key]:'Random key';
   const scale=F.fam==='chrom'?'all notes':modeName();
   document.getElementById('focusTitle').textContent=`${k} ${scale}`;
-  document.getElementById('focusSub').textContent=cur.posLabel+(document.querySelector('.app').classList.contains('wide')?'':'. Tap to change.');
+  document.getElementById('focusSub').textContent=cur.posLabel+tap;
 }
+function fillSongSel(){
+  const el=document.getElementById('selSong'), list=songSteps();
+  el.innerHTML=list.length?list.map(({id,s})=>`<option value="${esc(id)}"${id===saved.fsong?' selected':''}>${esc(s.name)}${s.artist?' · '+esc(s.artist):''}</option>`).join(''):'<option value="">No songs yet</option>';
+}
+function setFocusSong(id){
+  // Song mode: the focus takes the song's key, and Drill plays its chords with its strum pattern and tempo
+  const sk=LOG.skills[id]; if(!sk) return;
+  if(saved.fmode!=='song') saved.fkey={key:F.key,fam:F.fam,mode:F.mode,pos:F.pos,line:D.line,prog:songProg(D.prog)?'pop':D.prog};
+  saved.fmode='song'; saved.fsong=id;
+  if(st.mode==='songs'){st.song=id; st.newSong=false; st.vpick=null;}
+  stopMet(); st.paused=false; applySetup(songSetup(sk,id),false); fillSongSel();
+  if(st.mode==='drill'){st.picking=false; regen();} else render();
+}
+function setFocusKey(){
+  // back to Key mode: the key, scale, mode and position you had before
+  if(saved.fmode!=='song') return;
+  saved.fmode='key'; const k=saved.fkey;
+  if(k){Object.assign(F,{key:k.key,fam:k.fam,mode:k.mode,pos:k.pos}); if(songProg(D.prog)){D.prog=k.prog||'pop'; if(k.line) D.line=k.line;}}
+  stopMet(); st.paused=false; focusChanged();
+}
+document.querySelectorAll('[data-fm]').forEach(b=>b.onclick=()=>{
+  if(b.dataset.fm==='key') return setFocusKey();
+  if(focusSong()) return;
+  const list=songSteps(), id=(list.find(x=>x.id===saved.fsong)||list[0]||{}).id;
+  if(!id){st.newSong=true; setMode('songs'); return;} // no songs yet: add one first
+  setFocusSong(id);
+});
+document.getElementById('selSong').onchange=e=>{ if(e.target.value) setFocusSong(e.target.value); };
 function focusChanged(){
   refresh(); st.visible=new Set(cur.allowed); save(); fillSelects();
   if(st.mode==='drill') regen();
-  else if(st.mode==='explore'||st.mode==='practice') render(); else newQuestion();
+  else if(st.mode==='explore'||st.mode==='practice'||st.mode==='songs') render(); else newQuestion();
 }
 selKey.onchange=()=>{F.key=+selKey.value;focusChanged();};
 selFam.onchange=()=>{F.fam=selFam.value;F.mode=0;D.chord=0;focusChanged();};
@@ -1345,7 +1390,8 @@ function renderStats(){
 function render(){
   document.querySelectorAll('#modes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===st.mode||(b.dataset.mode==='quiz'&&(st.mode==='name'||st.mode==='find'))));
   appEl.classList.toggle('m-practice',st.mode==='practice'||st.mode==='songs'); appEl.classList.toggle('m-songs',st.mode==='songs'); appEl.classList.toggle('m-drill',st.mode==='drill');
-  renderStats(); focusText(); renderBoard(); renderPrompt(); renderPanel(); renderSheet(); renderVoice(); updateLive();
+  if(saved.fmode==='song'&&!focusSong()) saved.fmode='key'; // the song was removed
+  fillSongSel(); renderStats(); focusText(); renderBoard(); renderPrompt(); renderPanel(); renderSheet(); renderVoice(); updateLive();
 }
 const picking=()=>st.mode==='drill'&&(st.picking||cur.whole);
 function drillLabel(p){
@@ -1641,7 +1687,7 @@ function goalText(s){
   const st_=stepState(s), b=st_.best;
   return `Goal: clean at ${s.goal} bpm${s.line==='scale'?' in 8ths':''}. `+(b?`Best so far: ${b.bpm}.`:'No clean run yet.');
 }
-function applySetup(s){
+function applySetup(s,nav){
   if(s.stage===undefined){F.key=s.key; F.fam=s.fam; F.mode=s.mode;} // a song brings its own key; path steps keep the focus
   F.pos=s.pos;
   D.line=s.line; D.guide='full';
@@ -1650,8 +1696,9 @@ function applySetup(s){
   if(s.sev!==undefined) D.sev=s.sev;
   refresh(); if(songNow()) syncStrum(true); // a song loads its own strum pattern, as saved with it
   if(s.line==='prog'&&!songNow()){R.pat=s.rpat; R.swing=!!(RPAT[s.rpat]&&RPAT[s.rpat].swing);}
-  if(s.tempo) saved.bpm=s.tempo; // a song starts at its own tempo st.visible=new Set(cur.allowed); fillSelects(); save();
-  document.querySelector('#modes [data-mode="drill"]').click();
+  if(s.tempo) saved.bpm=s.tempo; // a song starts at its own tempo
+  st.visible=new Set(cur.allowed); fillSelects(); save();
+  if(nav!==false) document.querySelector('#modes [data-mode="drill"]').click();
 }
 function stepFor(id){ buildPath(); return id==='song'?null:STEP_BY[id]; }
 function pathNote(){
@@ -1926,6 +1973,7 @@ function setMode(m){
   if(m==='quiz') m=saved.quiz==='find'?'find':'name'; // Name it and Find it share the Quiz tab, which remembers the last one
   if(m==='name'||m==='find') saved.quiz=m;
   clearTimeout(st.timer); stopMet(); st.mode=m; st.q=null; st.sheet=false; panel.scrollTop=0;
+  if(m==='songs'&&focusSong()&&st.song!==saved.fsong){st.song=saved.fsong; st.vpick=null;} // the Songs tab opens on the song in focus
   if(st.mode==='explore'||st.mode==='practice'||st.mode==='songs') render();
   else if(st.mode==='drill'){st.picking=cur.whole; st.seq=genSeq(); render();}
   else newQuestion();
@@ -1966,7 +2014,8 @@ function songChange(e){
     else if(f==='minor') setSong(id,{minor:v==='1'});
     else if(f==='prog') setSong(id,{prog:PROG_BY[v]?v:'pop'});
     else if(f==='tempo'){const n=Math.round(+v); if(v&&!(n>=30&&n<=260)){const m=document.getElementById('sfMsg'); if(m) m.textContent='Tempo needs to be between 30 and 260 bpm.'; return true;} if(n) setSong(id,{tempo:n}); else {delete sk.tempo; setSong(id,{});}}
-    if(D.line==='prog'&&D.prog===id) refresh();
+    const fs=focusSong(); if(fs&&fs.id===id&&(f==='key'||f==='minor')){F.key=sk.key; F.fam='major'; F.mode=sk.minor?5:0; fillSelects();}
+    if(D.line==='prog'&&D.prog===id||fs&&fs.id===id) refresh();
     render(); return true;}
   if(t.dataset.part!==undefined||t.dataset.partName!==undefined){
     const parts=songParts(sk).map(p=>({...p})), k=+(t.dataset.part??t.dataset.partName);
@@ -1987,7 +2036,10 @@ const onChange=e=>{
   const k=e.target.dataset.set; if(!k) return;
   const v=e.target.value;
   if(k==='rpat'){R.pat=v; if(RPAT[v]) R.swing=RPAT[v].swing; save(); keepSongStrum(); regen(); return;}
-  if(k==='prog'){D.prog=v; refresh(); save(); regen(); return;}
+  if(k==='prog'){
+    if(songProg(v)){setFocusSong(v); return;}
+    if(saved.fmode==='song') saved.fmode='key'; // stays in the song's key, now playing a common progression
+    D.prog=v; refresh(); save(); regen(); return;}
   D[k]=(k==='sub'||k==='ramp')?+v:v; save();
   if(k==='pattern'||k==='sub') regen(); else render();
   if(e.target.closest('.sets')) keepSets(`[data-set="${k}"]`);
@@ -2022,9 +2074,11 @@ const onClick=e=>{
     case 'lbl': if(b.dataset.v==='notes') saved.labels='notes'; else {saved.labels='iv'; D.ref=b.dataset.v;} save(); render(); return;
     case 'play': togglePlay(); return;
     case 'clean': toggleClean(); return;
-    case 'step': buildPath(); applySetup(STEP_BY[b.dataset.id]); return;
+    case 'step': buildPath(); saved.fmode='key'; applySetup(STEP_BY[b.dataset.id]); return;
     case 'topath': document.querySelector('#modes [data-mode="practice"]').click(); return;
-    case 'songopen': st.song=b.dataset.id; st.newSong=false; st.vpick=null; if(st.mode!=='songs') setMode('songs'); else render(); return;
+    case 'songopen': st.song=b.dataset.id; st.newSong=false; st.vpick=null;
+      if(focusSong()&&saved.fsong!==st.song){setFocusSong(st.song);} // in Song mode, the open song is the focus
+      if(st.mode!=='songs') setMode('songs'); else render(); return;
     case 'songform': st.newSong=true; st.vpick=null; if(st.mode!=='songs') setMode('songs'); else render(); {const el=document.getElementById('sgName'); if(el) el.focus();} return;
     case 'songcancel': st.newSong=false; render(); return;
     case 'songadd':{
@@ -2036,7 +2090,10 @@ const onClick=e=>{
       const id=addSong(val('sgName'),val('sgArtist'),val('sgLink'),-1,0,'pop',text,{});
       saveParts(id,[{name:'Verse',text}]); st.song=id; st.newSong=false; render(); return;}
     case 'rate':{const id=b.dataset.id, r=+b.dataset.v, sk=LOG.skills[id]; if(sk) setSong(id,{rating:sk.rating===r?r-1:r}); render(); return;}
-    case 'songplay':{const sk=LOG.skills[b.dataset.id]; if(sk) applySetup(songSetup(sk,b.dataset.id)); return;}
+    case 'songplay':{const id=b.dataset.id; if(!LOG.skills[id]) return;
+      if(saved.fmode!=='song') saved.fkey={key:F.key,fam:F.fam,mode:F.mode,pos:F.pos,line:D.line,prog:songProg(D.prog)?'pop':D.prog}; // Practice puts the focus on the song
+      saved.fmode='song'; saved.fsong=id;
+      applySetup(songSetup(LOG.skills[id],id)); return;}
     case 'partadd':{const sk=LOG.skills[st.song]; if(!sk) return; const parts=songParts(sk).map(p=>({...p})), used=new Set(parts.map(p=>p.name));
       parts.push({name:['Chorus','Bridge','Intro','Outro','Solo'].find(x=>!used.has(x))||`Part ${parts.length+1}`,text:''}); saveParts(st.song,parts); render();
       {const ta=document.querySelector(`textarea[data-part="${parts.length-1}"]`); if(ta) ta.focus();} return;}
@@ -2327,7 +2384,10 @@ const TIPS=[
  ['[data-act="rres"][data-v="8"]',()=>'Put your pattern on 8 steps a bar: 1 & 2 & 3 & 4 &.'],
  ['[data-act="rres"][data-v="16"]',()=>'Put your pattern on 16 steps a bar: 1 e & a, four times.'],
  ['[data-act="rtog"][data-k="swing"]',()=>'Shuffle feel: the second strum of each pair lands late, two thirds of the way through, like a triplet with the middle note left out.'],
- ['#focusBtn',()=>'Your focus: every tab uses this key, scale, mode, and position, so it stays put as you move between them.'+(wide?'':' Tap to show or hide the settings.')],
+ ['#focusBtn',()=>(focusSong()?'Your focus is a song: every tab uses its key, and Drill plays its chords with its strum pattern and tempo.':'Your focus: every tab uses this key, scale, mode, and position, so it stays put as you move between them.')+(wide?'':' Tap to show or hide the settings.')],
+ ['[data-fm="key"]',()=>'Focus on a key, scale, mode and position.'+(focusSong()?' Puts back the ones you had before picking a song.':'')],
+ ['[data-fm="song"]',()=>songSteps().length?'Focus on one of your songs: its key for every tab, and its chords, strum pattern and tempo in Drill.':'Focus on one of your songs. Add one in the Songs tab first.'],
+ ['#selSong',()=>'The song to focus on. Its key sets every tab, and Drill plays its chords.'],
  ['[data-step="-1"]',()=>'Previous position. Shortcut: ←'],
  ['[data-step="1"]',()=>'Next position. Shortcut: →'],
  ['#selKey',()=>'The key center. Random picks a new key for each quiz question.'],

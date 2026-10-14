@@ -190,6 +190,18 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   setF('[data-sf=tempo]','92'); ok(X.LOG.skills['song:here-pavement'].tempo===92,'tempo-saved');
   X.saved.bpm=60; click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]'));
   ok(X.saved.bpm===92&&/goal 92 bpm/.test(d.getElementById('sheet').textContent),'tempo-practice',X.saved.bpm+' '+d.getElementById('sheet').textContent.slice(0,120));
+  // the focus bar: Key mode or Song mode
+  mode('explore'); click(d.querySelector('[data-fm=key]')); Object.assign(X.F,{key:2,fam:'major',mode:1,pos:-1}); X.refresh(); mode('explore');
+  click(d.querySelector('[data-fm=song]'));
+  ok(X.saved.fmode==='song'&&X.F.key===X.LOG.skills[X.saved.fsong].key&&d.getElementById('focusTitle').textContent===X.LOG.skills[X.saved.fsong].name,'focus-song',X.saved.fsong+' '+d.getElementById('focusTitle').textContent);
+  setF('#selSong','song:here-pavement'); ok(X.D.prog==='song:here-pavement'&&X.D.line==='prog'&&X.F.key===9&&X.saved.bpm===92&&/92 bpm/.test(d.getElementById('focusSub').textContent),'focus-song-pick');
+  mode('drill'); ok(d.querySelectorAll('.sh-bars .bar').length===3,'focus-song-drill');
+  setF('#selSong','song:song-b'); ok(X.D.prog==='song:song-b'&&X.F.key===7&&X.st.mode==='drill','focus-song-switch',X.F.key);
+  mode('songs'); ok(X.st.song==='song:song-b','focus-song-opens-in-songs');
+  click(d.querySelector('[data-act=songopen][data-id="song:here-pavement"]')); ok(X.saved.fsong==='song:here-pavement','songs-open-sets-focus');
+  click(d.querySelector('[data-fm=key]')); ok(X.saved.fmode==='key'&&X.F.key===2&&X.F.mode===1&&X.F.pos===-1&&!/^song:/.test(X.D.prog),'focus-key-restored',[X.F.key,X.F.mode,X.F.pos,X.D.prog].join(' '));
+  click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]')); ok(X.saved.fmode==='song'&&X.saved.fsong==='song:here-pavement','practice-sets-focus');
+  setF('[data-set=prog]','pop'); ok(X.saved.fmode==='key'&&X.F.key===9&&X.D.prog==='pop','common-prog-leaves-song');
   // stored under its own key
   ok(JSON.parse(w.localStorage.getItem(X.LOG_KEY)).sessions.length===X.LOG.sessions.length,'stored');
   // merge: union, idempotent

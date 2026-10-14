@@ -36,6 +36,7 @@ async function run(wide){
      click(d.querySelector('[data-act=sgstep][data-i="1"]')); check('song strum custom');
      click(d.querySelector('[data-act=songform]')); check('second song form');
      goMode(d,click,'practice'); check('path with song');
+     click(d.querySelector('[data-fm=song]')); check('focus on song'); goMode(d,click,'drill'); check('drill focused on song'); click(d.querySelector('[data-fm=key]')); goMode(d,click,'practice'); check('focus back on key');
      click(d.querySelector('.pnext [data-act=step]')); check('drill from path');
      click(d.querySelector('[data-act=topath]')); check('back to path');
      click(d.querySelector('[data-act=step][data-id=r3]')); check('rhythm step from path');
