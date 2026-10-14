@@ -28,7 +28,7 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
     const change=(sel,v)=>{const e=d.querySelector(sel); e.value=v; e.dispatchEvent(new w.Event('change',{bubbles:true}));};
     const L=wide?'wide':'phone';
     click(d.querySelector('[data-mode=drill]'));
-    click(d.querySelector('.cell[data-s="0"][data-f="5"]'));
+    {const sp=d.getElementById('selPos'); sp.value='5'; sp.dispatchEvent(new w.Event('change',{bubbles:true}));}
     click(d.querySelector('[data-act=line][data-v=prog]'));
     click(d.querySelector('[data-act=sheet]')); // Each chord and notes per beat live in Settings
     if(!d.querySelector('.sets')) fail('ui',L+' settings did not open');

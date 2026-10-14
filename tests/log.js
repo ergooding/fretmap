@@ -43,7 +43,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   const A=await device(true); const {w,d,X,click,mode,advance}=A;
   ok(!d.querySelector('[data-mode=practice]').hidden,'nav');
   // drill: a 60 s run on a box is logged with its passes
-  mode('drill'); click(d.querySelector('.cell[data-s="0"][data-f="5"]')); X.saved.bpm=120;
+  mode('drill'); {const sp=d.getElementById('selPos'); sp.value='5'; sp.dispatchEvent(new w.Event('change',{bubbles:true}));} X.saved.bpm=120;
   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(60); click(d.querySelector('[data-act=play]'));
   let E=entries(X); ok(E.length===1,'drill-entry',E.length);
   const e0=E[0]||{}; ok(e0.secs===60&&e0.passes>=1&&e0.skill.startsWith('box:')&&e0.bpm[0]===120,'drill-fields',JSON.stringify(e0));
@@ -78,7 +78,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   // the path is built from the focus: over the whole neck it goes box by box from the open strings up
   Object.assign(X.F,{key:9,fam:'pent',mode:1,pos:-1}); X.refresh();
   mode('practice'); ok(!/undefined|NaN|\[object/.test(d.querySelector('.app').textContent),'path-text');
-  ok([...d.querySelectorAll('.psteps [data-act=step][data-id^=s]')].map(e=>e.dataset.id).join(' ')==='s0 s3 s5 s8','path-scale-order');
+  ok([...d.querySelectorAll('.psteps [data-act=step][data-id^=s]')].map(e=>e.dataset.id).join(' ')==='s0 s2 s5 s7 sw','path-scale-order');
   ok(d.querySelector('.pnext [data-act=step]').dataset.id==='s0','path-next-s0');
   // a position picked in the header keeps every step in it
   Object.assign(X.F,{pos:5}); X.refresh(); mode('drill'); mode('practice');
@@ -86,7 +86,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(d.querySelector('.pnext [data-act=step]').dataset.id==='s5','path-next-s5');
   click(d.querySelector('.pnext [data-act=step]'));
   ok(X.st.mode==='drill'&&X.F.key===9&&X.F.fam==='pent'&&X.F.mode===1&&X.F.pos===5&&X.D.line==='scale'&&X.D.pattern==='thirds','step-setup',[X.st.mode,X.F.key,X.F.fam,X.F.mode,X.F.pos,X.D.line,X.D.pattern].join(' '));
-  ok(/Frets 5–9, from the root · goal 80/.test(d.getElementById('sheet').textContent),'path-note');
+  ok(/Em shape, frets 5–9 · goal 80/.test(d.getElementById('sheet').textContent),'path-note');
   const runClean=(bpm,secs)=>{X.saved.bpm=bpm; click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(secs); click(d.querySelector('[data-act=play]')); const c=d.querySelector('[data-act=clean]'); ok(c,'clean-chip-'+bpm); if(c) click(c);};
   runClean(70,20); ok(!X.stepState(X.STEP_BY.s5).done,'step-not-done-below-goal');
   runClean(80,20); ok(X.stepState(X.STEP_BY.s5).done,'step-done-at-goal');
@@ -241,6 +241,18 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     ok(pr('blues',0,'major',0,true).split(' ').every(n=>/^[CFG]7$/.test(n)),'audit-blues7',pr('blues',0,'major',0,true));
     ok(pr('251',9,'major',5,true)==='Bm7♭5 E7 Am7 Am7','audit-minor-251',pr('251',9,'major',5,true));
     ok(['Bdim','Bm7b5','Gdim7','Caug'].map(n=>X.chordIn(n,0).roman).join(' ')==='vii° viiø7 v°7 I+','audit-romans',['Bdim','Bm7b5','Gdim7','Caug'].map(n=>X.chordIn(n,0).roman).join(' '));
+    // the Drill neck matches its text: no dot the scale line skips, chord tones solid, the start and end note ringed
+    Object.assign(X.F,{key:0,fam:'major',mode:0,pos:0}); Object.assign(X.D,{line:'scale',chord:1,resolve:'key',pattern:'updown',sev:false}); X.saved.fmode='key'; X.refresh(); mode('drill');
+    const dt=(s,f)=>d.querySelector(`.cell[data-s="${s}"][data-f="${f}"] .dot`), per=(/Notes per string, low to high: ([\d ]+)\./.exec(d.getElementById('sheet').textContent)||[])[1];
+    ok(!dt(3,4)&&dt(4,0)&&per==='3 3 3 2 3 3','audit-neck-unison',per);
+    ok(/\bpass\b/.test(dt(4,1).className)&&/\bhome\b/.test(dt(4,1).className)&&!/\bpass\b/.test(dt(2,3).className),'audit-neck-chord-tones',dt(4,1).className+' / '+dt(2,3).className);
+    // positions are the CAGED shapes of the home chord, and the whole neck runs up through all of them
+    const posAt=(key,fam,m)=>{Object.assign(X.F,{key,fam,mode:m,pos:-1}); X.refresh(); return X.cur.pos.map(p=>p.label).join(' | ');};
+    ok(posAt(0,'major',0)==='C shape, frets 0–4 | A shape, frets 2–6 | G shape, frets 5–9 | E shape, frets 7–11','caged-c',posAt(0,'major',0));
+    ok(posAt(9,'pent',1)==='Am shape, frets 0–4 | Gm shape, frets 2–6 | Em shape, frets 5–9 | Dm shape, frets 7–11','caged-am',posAt(9,'pent',1));
+    posAt(0,'major',0); Object.assign(X.D,{line:'scale',pattern:'updown'}); X.refresh(); mode('drill');
+    const run=X.genSeq().filter(n=>!n.chord&&!n.rest), pcOf=n=>(n.s===undefined?-1:([4,9,2,7,11,4][n.s]+n.f)%12);
+    ok(!X.st.picking&&!d.querySelector('[data-act=keepbox]')&&run.length>20&&pcOf(run[0])===0&&pcOf(run[run.length-1])===0&&Math.max(...run.map(n=>n.f))>=10&&Math.min(...run.map(n=>n.f))<=3,'whole-neck-run',run.map(n=>n.s+'/'+n.f).join(' '));
     Object.assign(X.F,f0); Object.assign(X.D,{sev,line,prog}); X.saved.fmode=fm; X.refresh(); mode('drill'); mode('explore'); }
   // practice one part of a song in Drill
   X.saveParts('song:here-pavement',[{name:'Verse',text:'(A, E6, Dmaj7) x2'},{name:'Chorus',text:'D A E A'}]); X.refresh(); mode('drill');

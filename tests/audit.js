@@ -109,7 +109,7 @@ setTimeout(async()=>{
   await new Promise(r=>setTimeout(r,3000));
   click(d.querySelector('[data-act=sheet]'));
   const sub=d.querySelector('[data-set=sub]'); sub.value='3'; sub.dispatchEvent(new w.Event('change',{bubbles:true}));
-  await new Promise(r=>setTimeout(r,3000)); clearInterval(iv);
+  await new Promise(r=>setTimeout(r,5000)); clearInterval(iv);
   if(!sawChord) fail('play-chord','never saw chord step'); if(!chordOnDownbeat) fail('play-downbeat','chord off the downbeat');
   if(DX.saved.bpm<=bpm0) fail('play-ramp','tempo never ramped');
   click(d.querySelector('[data-act=play]')); if(DX.st.playing) fail('play-stop','did not stop');

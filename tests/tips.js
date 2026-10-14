@@ -21,7 +21,7 @@ async function run(wide){
  for(const m of ['explore','name','find','drill','practice','songs']){
    goMode(d,click,m); check(m);
    if(m==='name'){click(d.querySelector('[data-act=answer]')); check('name answered');}
-   if(m==='drill'){click(d.querySelector('.cell[data-s="0"][data-f="5"]')); check('drill box');
+   if(m==='drill'){(()=>{const sp=d.getElementById('selPos'); sp.value='5'; sp.dispatchEvent(new w.Event('change',{bubbles:true}));})(); check('drill box');
      click(d.querySelector('[data-act=sheet]')); check('drill settings');
      click(d.querySelector('[data-act=tog][data-k=pad]')); check('drill pad'); click(d.querySelector('[data-act=sheetclose]')); check('drill settings closed');
      click(d.querySelector('[data-act=chord][aria-pressed=true]')); check('drill chord heard');
@@ -49,7 +49,7 @@ async function run(wide){
      click(d.querySelector('[data-act=step][data-id=r3]')); check('rhythm step from path');
      click(d.querySelector('[data-act=topath]'));
      click(d.querySelector('[data-act=songplay]')); check('song changes in drill');}
-   if(m==='drill'){click(d.querySelector('.cell[data-s="0"][data-f="5"]'));
+   if(m==='drill'){(()=>{const sp=d.getElementById('selPos'); sp.value='5'; sp.dispatchEvent(new w.Event('change',{bubbles:true}));})();
      click(d.querySelector('[data-act=line][data-v=prog]')); check('drill prog');
      click(d.querySelector('.rstep[data-i="1"]')); check('prog custom');
      click(d.querySelector('[data-act=rres][data-v="16"]')); check('prog custom 16');
@@ -63,7 +63,7 @@ async function run(wide){
      click(d.querySelector('[data-act=line][data-v=scale]')); check('back to scale lines');}
  }
  // sample some content
- click(d.querySelector('[data-mode=drill]')); click(d.querySelector('.cell[data-s="0"][data-f="5"]'));
+ click(d.querySelector('[data-mode=drill]')); (()=>{const sp=d.getElementById('selPos'); sp.value='5'; sp.dispatchEvent(new w.Event('change',{bubbles:true}));})();
  console.log(wide?'wide':'phone','samples:');
  click(d.querySelector('[data-act=line][data-v=prog]'));
  for(const sel of ['[data-set=prog]','.tcol[data-j="0"]','.tcol[data-j="3"]','.tcol[data-j="9"]','[data-pci]']){const e=d.querySelector(sel); if(e) console.log('  ',sel,'→',X.tipFor(e).replace(/<[^>]+>/g,''));}

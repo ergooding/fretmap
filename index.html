@@ -122,6 +122,7 @@ h1{font-size:1.05rem;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
 .dot.ghost{opacity:.28}
 
 .dot.pass{background:var(--pearl);color:#4d453a;font-weight:600;transform:scale(.8)}
+.dot.home{box-shadow:0 0 0 3px var(--gold)}
 .dot.now{transform:scale(1.2);box-shadow:0 0 0 3px var(--ink),0 0 16px 2px var(--c,var(--pearl));z-index:2;position:relative;animation:none}
 .dot.nextup{outline:2px dashed var(--ink);outline-offset:2px;animation:none}
 .drow{display:flex;gap:6px;align-items:center}
@@ -764,17 +765,25 @@ function scaleSet(){
 }
 function modeName(){return FAMS[F.fam].modes[F.mode][0];}
 function lab(iv){return F.fam==='chrom'?IV[iv]:labIn(iv,cur.set);}
+// each shape: [name, the string its root sits on, where the box starts relative to that root's fret]
+const CAGED={maj:[['C',1,-3],['A',1,-1],['G',0,-3],['E',0,-1],['D',2,-1]],min:[['Cm',1,-3],['Am',1,0],['Gm',0,-3],['Em',0,0],['Dm',2,0]]};
 function positions(key){
   const out=[];
   if(key<0||F.fam==='chrom'){
     for(let f=0;f<=8;f++) out.push({lo:f,hi:f+4,label:`Frets ${f}–${f+4}`});
     return out;
   }
-  for(let f=0;f<=8;f++){ // boxes past fret 8 would run off the 12-fret neck
-    const iv=(pc(0,f)-key+12)%12;
-    if(cur.set.has(iv)){const hi=f+4; out.push({lo:f,hi,label:`Frets ${f}–${hi}, starts on ${lab(iv)[0]}`});}
-  }
-  return out;
+  // the CAGED positions: each 5-fret box is built around one shape of the home chord (C, A, G, E and D shapes, or
+  // their minor versions), found from where its root sits; a box past fret 8 would run off the 12-fret neck
+  const minor=cur.A7.includes(3)&&!cur.A7.includes(4);
+  CAGED[minor?'min':'maj'].forEach(([name,s,off])=>{
+    for(const r of [0,12]){
+      const f=(key-OPEN[s]+120)%12+r; let lo=f+off; if(lo===-1) lo=0; // the open strings stand in for the fret below the nut
+      if(lo<0||lo>8||out.some(p=>p.lo===lo)) continue;
+      out.push({lo,hi:lo+4,shape:name,label:`${name} shape, frets ${lo}–${lo+4}`});
+    }
+  });
+  return out.sort((a,b)=>a.lo-b.lo);
 }
 function qname(q,rel){return q!==null?q:'('+rel.slice(1).map(x=>IV[x][0]).join(' ')+')';}
 function buildChords(){
@@ -1139,10 +1148,32 @@ function record(ok){
 
 // ---------- drill generation ----------
 function boxNotes(){
+  if(cur.whole&&D.line!=='prog'&&F.fam!=='chrom'&&cur.pos.length) return climbNotes();
   const list=[];
   for(let s=0;s<6;s++)for(let f=cur.lo;f<=cur.hi;f++) if(cur.set.has(ivOf({s,f},cur.key))) list.push({s,f,m:MIDI[s]+capo()+f});
   list.sort((a,b)=>a.m-b.m||b.s-a.s); // same pitch twice: keep the higher string (less stretching)
   return list.filter((n,i)=>i===0||n.m!==list[i-1].m);
+}
+function climbNotes(){
+  // the whole neck as one run: every scale note from the lowest root of the first shape up to the top of the last,
+  // shifting up through the shapes in order, so each shape gets its share of the run (each note keeps its box for fingering)
+  const S=cur.pos, all=[];
+  for(let s=0;s<6;s++)for(let f=0;f<=12;f++) if(cur.set.has(ivOf({s,f},cur.key))) all.push({s,f,m:MIDI[s]+capo()+f});
+  const inBox=(n,b)=>n.f>=b.lo-(b.lo?0:1)&&n.f<=b.hi;
+  const first=all.filter(n=>inBox(n,S[0])&&pc(n.s,n.f)===cur.key).sort((a,b)=>a.m-b.m)[0];
+  const top=Math.max(...all.filter(n=>n.s===5&&inBox(n,S[S.length-1])).map(n=>n.m));
+  if(!first||!isFinite(top)) return [];
+  const pitches=[...new Set(all.map(n=>n.m))].filter(m=>m>=first.m&&m<=top).sort((a,b)=>a-b), out=[];
+  let prev=first;
+  pitches.forEach((m,i)=>{
+    const b=S[Math.min(S.length-1,Math.floor(i*S.length/pitches.length))];
+    const c=i?all.filter(n=>n.m===m&&n.s>=prev.s):[first];
+    const run=out.filter(x=>x.s===prev.s).length; // three notes on a string, then cross to the next
+    const cost=n=>(n.f<b.lo?b.lo-n.f:n.f>b.hi?n.f-b.hi:0)*3+Math.abs(n.f-prev.f)*0.3+(n.s-prev.s)*0.2+(n.s===prev.s&&run>=3?4:0);
+    const n=c.sort((x,y)=>cost(x)-cost(y))[0]; if(!n) return;
+    out.push({...n,lo:b.lo}); prev=n;
+  });
+  return out;
 }
 function arpNotes(p){
   // the strummed voicing, one string at a time, low to high and back; with no voicing, the chord tones in the box from the lowest root
@@ -1567,7 +1598,7 @@ function render(){
   if(saved.fmode==='song'&&!focusSong()) saved.fmode='key'; // the song was removed
   fillSongSel(); renderStats(); focusText(); renderBoard(); renderPrompt(); renderPanel(); renderSheet(); renderVoice(); updateLive();
 }
-const picking=()=>st.mode==='drill'&&(st.picking||cur.whole);
+const picking=()=>st.mode==='drill'&&(st.picking||cur.whole&&(D.line==='prog'||F.fam==='chrom'));
 function drillLabel(p){
   const ivK=ivOf(p,cur.key), ivC=ivOf(p,cur.chord.root);
   const ref=D.ref==='chord'?ivC:ivK;
@@ -1580,6 +1611,9 @@ function renderBoard(){
   if(st.mode==='practice'||st.mode==='songs') return; // the neck is hidden
   if(st.mode==='drill'&&!picking()&&!wide) setZoom(Math.max(0,cur.lo-1),Math.min(12,cur.hi+1)); else setZoom(0,12);
   const nowN=(st.playing||st.paused)&&st.idx>=0?st.seq[st.idx]:null;
+  // a scale line plays each pitch once, so a note it skips (the same pitch on the next string) isn't drawn
+  const played=st.mode==='drill'&&D.line!=='prog'?new Set(boxNotes().map(n=>n.s+':'+n.f)):null;
+  const home=D.resolve==='chord'?cur.chord.root:cur.key;
   const nextN=nowN?st.seq[(st.idx+1)%st.seq.length]:null;
   const same=(a,s,f)=>a&&a.s===s&&a.f===f;
   const E=exSong(), EV=E&&E.c?exVoicing(E,E.sel):null, ERel=E&&E.c?exOverRel(E):null;
@@ -1608,7 +1642,7 @@ function renderBoard(){
       const out=!inWin(f); c.classList.toggle('out',out);
       const inV=cur.voicing&&cur.voicing.frets[s]===f;
       const isNow=same(nowN,s,f)||(nowN&&nowN.chord&&inV), isNext=same(nextN,s,f)||(nextN&&nextN.chord&&inV);
-      if(!isNow&&!isNext&&(out||!cur.set.has(ivOf({s,f},cur.key)))){dot(c,null);continue;}
+      if(!isNow&&!isNext&&(out||!cur.set.has(ivOf({s,f},cur.key))||(played&&!(inV&&D.pad)&&!played.has(s+':'+f)))){dot(c,null);continue;}
       const {ref,t}=drillLabel({s,f}), isC=cur.chordPcs.has(pc(s,f));
       let show=true;
       if(st.playing&&st.idx>=0){
@@ -1616,7 +1650,7 @@ function renderBoard(){
         if(D.guide==='blind') show=false;
       }
       if(!show){dot(c,null);continue;}
-      let cls=ref===0?'root':(isC?'':'pass');
+      let cls=(isC?(ref===0?'root':''):'pass')+(D.line!=='prog'&&pc(s,f)===home?' home':''); // solid: chord tone; pearl: passing tone; gold ring: where each pass starts and ends
       if(isNow) cls+=' now'; else if(isNext&&D.guide!=='full') cls+=' nextup';
       if(st.flashUntil>Date.now()&&cur.voicing&&cur.voicing.frets[s]===f) cls+=' vc';
       dot(c,{t,c:COL[ref],cls});
@@ -1668,8 +1702,9 @@ function renderPrompt(){
   }
 }
 function finger(n){
-  if(cur.lo===0) return n.f===0?'o':String(Math.min(4,n.f));
-  const o=n.f-cur.lo; return o>=4?'4+':String(o+1);
+  const lo=n.lo??cur.lo; // a whole-neck run fingers each note in its own box
+  if(lo===0) return n.f===0?'o':String(Math.min(4,n.f));
+  const o=n.f-lo; return o<0?'1':o>=4?'4+':String(o+1);
 }
 function chordTones(){
   const pick=o=>o.find(x=>cur.set.has(x));
@@ -1834,10 +1869,13 @@ function buildPath(){
   const fk={key:cur.key,fam:F.fam,mode:F.mode}, k=followKey(), home=homePos(), tonic=progNames(k,'one')[0], minor=/m(?!aj)/.test(tonic)||/°/.test(tonic);
   // a position picked in the header keeps every step in it; the whole neck goes box by box from the open strings up
   const one=F.pos>=0, ps=one?[home]:cur.pos, fr=p=>`frets ${p.lo}–${p.hi}`;
-  const scale=ps.map((p,i)=>({id:'s'+p.lo,title:(pc(0,p.lo)-cur.key+12)%12===0?`Frets ${p.lo}–${p.hi}, from the root`:`Frets ${p.lo}–${p.hi}`,
+  const scale=ps.map((p,i)=>({id:'s'+p.lo,title:p.label.split(',')[0]===p.label?p.label:p.label.replace(/^./,c=>c.toUpperCase()),
     what:i===0?'Up and down the box in 3rds. Say the interval of each note as you play it.':'The next position up, in 3rds.',
     ...fk,pos:p.lo,line:'scale',pattern:'thirds',sub:2,goal:80}));
-  const chord=ps.map(p=>({id:'c'+p.lo,title:`${tonic} in ${fr(p)}`,
+  if(!one&&F.fam!=='chrom'&&ps.length>1) scale.push({id:'sw',title:'Whole neck, through every shape',
+    what:'One run from the lowest root up through each box to the top of the neck and back. Feel where each shape hands over to the next.',
+    ...fk,pos:-1,line:'scale',pattern:'updown',sub:2,goal:80});
+  const chord=ps.map(p=>({id:'c'+p.lo,title:p.shape?`${tonic} in the ${p.shape} shape box, ${fr(p)}`:`${tonic} in ${fr(p)}`,
     what:`The ${tonic} chord as it sits in ${fr(p)}. Strum a bar, then pick the same shape one string at a time.`,
     ...fk,pos:p.lo,line:'prog',prog:'one',plan:'both',rpat:'quarters',sev:false,goal:80}));
   const progs=minor?['two','145','epic','andalusian']:['two','145','pop','50s'];
@@ -2186,7 +2224,7 @@ function renderSheet(){
       <div class="sh-head"><b class="sh-name">${cur.chord.name}</b><span>${cur.chord.roman?cur.chord.roman+' in ':'Over '}${keyName()} ${F.fam==='chrom'?'':esc(modeName())}</span></div>
       <div class="row sh-chips" role="group" aria-label="Chord to drill over">${chips}</div>
       <div class="drow"><select data-set="pattern" aria-label="Pattern">${opts(PATTERNS,D.pattern)}</select></div>
-      <p class="hint">Solid dots are ${term('chordtone','chord tones')}, pearl dots ${term('passing','passing tones')}. Notes per string, low to high: ${per.join(' ')}.${D.pad&&!cur.voicing?' No voicing fits this box, so the chord step is skipped.':''} Tap the chosen chord again to hear it.</p>`;
+      <p class="hint">Solid dots are ${term('chordtone','chord tones')} of ${cur.chord.name}, pearl dots ${term('passing','passing tones')}, and a gold ring marks ${D.resolve==='chord'?rootName(cur.chord):keyName()}, where each pass starts and ends. Notes per string, low to high: ${per.join(' ')}.${D.pad&&!cur.voicing?' No voicing fits this box, so the chord step is skipped.':''} Tap the chosen chord again to hear it.</p>`;
     return;
   }
   if(!cur.prog){el.innerHTML=`${playSeg}<p class="hint">Progressions are built from the chords of a 7-note scale. Pick a mode of Major, Harmonic minor, or Melodic minor in the focus settings.</p>`; return;}
@@ -2302,7 +2340,7 @@ function setMode(m){
   clearTimeout(st.timer); stopMet(); st.mode=m; st.q=null; st.sheet=false; st.exTap=null; panel.scrollTop=0;
   if(m==='songs'&&focusSong()&&st.song!==saved.fsong){st.song=saved.fsong; st.vpick=null;} // the Songs tab opens on the song in focus
   if(st.mode==='explore'||st.mode==='practice'||st.mode==='songs') render();
-  else if(st.mode==='drill'){st.picking=cur.whole; st.seq=genSeq(); render();}
+  else if(st.mode==='drill'){st.picking=false; st.seq=genSeq(); render();}
   else newQuestion();
 }
 document.getElementById('modes').addEventListener('click',e=>{const b=e.target.closest('button'); if(b) setMode(b.dataset.mode);});
@@ -2546,7 +2584,7 @@ const GLOSS_GROUPS=[
   ['mode','Mode','A scale played from a different note of a parent scale. Dorian uses the same notes as the major scale but starts on its 2nd degree, which gives it a different home note and a different sound.'],
   ['diatonic','Diatonic','Using only the notes of the current scale. Diatonic chords are the chords you can build from those notes alone.'],
   ['pentatonic','Pentatonic','A five-note scale. Minor pentatonic (R ♭3 4 5 ♭7) is the backbone of most rock and blues soloing.'],
-  ['position','Position (box)','A hand position covering about five frets across all six strings, with the index finger on the lowest fret. Learning a scale box by box is how most guitarists map the neck. Here a box starts on each scale note of the low E string, so neighbouring boxes overlap; learn them in Path order.']
+  ['position','Position (box)','A hand position covering about five frets across all six strings, with the index finger on the lowest fret. Here the boxes are the CAGED positions: each is built around one shape of the home chord (the C, A, G, E and D shapes), and together they cover the neck. Learn each box, then run through them all on the whole neck.']
  ]],
  ['Chords',[
   ['chordtone','Chord tone','A note that belongs to the chord: its root, 3rd and 5th, plus the 7th in a 7th chord. Other scale notes are passing tones or extensions.'],
@@ -2735,7 +2773,7 @@ const TIPS=[
  ['#selKey',()=>'The key center. Random picks a new key for each quiz question.'],
  ['#selFam',()=>'The scale family. Each family has its own set of modes.'],
  ['#selMode',()=>`<b>${esc(modeName())}</b>: R ${cur.allowed.map(i=>lab(i)[0]).join(' ')}`],
- ['#selPos',()=>'A 5-fret box that starts on a scale tone of the low E string, or the whole neck. In Drill you can also click the neck to set a box.'],
+ ['#selPos',()=>'A 5-fret box built around one CAGED shape of the home chord, or the whole neck: in Drill, scale lines then run up through every shape.'],
  ['#stats',()=>'Your quiz score and streak from Name it and Find it, and your practice time today.'],
  ['#layoutBtn',()=>`Layout: ${{auto:'automatic, based on the window shape',wide:'always desktop',compact:'always phone (sideways phones get a horizontal neck)'}[saved.layout]}. Click to switch.`],
  ['#soundBtn',()=>`Note sounds are ${saved.sound?'on':'off'} for tapping and quizzes. The drill has its own Click and Notes switches.`],
