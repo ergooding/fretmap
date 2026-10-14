@@ -909,7 +909,16 @@ function applyLayout(){
 [mq,mqLand].forEach(m=>m.addEventListener?m.addEventListener('change',()=>{applyLayout();render();}):m.addListener(()=>{applyLayout();render();}));
 layoutBtn.onclick=()=>{saved.layout={auto:'wide',wide:'compact',compact:'auto'}[saved.layout]; save(); applyLayout(); render();};
 applyLayout();
-function dot(cell,d){cell.innerHTML=d?`<span class="dot ${d.cls||''}" style="--c:${d.c||'var(--pearl)'}">${d.t}</span>`:'';}
+function dot(cell,d){
+  // change a dot in place rather than redrawing it, so only a dot that wasn't there before pops in and the neck doesn't flicker
+  const el=cell.firstElementChild;
+  if(!d){if(el) cell.textContent=''; return;}
+  const cls='dot '+(d.cls||''), c=d.c||'var(--pearl)', t=String(d.t);
+  if(!el){cell.innerHTML=`<span class="${cls}" style="--c:${c}">${t}</span>`; return;}
+  if(el.className!==cls) el.className=cls;
+  if(el.style.getPropertyValue('--c')!==c) el.style.setProperty('--c',c);
+  if(el.textContent!==t) el.textContent=t;
+}
 const inWin=f=>f>=cur.lo&&f<=cur.hi;
 
 // ---------- focus controls ----------
