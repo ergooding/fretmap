@@ -82,7 +82,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(d.querySelector('.pnext [data-act=step]').dataset.id==='s0','path-next-s0');
   // a position picked in the header keeps every step in it
   Object.assign(X.F,{pos:5}); X.refresh(); mode('drill'); mode('practice');
-  ok([...d.querySelectorAll('.psteps [data-act=step][data-id^=s],.psteps [data-act=step][data-id^=c]')].map(e=>e.dataset.id).join(' ')==='s5 c5'&&[...X.PATH.flatMap(g=>g.steps)].every(s=>s.pos===5),'path-one-position');
+  ok([...d.querySelectorAll('.psteps [data-act=step][data-id^=s],.psteps [data-act=step][data-id^=c]')].map(e=>e.dataset.id).join(' ')==='s5 c5'&&[...X.PATH.filter(g=>g.id!=='bluegrass').flatMap(g=>g.steps)].every(s=>s.pos===5),'path-one-position');
   ok(d.querySelector('.pnext [data-act=step]').dataset.id==='s5','path-next-s5');
   click(d.querySelector('.pnext [data-act=step]'));
   ok(X.st.mode==='drill'&&X.F.key===9&&X.F.fam==='pent'&&X.F.mode===1&&X.F.pos===5&&X.D.line==='scale'&&X.D.pattern==='thirds','step-setup',[X.st.mode,X.F.key,X.F.fam,X.F.mode,X.F.pos,X.D.line,X.D.pattern].join(' '));
@@ -265,6 +265,18 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     ok(th.join()==='3,6,5,8','thirds-from-root',th.join());
     X.D.pattern='g3'; X.refresh(); const g3=X.genSeq().filter(n=>!n.chord&&!n.rest).slice(0,4).map(n=>([4,9,2,7,11,4][n.s]+n.f)%12); ok(g3.join()==='3,5,6,5','g3-from-root',g3.join());
     X.D.pattern='updown';
+    // bluegrass: boom-chuck walks G A B into C, and C alternates to the G on the low E string
+    { const nm=n=>n.chord?'['+n.v.frets.map(f=>f===null?'-':f).join('')+']':'EADGBe'[n.s]+n.f;
+      Object.assign(X.F,{key:7,fam:'major',mode:0,pos:0}); Object.assign(X.D,{line:'prog',prog:'145',plan:'boom',sev:false}); X.refresh(); mode('drill');
+      const bb=X.genSeq().map(nm).join(' ');
+      ok(bb.startsWith('E3 [---003] A0 A2 A3 [--2010] E3 [--2010] D0 [---232] A2 A0 E3 [---003] D0 [---003]'),'bg-boom',bb);
+      X.D.plan='thumb'; X.refresh(); const tb=X.genSeq().slice(0,8).map(n=>nm(n)+n.pk).join(' '); ok(tb==='E3p B0m D0p G0i E3p B0m D0p G0i','bg-travis',tb);
+      X.D.plan='roll'; X.refresh(); const rb=X.genSeq().slice(0,8).map(n=>nm(n)+n.pk).join(' '); ok(rb==='G0↓ B0↑ e3↓ G0↑ B0↓ e3↑ G0↓ B0↑','bg-roll',rb);
+      Object.assign(X.D,{line:'scale',pattern:'slurs'}); X.refresh(); const sl=X.genSeq().slice(0,6).map(n=>nm(n)+(n.sl||'')).join(' '); ok(sl==='E3 A0 A2h A3 D0 D2h','bg-slurs',sl);
+      X.D.pattern='altpick'; X.refresh(); ok(X.genSeq().slice(0,4).map(n=>n.pk).join('')==='↓↑↓↑'&&/alternate picking/.test(X.skillNow().name),'bg-altpick',X.skillNow().name);
+      mode('practice'); click(d.querySelector('[data-act=step][data-id=tune1]'));
+      ok(X.st.mode==='songs'&&d.getElementById('sgName').value==='Black Mountain Rag'&&/songsterr\.com\/\?pattern=Black%20Mountain%20Rag/.test(d.getElementById('sgLink').value),'bg-tune-form',d.getElementById('sgName')&&d.getElementById('sgName').value);
+      click(d.querySelector('[data-act=songcancel]')); X.D.pattern='updown'; }
     Object.assign(X.F,f0); Object.assign(X.D,{sev,line,prog}); X.saved.fmode=fm; X.refresh(); mode('drill'); mode('explore'); }
   // the browser's Back button returns to the previous tab, and closing the settings sheet doesn't leave an entry behind
   { mode('explore'); mode('drill'); const n=w.history.length; click(d.querySelector('[data-act=sheet]')); ok(X.st.sheet&&w.history.length===n+1,'back-sheet-entry',w.history.length-n);
