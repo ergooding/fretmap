@@ -259,6 +259,12 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     ok(!d.querySelector('[data-act=keepbox]')&&d.querySelector('#tab')&&pv.every(f=>f&&Math.max(...f.filter(x=>x!==null))<=5),'whole-neck-strum',JSON.stringify(pv));
     Object.assign(X.F,{key:0,fam:'chrom',mode:0,pos:-1}); X.D.line='scale'; X.refresh(); mode('drill');
     const cr=X.genSeq().filter(n=>!n.chord&&!n.rest); ok(cr.length>40&&Math.max(...cr.map(n=>n.f))>=10,'whole-neck-chrom',cr.length);
+    // patterns start on the root itself: 3rds go E♭ G♭ F A♭… in E♭ melodic minor, not a run of steps first
+    Object.assign(X.F,{key:3,fam:'mel',mode:0,pos:6}); Object.assign(X.D,{line:'scale',pattern:'thirds',resolve:'key'}); X.refresh(); mode('drill');
+    const th=X.genSeq().filter(n=>!n.chord&&!n.rest).slice(0,4).map(n=>([4,9,2,7,11,4][n.s]+n.f)%12);
+    ok(th.join()==='3,6,5,8','thirds-from-root',th.join());
+    X.D.pattern='g3'; X.refresh(); const g3=X.genSeq().filter(n=>!n.chord&&!n.rest).slice(0,4).map(n=>([4,9,2,7,11,4][n.s]+n.f)%12); ok(g3.join()==='3,5,6,5','g3-from-root',g3.join());
+    X.D.pattern='updown';
     Object.assign(X.F,f0); Object.assign(X.D,{sev,line,prog}); X.saved.fmode=fm; X.refresh(); mode('drill'); mode('explore'); }
   // the browser's Back button returns to the previous tab, and closing the settings sheet doesn't leave an entry behind
   { mode('explore'); mode('drill'); const n=w.history.length; click(d.querySelector('[data-act=sheet]')); ok(X.st.sheet&&w.history.length===n+1,'back-sheet-entry',w.history.length-n);

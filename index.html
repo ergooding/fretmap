@@ -1249,31 +1249,38 @@ function genRaw(){
   if(n<2) return P;
   const isC=p=>cur.chordPcs.has(pc(p.s,p.f));
   const upDown=X=>X.length<2?X:[...X,...X.slice(1,-1).reverse()];
-  const groups=g=>{for(let i=0;i+g<=n;i++)for(let k=0;k<g;k++)seq.push(P[i+k]);
-    for(let i=n-1;i-g+1>=0;i--)for(let k=0;k<g;k++)seq.push(P[i-k]);};
+  // patterns start on the lowest root (the key's, or the chord's when that's chosen), climb to the top, come down to the
+  // bottom and climb back to that root, so a pass starts and ends on it with no lead-in
+  const home=D.resolve==='chord'?cur.chord.root:cur.key, isH=p=>pc(p.s,p.f)===home;
+  const r=Math.max(0,P.findIndex(isH));
+  const fromRoot=(X,h)=>X.length<2||h<0?upDown(X):[...X.slice(h),...X.slice(0,-1).reverse(),...X.slice(1,h+1)];
+  const groups=g=>{for(let i=r;i+g<=n;i++)for(let k=0;k<g;k++)seq.push(P[i+k]);
+    for(let i=n-1;i-g+1>=0;i--)for(let k=0;k<g;k++)seq.push(P[i-k]);
+    for(let i=0;i+g-1<=r;i++)for(let k=0;k<g;k++)seq.push(P[i+k]);};
   switch(D.pattern){
     case 'updown': return upDown(P);
     case 'strings':
-      for(let a=0;a<5;a++){const X=P.filter(p=>p.s===a||p.s===a+1); if(X.length) seq.push(...upDown(X));}
+      for(let a=0;a<5;a++){const X=P.filter(p=>p.s===a||p.s===a+1); if(X.length) (seq.length?upDown(X):fromRoot(X,X.findIndex(isH))).forEach(p=>{if(p!==seq[seq.length-1]) seq.push(p);});} // the first pair starts from its root; no note twice in a row
       return seq;
     case 'thirds':
-      for(let i=0;i+2<n;i++) seq.push(P[i],P[i+2]);
+      for(let i=r;i+2<n;i++) seq.push(P[i],P[i+2]);
       for(let i=n-1;i-2>=0;i--) seq.push(P[i],P[i-2]);
+      for(let i=0;i+2<=r;i++) seq.push(P[i],P[i+2]);
       return seq;
     case 'g3': groups(3); return seq;
     case 'g4': groups(4); return seq;
-    case 'arp': return upDown(P.filter(isC));
+    case 'arp':{const X=P.filter(isC); return fromRoot(X,X.findIndex(isH));}
     case 'enclose':{
       const ks=P.map((p,i)=>isC(p)?i:-1).filter(i=>i>=0);
       const cell=k=>[P[k+1],P[k-1],P[k]].filter(Boolean);
-      ks.forEach(k=>seq.push(...cell(k))); ks.slice(0,-1).reverse().forEach(k=>seq.push(...cell(k)));
+      fromRoot(ks,ks.findIndex(k=>isH(P[k]))).forEach(k=>seq.push(...cell(k)));
       return seq;
     }
     case 'walk':{
       const ks=P.map((p,i)=>isC(p)?i:-1).filter(i=>i>=0);
-      let pos=ks[rnd(ks.length)]; const len=D.sub*8;
+      const kh=ks.filter(k=>isH(P[k])); let pos=kh.length?kh[rnd(kh.length)]:ks[rnd(ks.length)]; const len=D.sub*8;
       for(let j=0;j<len;j++){
-        if(j%D.sub===0){const near=ks.filter(k=>Math.abs(k-pos)<=3&&k!==pos); pos=near.length?near[rnd(near.length)]:ks[rnd(ks.length)];}
+        if(j&&j%D.sub===0){const near=ks.filter(k=>Math.abs(k-pos)<=3&&k!==pos); pos=near.length?near[rnd(near.length)]:ks[rnd(ks.length)];}
         else{const steps=[-2,-1,1,2]; pos=Math.max(0,Math.min(n-1,pos+steps[rnd(4)]));}
         seq.push(P[pos]);
       }
@@ -1879,7 +1886,7 @@ function buildPath(){
   // a position picked in the header keeps every step in it; the whole neck goes box by box from the open strings up
   const one=F.pos>=0, ps=one?[home]:cur.pos, fr=p=>`frets ${p.lo}–${p.hi}`;
   const scale=ps.map((p,i)=>({id:'s'+p.lo,title:p.label.split(',')[0]===p.label?p.label:p.label.replace(/^./,c=>c.toUpperCase()),
-    what:i===0?'Up and down the box in 3rds. Say the interval of each note as you play it.':'The next position up, in 3rds.',
+    what:(i===0?'Up and down the box ':'The next position up, ')+(cur.set.size===7?'in 3rds.':'skipping every other note.')+(i===0?' Say the interval of each note as you play it.':''),
     ...fk,pos:p.lo,line:'scale',pattern:'thirds',sub:2,goal:80}));
   if(!one&&F.fam!=='chrom'&&ps.length>1) scale.push({id:'sw',title:'Whole neck, through every shape',
     what:'One run from the lowest root up through each box to the top of the neck and back. Feel where each shape hands over to the next.',
@@ -2232,7 +2239,7 @@ function renderSheet(){
     el.innerHTML=`${playSeg}${pathNote()}
       <div class="sh-head"><b class="sh-name">${cur.chord.name}</b><span>${cur.chord.roman?cur.chord.roman+' in ':'Over '}${keyName()} ${F.fam==='chrom'?'':esc(modeName())}</span></div>
       <div class="row sh-chips" role="group" aria-label="Chord to drill over">${chips}</div>
-      <div class="drow"><select data-set="pattern" aria-label="Pattern">${opts(PATTERNS,D.pattern)}</select></div>
+      <div class="drow"><select data-set="pattern" aria-label="Pattern">${opts(PATTERNS.map(([k,l])=>[k,k==='thirds'&&cur.set.size!==7?'Skip a note':l]),D.pattern)}</select></div>
       <p class="hint">Solid dots are ${term('chordtone','chord tones')} of ${cur.chord.name}, pearl dots ${term('passing','passing tones')}, and a gold ring marks ${D.resolve==='chord'?rootName(cur.chord):keyName()}, where each pass starts and ends. Notes per string, low to high: ${per.join(' ')}.${D.pad&&!cur.voicing?' No voicing fits this box, so the chord step is skipped.':''} Tap the chosen chord again to hear it.</p>`;
     return;
   }
@@ -2704,9 +2711,10 @@ const STR_NAME=['low E','A','D','G','B','high E'];
 const PAT_TIP={updown:'Every scale note in the box: from the root up to the top, down to the bottom, and back up to the root.',
  strings:'Two strings at a time, up and back, so each string pair locks in on its own.',
  thirds:'Skip every other note (1–3, 2–4, 3–5…) to hear the scale in 3rds.',
- g3:'Runs of three notes, moving up one note each time, then the same coming down.',
- g4:'Runs of four notes, moving up one note each time, then the same coming down.',
- arp:'Only the chord tones in the box, up and back.',
+ thirdsX:'Skip every other note of the scale. Only a 7-note scale makes every skip a 3rd: here some skips are bigger or smaller, such as the 3rds and 4ths of a pentatonic.',
+ g3:'Runs of three notes from the root, moving up one note each time to the top, then the same coming down, and back up to the root.',
+ g4:'Runs of four notes from the root, moving up one note each time to the top, then the same coming down, and back up to the root.',
+ arp:'Only the chord tones in the box, from the root up to the top, down to the bottom, and back to the root.',
  enclose:'Approach each chord tone from the scale note above, then below, then land on it.',
  walk:'A new random line every pass that lands on a chord tone on each beat.'};
 const GUIDE_TIP={full:'The whole box stays visible while you play.',next:'While playing, only the current note and the next one are shown.',
@@ -2832,7 +2840,7 @@ const TIPS=[
  ['[data-act="chord"]',el=>{const i=+el.dataset.i, c=cur.chords[i];return `<b>${c.name}</b> (${c.roman}): ${formulaText(c)}. ${i===D.chord?'Click to hear it and see it on the neck.':'Click to drill over this chord.'}`;}],
  ['[data-rn]',el=>{const c=cur.chords[+el.dataset.rn];return `<b>${c.name}</b>: ${formulaText(c)}. Click to drill over it.`;}],
  ['[data-act="sev"]',()=>`Build 4-note 7th chords. Currently ${D.sev?'on':'off (triads)'}.`],
- ['[data-set="pattern"]',()=>PAT_TIP[D.pattern]],
+ ['[data-set="pattern"]',()=>PAT_TIP[D.pattern==='thirds'&&cur.set.size!==7?'thirdsX':D.pattern]],
  ['[data-set="guide"]',()=>GUIDE_TIP[D.guide]],
  ['[data-act="slower"]',()=>'4 bpm slower.'],
  ['[data-act="faster"]',()=>'4 bpm faster.'],
