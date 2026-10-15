@@ -471,6 +471,103 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 .seglab:empty{display:none}
 .song-sheet .segw{flex-wrap:wrap;flex:1 1 auto;min-width:0}
 .gl-keys{margin:0 10px;font-size:.88rem;line-height:1.45}
+/* Exercises: the exercise panel at the top of Drill's side column, the session strip, the Exercises tab, Customize */
+.sp{flex:1}
+.lab{font-size:.68rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.icon.sm{width:30px;height:30px;font-size:.9rem;flex:none}
+.icon:disabled{opacity:.35;cursor:default}
+.exhead{display:flex;flex-direction:column;gap:8px;border:2px solid var(--gold);background:var(--surface);border-radius:14px;padding:10px 12px;flex:none;min-width:0}
+.exhead[hidden],.exstrip[hidden],#cust[hidden]{display:none}
+.exh-top{display:flex;align-items:center;gap:8px}
+.exh-title{display:flex;align-items:baseline;gap:8px}
+.exh-title b{font-size:1.15rem;flex:1;min-width:0}
+.exh-title small{color:var(--muted);font-size:.78rem;white-space:nowrap;font-variant-numeric:tabular-nums}
+.exrow{display:flex;flex-direction:column;gap:4px;min-width:0}
+.exrow .row{flex-wrap:wrap}
+.app:not(.wide) .exrow .row{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.exrow.off .hint{border:1px dashed var(--line);border-radius:999px;padding:4px 11px;align-self:flex-start}
+.chip.exc{padding:5px 11px}
+.chip.done::before{content:"✓ ";color:var(--good);font-weight:700}
+.chip.done[aria-pressed="true"]::before{color:inherit}
+.exh-goal{display:flex;align-items:center;justify-content:flex-end}
+.gstep{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;overflow:hidden;font-size:.8rem;flex:none;background:var(--surface)}
+.gstep button{border:0;background:none;padding:4px 11px;cursor:pointer;font-size:.95rem;line-height:1}
+.gstep b{padding:4px 9px;border-inline:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap}
+.exsave{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:8px;font-size:.78rem;color:var(--muted)}
+.exsave .chip{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:600}
+.exstrip{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:5px 8px;min-width:0;flex:none}
+.exstrip>b{white-space:nowrap;font-size:.92rem}
+.exsteps{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}
+.exstep{display:flex;align-items:center;gap:6px;border:0;background:none;padding:4px 10px 4px 5px;border-radius:999px;font-size:.8rem;color:var(--muted);white-space:nowrap;cursor:pointer;flex:none}
+.exstep i{font-style:normal;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.68rem;font-weight:700;flex:none}
+.exstep.done i{background:var(--good);border-color:var(--good);color:#fff}
+.exstep[aria-current="step"]{background:color-mix(in srgb,var(--gold) 18%,var(--surface));color:var(--ink);font-weight:600;box-shadow:inset 0 0 0 1.5px var(--gold)}
+.exstep[aria-current="step"] i{border-color:var(--gold)}
+.app:not(.wide) .exstrip .chip{padding:5px 9px}
+.app.wide.has-strip{grid-template-rows:auto auto auto auto minmax(0,1fr);grid-template-areas:"head head" "goal goal" "strip strip" "side neck" "side panel"}
+.app.wide .exstrip{grid-area:strip}
+.app.land.has-ex{grid-template-rows:auto auto auto auto auto minmax(0,1fr);grid-template-areas:"modes head" "neck goal" "neck strip" "neck exh" "neck prompt" "neck panel"}
+.app.land .exstrip{grid-area:strip;padding:3px 6px}
+.app.land .exhead{grid-area:exh;padding:6px 8px;gap:5px}
+.sh-static{border:0;cursor:default}
+.expage{display:flex;flex-direction:column;gap:16px}
+.exsess,.exopen,.exlib{display:flex;flex-direction:column;gap:8px;min-width:0}
+.exsess-list{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.exsess-item{flex:none;display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:.9rem;line-height:1.3}
+.exsess-item small{color:var(--muted);font-size:.74rem}
+.exsess-item[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.exsess-item.add{border-style:dashed;color:var(--muted);justify-content:center}
+.exs-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.exs-head>b{font-size:1.2rem}
+.exs-head .btn{flex:none;padding:9px 16px}
+.exlist{display:flex;flex-direction:column;gap:8px}
+.exi{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:9px 10px}
+.exi.next{border:2px solid var(--gold)}
+.exi .mk{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.72rem;font-weight:700;color:var(--muted)}
+.exi .mk.ok{background:var(--good);border-color:var(--good);color:#fff}
+.exi.next .mk{border-color:var(--gold);color:var(--gold)}
+.exi .tx{min-width:0;display:flex;flex-direction:column;gap:2px;line-height:1.35}
+.exi .tx small{color:var(--muted);font-size:.78rem}
+.exi .btn{flex:none;padding:8px 16px}
+.exprog{display:flex;align-items:center;gap:8px;margin-top:2px}
+.exprog .bar{height:5px;border-radius:3px;background:var(--line);overflow:hidden;width:120px;flex:none}
+.exprog .bar i{display:block;height:100%;background:var(--good)}
+.exi.edit{grid-template-columns:auto minmax(0,1fr)}
+.exi.edit .exi-acts{grid-column:1/-1;justify-content:flex-end;gap:6px}
+.app.wide .exi.edit{grid-template-columns:auto minmax(0,1fr) auto}
+.app.wide .exi.edit .exi-acts{grid-column:auto}
+.exi .grip{color:var(--muted);cursor:grab;letter-spacing:-2px;user-select:none}
+.exi.drop{box-shadow:0 -3px 0 var(--gold)}
+#exName{font:inherit;font-size:16px;font-weight:600;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.exconfirm{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border:1px solid var(--bad);border-radius:12px;padding:8px 10px;font-size:.88rem}
+.exconfirm .btn{flex:none;padding:8px 14px}
+.btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+.exgrp{font-size:.8rem;font-weight:700;margin-top:4px}
+.extile{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 10px}
+.extile.in{border-color:color-mix(in srgb,var(--good) 70%,var(--line))}
+.extile .tx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.35}
+.extile small{color:var(--muted);font-size:.76rem}
+.extile .chip{padding:5px 10px}
+.chip.add{border-style:dashed}
+.app.wide.m-practice:not(.m-songs){grid-template-areas:"head head" "goal goal" "panel panel" "panel panel"}
+.app.wide.m-practice .side{display:none}
+.app.wide.m-practice .panel>.expage{max-width:1500px;display:grid;grid-template-columns:250px minmax(0,1fr) 360px;gap:22px;align-items:start}
+.app.wide .exsess-list{flex-direction:column;overflow:visible}
+.app.wide .exsess-item{align-self:stretch}
+.sets.cust{width:min(1060px,100%)}
+.sets-top small{color:var(--muted);font-size:.8rem;font-weight:400}
+.cust-cols{display:grid;grid-template-columns:minmax(0,1fr);gap:4px 22px}
+.app.wide~#cust .cust-cols,html.wide #cust .cust-cols{grid-template-columns:minmax(0,1fr) 320px}
+html.wide #cust .cust-r{border-left:1px solid var(--line);padding-left:20px}
+.ckg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0 12px}
+.ckgrp{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 12px}
+.ckgrp small{display:block;font-weight:700;font-size:.74rem;margin:2px 0}
+.ck{display:flex;align-items:flex-start;gap:7px;border:0;background:none;padding:4px 0;font-size:.82rem;text-align:left;cursor:pointer;line-height:1.3;width:100%}
+.ck::before{content:"";width:16px;height:16px;border:1.5px solid var(--muted);border-radius:4px;flex:none;margin-top:1px;display:grid;place-items:center;font-size:.66rem;font-weight:700}
+.ck[aria-pressed="true"]::before{content:"✓";background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.cust .set select{max-width:100%;min-width:0}
+.cust .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.cust .actions .btn{flex:none;padding:10px 18px}
 </style>
 </head>
 <body>
@@ -501,10 +598,12 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
     <button data-mode="explore">Explore</button>
     <button data-mode="quiz">Quiz</button>
     <button data-mode="drill">Drill</button>
-    <button data-mode="practice">Path</button>
+    <button data-mode="practice">Exercises</button>
     <button data-mode="songs">Songs</button>
   </nav>
+  <div class="exstrip" id="exstrip" role="navigation" aria-label="Practice session" hidden></div>
   <aside class="side">
+  <div class="exhead" id="exhead" role="region" aria-label="Exercise" hidden></div>
   <div class="prompt" id="prompt" aria-live="polite"></div>
   <div class="song-sheet" id="sheet" hidden></div>
   <div class="voice-card" id="voiceCard" hidden></div>
@@ -514,6 +613,7 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 </div>
 
 <div id="gloss" hidden></div>
+<div id="cust" hidden></div>
 <div id="tip" role="tooltip" aria-hidden="true"></div>
 <script>
 (function(){
@@ -1019,7 +1119,7 @@ function applyLayout(){
   appEl.classList.toggle('wide',wide); document.documentElement.classList.toggle('wide',wide);
   appEl.classList.toggle('land',land); document.documentElement.classList.toggle('land',land);
   const nav=document.getElementById('modes'), hd=appEl.querySelector('header');
-  if(wide) hd.insertBefore(nav,hd.querySelector('.stats')); else appEl.insertBefore(nav,appEl.querySelector('.side'));
+  if(wide) hd.insertBefore(nav,hd.querySelector('.stats')); else appEl.insertBefore(nav,document.getElementById('exstrip'));
   const L={auto:['◐','Layout: automatic'],wide:['🖥','Layout: desktop'],compact:['📱','Layout: phone']}[saved.layout];
   layoutBtn.textContent=L[0]; layoutBtn.setAttribute('aria-label',L[1]);
   layoutNeck();
@@ -1554,18 +1654,19 @@ function logStop(){
   const out={id:rid('e'),skill:e.skill,t:e.t0,secs,bpm:e.bpm,sub:e.sub,passes:e.passes};
   ['pattern','chord','prog','plan','swing'].forEach(k=>{if(e[k]!==undefined) out[k]=e[k];});
   const s=sessionFor(e.t0); s.entries.push(out); s.end=Math.max(s.end,t);
-  lg.last=out; saveLog();
+  lg.last=out; exRunMark(); saveLog();
 }
 function logAnswer(iv,ok){
   const t=now(); let q=lg.quiz;
-  if(!q||t-q.lastT>QUIZ_GAP){
+  if(!q||t-q.lastT>QUIZ_GAP||q.m!==st.mode){ // Name it and Find it are logged apart
     if(!LOG.skills.iv) LOG.skills.iv={kind:'iv',name:'Intervals (Name it and Find it)'};
-    const e={id:rid('e'),skill:'iv',t,secs:0,asked:0,right:0,miss:{}}; sessionFor(t).entries.push(e);
-    q=lg.quiz={id:e.id,lastT:t};
+    const e={id:rid('e'),skill:'iv',t,secs:0,asked:0,right:0,miss:{},q:st.mode}; sessionFor(t).entries.push(e);
+    q=lg.quiz={id:e.id,lastT:t,m:st.mode};
   }
   const e=findEntry(q.id); if(!e) {lg.quiz=null; return logAnswer(iv,ok);}
   e.secs+=Math.round(Math.min(60,(t-q.lastT)/1000)); e.asked++; if(ok) e.right++; else e.miss[iv]=(e.miss[iv]||0)+1;
   q.lastT=t; const s=LOG.sessions.find(s=>s.entries.includes(e)); if(s) s.end=Math.max(s.end,t);
+  if(st.ex&&isQuiz(EX_BY[st.ex.ex])&&e.asked>=10) exRunMark();
   saveLog();
 }
 function findEntry(id){for(let i=LOG.sessions.length-1;i>=0;i--){const e=LOG.sessions[i].entries.find(e=>e.id===id); if(e) return e;} return null;}
@@ -1607,10 +1708,13 @@ function mergeLogs(a,b){
     const o=skills[id]; if(!o){skills[id]={...s}; return;}
     skills[id]=(s.updated||0)>=(o.updated||0)?{...o,...s}:{...s,...o}; // the newer edit (a song's rating, say) wins
   });
-  return {v:1,sessions:Object.values(sessions).sort((p,q)=>p.start-q.start),skills,gist:a.gist||null};
+  // sessions you set up, how far you got in each, and your defaults: the newer copy of each wins
+  const newer=(x,y,f)=>{const o={...(x||{})}; Object.entries(y||{}).forEach(([id,v])=>{const u=o[id]; if(!u||(v[f]||0)>(u[f]||0)) o[id]=v;}); return o;};
+  return {v:1,sessions:Object.values(sessions).sort((p,q)=>p.start-q.start),skills,gist:a.gist||null,
+    routines:newer(a.routines,b.routines,'updated'),runs:newer(a.runs,b.runs,'t'),exprefs:newer(a.exprefs,b.exprefs,'updated')};
 }
 function relink(){ if(lg.last) lg.last=findEntry(lg.last.id)||lg.last; } // merging copies entries; keep pointing at the live one
-const exportable=()=>({v:1,sessions:LOG.sessions,skills:LOG.skills});
+const exportable=()=>({v:1,sessions:LOG.sessions,skills:LOG.skills,routines:LOG.routines,runs:LOG.runs,exprefs:LOG.exprefs});
 function exportLog(){
   const blob=new Blob([JSON.stringify(exportable(),null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`fretmap-log-${dayKey(now())}.json`;
@@ -1677,7 +1781,7 @@ function render(){
   document.querySelectorAll('#modes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===st.mode||(b.dataset.mode==='quiz'&&(st.mode==='name'||st.mode==='find'))));
   appEl.classList.toggle('m-practice',st.mode==='practice'||st.mode==='songs'); appEl.classList.toggle('m-songs',st.mode==='songs'); appEl.classList.toggle('m-drill',st.mode==='drill');
   if(saved.fmode==='song'&&!focusSong()) saved.fmode='key'; // the song was removed
-  fillSongSel(); renderStats(); focusText(); renderBoard(); renderPrompt(); renderPanel(); renderSheet(); renderVoice(); updateLive(); navSync();
+  fillSongSel(); renderStats(); focusText(); renderBoard(); renderPrompt(); renderPanel(); renderSheet(); renderVoice(); renderEx(); updateLive(); navSync();
 }
 const picking=()=>st.mode==='drill'&&st.picking;
 function drillLabel(p){
@@ -1755,7 +1859,7 @@ function ctx(key){return F.fam==='chrom'?'':` in ${keyName(key)} ${modeName()}`;
 function renderPrompt(){
   const q=st.q;
   promptEl.hidden=false;
-  if(st.mode==='practice'){practicePrompt(); return;}
+  if(st.mode==='practice'){promptEl.hidden=true; return;}
   if(st.mode==='songs'){promptEl.hidden=true; return;}
   if(st.mode==='drill'){
     if(picking()){promptEl.innerHTML=`<span class="big">☝</span><span>Tap where your index finger sits. The drill uses the 5 frets from there.</span>`;return;}
@@ -1929,62 +2033,11 @@ function transportHTML(){
         <button class="bpm" data-act="tap" aria-label="Tap tempo"><span id="bpmVal">${saved.bpm}</span><small>bpm, tap</small></button>
         <button class="icon" data-act="faster" aria-label="Faster">+</button>`;
 }
-// ---------- learning path ----------
-// Scale, then chords, then progressions, then songs, with a rhythm track alongside. Each step is a Drill setup with a goal;
-// a step is done when a run of its skill has been marked clean at the goal tempo. The log behind it fills those numbers in.
-// Every step is built from the focus in the header: its key, scale and mode stay put, and a step only moves the position.
-function focusName(){return `${keyName()} ${F.fam==='chrom'?'all notes':modeName()}`;}
-function homePos(){ // where the path is played: the position picked in the header, or the lowest box on the neck
-  return cur.custom||cur.pos.find(p=>p.lo===F.pos)||cur.pos[0]||{lo:0,hi:4,label:'Frets 0–4'};
-}
-const RHY={follow:true,line:'prog',plan:'strum',sev:false};
-const RHY_STEPS=[
-  {id:'r1',title:'8ths, accents on 2 and 4',what:'{ch}, a bar each. Keep the hand moving down and up.',...RHY,prog:'two',rpat:'backbeat',goal:90},
-  {id:'r2',title:'Ghost strums',what:'Down, down-up, up-down-up over {ch}. Count it out loud.',...RHY,prog:'pop',rpat:'faithful',goal:80},
-  {id:'r3',title:'16ths: 1 & a',what:'The gallop over {ch}.',...RHY,prog:'pop',rpat:'gallop',goal:70},
-  {id:'r4',title:'Syncopation: 3-3-2',what:'The tresillo over {ch}.',...RHY,prog:'145',rpat:'tresillo',goal:80},
-  {id:'r5',title:'Shuffle feel',what:'Swung 8ths over {ch}.',...RHY,prog:'145',rpat:'shufflefaith',goal:80}];
-// Bluegrass flatpicking, Doc Watson style: its own track in G, open position (the G shape box, frets 0–4), whatever the focus
-const BG={own:true,key:7,fam:'major',mode:0,pos:0,sev:false,rpat:'quarters'};
-const BG_STEPS=[
-  {id:'bg1',title:'Boom-chuck on G',what:'Root on 1, the 5th on 3, the treble strings strummed on 2 and 4, all downstrokes.',...BG,line:'prog',prog:'one',plan:'boom',goal:90},
-  {id:'bg2',title:'Bass runs: G, C and D',what:'Boom-chuck through G C D G, with the bass walking into each new chord on beats 3 and 4.',...BG,line:'prog',prog:'145',plan:'boom',goal:80},
-  {id:'bg3',title:'Alternate picking: G major',what:'The scale from G up and back, down on every beat and up on every and, even when crossing strings.',...BG,line:'scale',pattern:'altpick',sub:2,goal:100},
-  {id:'bg4',title:'Hammer-ons and pull-offs',what:'Pick one note, then hammer on or pull off to the next on the same string. Most start from an open string.',...BG,line:'scale',pattern:'slurs',sub:2,goal:80},
-  {id:'bg5',title:'Crosspicking: G, C and D',what:'Roll the top three strings of each chord with strict alternate picking.',...BG,line:'prog',prog:'145',plan:'roll',goal:80},
-  {id:'bg6',title:'Travis picking: G, C and D',what:'Thumb alternating the bass on the beat, index and middle on the ands.',...BG,line:'prog',prog:'145',plan:'thumb',goal:70}];
-// fiddle tunes and Doc Watson standards: each opens Songs to add it, with a Songsterr search for its tab and chords
-const TUNES=[['Salt Creek',''],['Black Mountain Rag','Doc Watson'],['Beaumont Rag','Doc Watson'],['Windy and Warm','Doc Watson'],['Deep River Blues','Doc Watson']]
-  .map(([name,artist],i)=>({id:'tune'+i,tune:true,title:name+(artist?', '+artist:''),name,artist,link:'https://www.songsterr.com/?pattern='+encodeURIComponent(name+(artist?' '+artist:'')),goal:80}));
-const tuneSong=t=>songSteps().find(({s})=>s.name.trim().toLowerCase()===t.name.toLowerCase());
-let PATH=[], STEP_BY={}, pathSig='';
-function buildPath(){
-  const sig=[F.key,F.fam,F.mode,cur.key,F.pos].join(':'); if(sig===pathSig) return PATH; pathSig=sig;
-  const fk={key:cur.key,fam:F.fam,mode:F.mode}, k=followKey(), home=homePos(), tonic=progNames(k,'one')[0], minor=/m(?!aj)/.test(tonic)||/°/.test(tonic);
-  // a position picked in the header keeps every step in it; the whole neck goes box by box from the open strings up
-  const one=F.pos>=0, ps=one?[home]:cur.pos, fr=p=>`frets ${p.lo}–${p.hi}`;
-  const scale=ps.map((p,i)=>({id:'s'+p.lo,title:p.label.split(',')[0]===p.label?p.label:p.label.replace(/^./,c=>c.toUpperCase()),
-    what:(i===0?'Up and down the box ':'The next position up, ')+(cur.set.size===7?'in 3rds.':'skipping every other note.')+(i===0?' Say the interval of each note as you play it.':''),
-    ...fk,pos:p.lo,line:'scale',pattern:'thirds',sub:2,goal:80}));
-  if(!one&&F.fam!=='chrom'&&ps.length>1) scale.push({id:'sw',title:'Whole neck, through every shape',
-    what:'One run from the lowest root up through each box to the top of the neck and back. Feel where each shape hands over to the next.',
-    ...fk,pos:-1,line:'scale',pattern:'updown',sub:2,goal:80});
-  const chord=ps.map(p=>({id:'c'+p.lo,title:p.shape?`${tonic} in the ${p.shape} shape box, ${fr(p)}`:`${tonic} in ${fr(p)}`,
-    what:`The ${tonic} chord as it sits in ${fr(p)}. Strum a bar, then pick the same shape one string at a time.`,
-    ...fk,pos:p.lo,line:'prog',prog:'one',plan:'both',rpat:'quarters',sev:false,goal:80}));
-  const progs=minor?['two','145','epic','andalusian']:['two','145','pop','50s'];
-  const prog=progs.map(id=>({id:'p'+id,title:PROG_BY[id].name,what:`${progNames(k,id).join(' ')}, without leaving frets ${home.lo}–${home.hi}.`,
-    ...fk,pos:home.lo,line:'prog',prog:id,plan:'both',rpat:'faithful',sev:false,goal:80}));
-  const pos=home.lo;
-  PATH=[
-    {id:'scale',name:'Scales',sub:one?`${focusName()} in ${fr(home)}. Pick Whole neck under Position to see every box.`:`${focusName()}, box by box up the neck`,steps:scale},
-    {id:'chord',name:one?'Home chord in this position':'Home chord in each position',sub:`${tonic}, strummed then arpeggiated`,steps:chord},
-    {id:'prog',name:'Progressions',sub:`Chord changes in frets ${home.lo}–${home.hi}`,steps:prog},
-    {id:'rhythm',name:'Rhythm track',sub:'Strum patterns in your focus, any time alongside the steps above',steps:RHY_STEPS.map(r=>({...r,...fk,pos}))},
-    {id:'bluegrass',name:'Bluegrass flatpicking',sub:'Doc Watson style, in G in the open position, whatever your focus. Then the tunes: add each one in Songs with its chords from Songsterr',steps:[...BG_STEPS,...TUNES]}];
-  STEP_BY={}; PATH.forEach(g=>g.steps.forEach(s=>{s.stage=g.id; STEP_BY[s.id]=s;}));
-  return PATH;
-}
+// ---------- exercises and practice sessions ----------
+// Seven exercises, each a family of Drill setups. An exercise's main choices show as chips in Drill's exercise panel,
+// so you switch between them without leaving it, and a chip gets a ✓ once a run of it is marked clean at the goal tempo.
+// A practice session is a named, ordered list of exercises, each with its own settings, and it remembers where you
+// stopped. Sessions live in the practice log, so they sync between devices with it.
 // The chords of a scale that has fewer than 7 notes come from the 7-note scale it sits in
 // (minor pentatonic and minor blues sit in Aeolian, major pentatonic in Ionian, and so on).
 function followKey(){
@@ -1992,73 +2045,395 @@ function followKey(){
   return {key:cur.key,fam:seven?F.fam:'major',mode:seven?F.mode:(TO_DIATONIC[F.fam]||[0])[F.mode]||0};
 }
 function progNames(k,prog){return progChords(prog,k,false).map(c=>c.name);} // chord names of a progression in a key, without touching the current focus
-function stepWhat(s){ return s.follow?s.what.replace('{ch}',progNames(followKey(),s.prog).join(' ')):s.what; }
 function setupSkill(s){
   return s.line==='prog'?`prog:${s.key}:${s.fam}:${s.mode}:${s.pos}:${s.prog}:${s.plan}:${s.plan==='arp'||isBG(s.plan)?'-':s.rpat}`:`box:${s.key}:${s.fam}:${s.mode}:${s.pos}${TECH[s.pattern]?':'+s.pattern:''}`;
 }
-function stepState(s){
-  if(s.tune){const t=tuneSong(s); return t?stepState(songSetup(t.s,t.id)):{best:null,done:false};}
-  // a rhythm step counts in any key: it's the strumming that's being learned
-  const b=s.follow?[...new Set(LOG.sessions.flatMap(x=>x.entries.map(e=>e.skill)))].filter(id=>id&&id.startsWith('prog:')&&id.endsWith(`:${s.prog}:${s.plan}:${s.rpat}`)).map(bestOf).filter(Boolean).sort((a,b)=>b.bpm-a.bpm)[0]||null:bestOf(setupSkill(s)), done=!!b&&b.bpm>=s.goal&&(s.line==='prog'||b.sub>=(s.sub||1));
-  return {best:b,done};
-}
+function stepState(s){ const b=bestOf(setupSkill(s)); return {best:b,done:!!b&&b.bpm>=s.goal}; } // a song's changes, clean at its goal
 function songSteps(){
   return Object.entries(LOG.skills).filter(([id,s])=>s.kind==='song'&&!s.gone).sort((a,b)=>(a[1].added||0)-(b[1].added||0)).map(([id,s])=>({id,s}));
 }
 function songSetup(s,id){const sp=s.strum, rpat=!sp?'faithful':sp.pat==='custom'&&sp.custom?`custom-${sp.custom.res}-${sp.custom.steps}`:sp.pat; return {strum:sp,key:s.key??0,fam:'major',mode:s.minor?5:0,pos:0,line:'prog',prog:s.chords&&s.chords.length&&id?id:PROG_BY[s.prog]?s.prog:'pop',plan:'both',rpat,sev:false,goal:s.tempo||80,tempo:s.tempo||0};}
-function nextStep(){
-  for(const g of buildPath()){ if(g.id==='rhythm'||g.id==='bluegrass') continue; const s=g.steps.find(s=>!stepState(s).done); if(s) return s; }
-  return null;
-}
-function goalText(s){
-  if(s.tune){const t=tuneSong(s); return t?goalText(songSetup(t.s,t.id)):'Add it in Songs, with its chords from Songsterr.';}
-  const st_=stepState(s), b=st_.best;
-  return `Goal: clean at ${s.goal} bpm${s.line==='scale'?' in 8ths':''}. `+(b?`Best so far: ${b.bpm}.`:'No clean run yet.');
-}
-function applySetup(s,nav){
-  if(s.stage===undefined||s.own){F.key=s.key; F.fam=s.fam; F.mode=s.mode;} // a song and the bluegrass track bring their own key; other path steps keep the focus
-  F.pos=s.pos;
-  D.line=s.line; D.guide='full';
-  if(s.line==='scale'){D.pattern=s.pattern; D.sub=s.sub;}
-  else{D.prog=s.prog; D.plan=s.plan;}
+function applySetup(s,nav){ // a song's setup: its key, open position, its chords and strum pattern
+  F.key=s.key; F.fam=s.fam; F.mode=s.mode; F.pos=s.pos;
+  D.line=s.line; D.guide='full'; D.prog=s.prog; D.plan=s.plan;
   if(s.sev!==undefined) D.sev=s.sev;
   refresh(); if(songNow()) syncStrum(true); // a song loads its own strum pattern, as saved with it
-  if(s.line==='prog'&&!songNow()){R.pat=s.rpat; R.swing=!!(RPAT[s.rpat]&&RPAT[s.rpat].swing);}
+  if(!songNow()){R.pat=s.rpat; R.swing=!!(RPAT[s.rpat]&&RPAT[s.rpat].swing);}
   if(s.tempo) saved.bpm=s.tempo; // a song starts at its own tempo
   st.visible=new Set(cur.allowed); fillSelects(); save();
   if(nav!==false) document.querySelector('#modes [data-mode="drill"]').click();
 }
-function stepFor(id){ buildPath(); return id==='song'?null:STEP_BY[id]; }
-function pathNote(){
-  // in Drill, say when the current setup is a step on the path, and how close it is
-  const id=skillNow().id;
-  buildPath(); const song=songSteps().find(({id:i,s:x})=>setupSkill(songSetup(x,i))===id); // a song you're playing names itself, even when a path step has the same setup
-  const s=!song&&Object.values(STEP_BY).find(s=>setupSkill(s)===id);
-  if(!s&&!song) return '';
-  const title=s?s.title:`${esc(song.s.name)}: play the changes`, step=s||songSetup(song.s,song.id), ok=stepState(step).done;
-  const b=stepState(step).best;
-  return `<div class="pathnote" data-tip="${ok?'Done: a run is marked clean at the goal tempo.':'Play a run at the goal tempo, then tap Mark last run clean if it was clean. That completes the step.'}"><span><b>${ok?'✓ ':''}${title}</b> · goal ${step.goal} bpm${b?`, best ${b.bpm}`:''}</span><button class="chip" data-act="topath">Path</button></div>`;
+function songNote(){
+  // in free Drill, a song you're playing says its goal tempo and how close you are
+  if(st.ex) return '';
+  const id=skillNow().id, song=songSteps().find(({id:i,s:x})=>setupSkill(songSetup(x,i))===id);
+  if(!song) return '';
+  const step=songSetup(song.s,song.id), {best:b,done}=stepState(step);
+  return `<div class="pathnote" data-tip="${done?'Done: a run is marked clean at the song’s tempo.':'Play a run at the song’s tempo, then tap Mark last run clean if it was clean.'}"><span><b>${done?'✓ ':''}${esc(song.s.name)}: play the changes</b> · goal ${step.goal} bpm${b?`, best ${b.bpm}`:''}</span></div>`;
 }
-function practicePrompt(){
-  const n=nextStep(), today=mins(entriesSince(startOfDay(now())));
-  promptEl.innerHTML=`<span class="big" style="color:var(--gold);font-size:1.3rem;min-width:auto;white-space:nowrap">${today} min</span><span>practiced today.<br><span class="sub">${n?'Each step opens Drill set up for it. Mark a run clean at the goal tempo to finish the step.':'Every scale, chord and progression step is done. Keep adding songs.'}</span></span>`;
+const PLAY_CH=[['strum','Strum'],['both','Strum, then pick'],['arp','Pick'],...BG_PLANS];
+const RPAT_LIST=RPATS.flatMap(([g,list])=>list.map(p=>[p[0],p[1]]));
+const patLabel=v=>v==='thirds'&&cur.set.size!==7?'Skip a note':(PATTERNS.find(p=>p[0]===v)||[v,v])[1];
+const pats=list=>()=>list.map(v=>[v,patLabel(v)]);
+const EXS=[
+  {id:'box',name:'Box patterns',grp:'Scales',blurb:'Up and down, 3rds, groups, two strings',line:'scale',unit:'patterns',
+    rows:[{k:'pattern',name:'Pattern',all:pats(['updown','thirds','g3','g4','strings']),def:['updown','thirds','g3','g4','strings']}],def:{pattern:'thirds',sub:2,goal:80}},
+  {id:'tones',name:'Chord tones',grp:'Scales',blurb:'Arpeggios, enclosures, chord-tone walks',line:'scale',unit:'patterns',
+    rows:[{k:'pattern',name:'Pattern',all:pats(['arp','enclose','walk']),def:['arp','enclose','walk']}],def:{pattern:'arp',sub:2,chord:0,resolve:'key',goal:80}},
+  {id:'tech',name:'Picking technique',grp:'Scales',blurb:'Alternate picking, hammer-ons and pull-offs',line:'scale',unit:'techniques',
+    rows:[{k:'pattern',name:'Technique',all:pats(['altpick','slurs']),def:['altpick','slurs']}],def:{pattern:'altpick',sub:2,goal:100}},
+  {id:'home',name:'Home chord',grp:'Chords',blurb:'The tonic in each CAGED shape',line:'prog',unit:'boxes',
+    rows:[{k:'pos',name:'Box',all:()=>cur.pos.map(p=>[String(p.lo),p.shape?`${p.shape} shape`:`Frets ${p.lo}–${p.hi}`]),def:null}],def:{plan:'both',rpat:'quarters',goal:80}},
+  {id:'prog',name:'Progressions',grp:'Chords',blurb:'11 progressions, 20 strums, boom-chuck, crosspick, Travis',line:'prog',unit:'choices',
+    rows:[{k:'prog',name:'Progression',all:()=>PROGS.map(p=>[p[0],p[1]]),def:['two','145','pop','50s']},
+      {k:'plan',name:'Play each chord',all:()=>PLAY_CH,def:PLAY_CH.map(p=>p[0])},
+      {k:'rpat',name:'Strum pattern',all:()=>RPAT_LIST,def:['eighths','backbeat','faithful','gallop','tresillo']}],
+    def:{prog:'pop',plan:'both',rpat:'backbeat',sev:false,goal:80}},
+  {id:'songs',name:'Your songs',grp:'Songs and ear',blurb:'Songs you added, by part',unit:'songs',
+    rows:[{k:'song',name:'Song',all:()=>songSteps().map(({id,s})=>[id,s.name]),def:null}],def:{song:''}},
+  {id:'quiz',name:'Interval quiz',grp:'Songs and ear',blurb:'Name it, find it',unit:'quizzes',
+    rows:[{k:'quiz',name:'Quiz',all:()=>[['name','Name it'],['find','Find it']],def:['name','find']}],def:{quiz:'name',goal:90}}];
+const EX_BY=Object.fromEntries(EXS.map(E=>[E.id,E]));
+const isQuiz=E=>E.id==='quiz', pct=E=>isQuiz(E)?'%':'';
+function fillSet(ex,set){ // an exercise's settings: its defaults, your saved defaults for it, then the session's own
+  const E=EX_BY[ex], pref=(LOG.exprefs[ex]||{}).set||{}, s={...E.def,key:null,pos:null,...pref,...(set||{})};
+  s.chips={}; E.rows.forEach(r=>{const c=(set&&set.chips&&set.chips[r.k])||(pref.chips&&pref.chips[r.k])||r.def; s.chips[r.k]=c?[...c]:null;});
+  return s;
 }
-function stepRow(s,isNext){
-  const {done}=stepState(s);
-  return `<li><button class="pstep${done?' done':''}${isNext?' next':''}" data-act="step" data-id="${s.id}">
-    <span class="pmark" aria-hidden="true">${done?'✓':isNext?'▶':''}</span>
-    <span class="ptext"><b>${s.title}</b><small>${goalText(s)}</small></span></button></li>`;
+const rowAll=r=>r.all().map(([v,l])=>[String(v),l]);
+function rowChips(r,s){const all=rowAll(r), on=s.chips[r.k]; return on?all.filter(([v])=>on.includes(v)):all;}
+const rowLabel=(r,v)=>(rowAll(r).find(x=>x[0]===String(v))||[v,String(v)])[1];
+// the choice that's playing now, read from Drill itself, so the ⚙ settings and the focus bar change it too
+function exNow(E,k){
+  if(k==='pattern') return D.pattern;
+  if(k==='prog') return D.prog; if(k==='plan') return D.plan; if(k==='rpat') return R.pat;
+  if(k==='pos') return String(F.pos); if(k==='song') return D.prog;
+  if(k==='quiz') return st.mode;
+  return '';
 }
-function songsHTML(){
-  const rows=songSteps().map(({id,s})=>{
-    const set=songSetup(s,id), {done}=stepState(set), r=s.rating||0;
-    return `<li class="psong"><button class="pstep${done?' done':''}" data-act="songplay" data-id="${esc(id)}"><span class="pmark" aria-hidden="true">${done?'✓':''}</span>
-      <span class="ptext"><b>${esc(s.name)}${s.artist?', '+esc(s.artist):''}</b><small>${goalText(set)} <span class="pstars" aria-label="Rated ${r} of 5">${'★'.repeat(r)}${'☆'.repeat(5-r)}</span></small></span></button>
-      <button class="chip" data-act="songopen" data-id="${esc(id)}">Open</button></li>`;
+function chipDone(E,k,v,goal,s){
+  const es=LOG.sessions.flatMap(x=>x.entries);
+  if(E.id==='quiz') return es.some(e=>e.skill==='iv'&&e.q===v&&e.asked>=20&&e.right*100>=goal*e.asked);
+  if(E.id==='songs'){const sk=LOG.skills[v]; return !!sk&&!sk.gone&&stepState(songSetup(sk,v)).done;}
+  const cl=es.filter(e=>e.clean>=goal);
+  if(E.line==='scale') return cl.some(e=>e.skill.startsWith('box:')&&e.pattern===v&&(e.sub||1)>=(s.sub||2)); // a pattern counts in any key and box
+  const P=e=>e.skill.split(':'); // prog:key:fam:mode:box:progression:plan:strum
+  if(E.id==='home') return cl.some(e=>{const p=P(e); return p[0]==='prog'&&p[1]===String(cur.key)&&p[2]===F.fam&&p[3]===String(F.mode)&&p[4]===v&&p[5]==='one';});
+  // a progression, a way to play each chord or a strum pattern counts in any key and box, with any of the other choices
+  return cl.some(e=>{const p=P(e); if(p[0]!=='prog'||!PROG_BY[p[5]]) return false; return k==='prog'?p[5]===v:k==='plan'?p[6]===v:p[7]===v;});
+}
+function exProgress(E,s){
+  let n=0,m=0; E.rows.forEach(r=>rowChips(r,s).forEach(([v])=>{m++; if(chipDone(E,r.k,v,s.goal,s)) n++;}));
+  return {n,m};
+}
+// ---- practice sessions
+const STARTER={id:'weeknight',name:'Weeknight',created:0,updated:0,items:[{uid:'w1',ex:'box',set:{}},{uid:'w2',ex:'tech',set:{}},{uid:'w3',ex:'prog',set:{}},{uid:'w4',ex:'songs',set:{}}]};
+['routines','runs','exprefs'].forEach(k=>{if(!LOG[k]) LOG[k]={};});
+if(!LOG.routines.weeknight) LOG.routines.weeknight=JSON.parse(JSON.stringify(STARTER)); // the same id on every device, so syncing never doubles it
+const routines=()=>Object.values(LOG.routines).filter(r=>!r.gone).sort((a,b)=>(a.created||0)-(b.created||0));
+function openRoutine(){const list=routines(); return list.find(r=>r.id===saved.rid)||list[0]||null;}
+function touch(r){r.updated=now(); saveLog();}
+const runOf=r=>LOG.runs[r.id]||{at:0,done:[],t:0};
+function setRun(r,patch){LOG.runs[r.id]={...runOf(r),...patch,t:now()}; saveLog();}
+const runDone=r=>{const d=runOf(r).done||[]; return r.items.length>0&&r.items.every(x=>d.includes(x.uid));};
+function exRunMark(){ // a run logged during a session's exercise marks it done for this time through
+  const r=st.ex&&st.ex.rid&&LOG.routines[st.ex.rid]; if(!r) return;
+  const run=runOf(r), i=r.items.findIndex(x=>x.uid===st.ex.uid); if(i<0) return;
+  LOG.runs[r.id]={...run,at:i,done:[...new Set([...(run.done||[]),st.ex.uid])],t:now()};
+}
+function dayText(t){
+  const d=Math.round((startOfDay(now())-startOfDay(t))/864e5);
+  return d<=0?'today':d===1?'yesterday':d<7?new Date(t).toLocaleDateString('en-US',{weekday:'long'}):new Date(t).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+function itemLabel(r,it){ // the exercise's name, plus its main choice when the session has it more than once
+  const E=EX_BY[it.ex], s=fillSet(it.ex,it.set), twice=r.items.filter(x=>x.ex===it.ex).length>1;
+  if(!twice) return E.name;
+  const main=E.id==='prog'?(isBG(s.plan)?rowLabel(E.rows[1],s.plan):rowLabel(E.rows[0],s.prog)):E.rows[0].k==='pos'?'':rowLabel(E.rows[0],s[E.rows[0].k]);
+  return main?`${E.name} · ${main}`:E.name;
+}
+function exSummary(E,s){
+  const box=s.pos==null?cur.posLabel:+s.pos<0?'Whole neck':((positions(s.key??cur.key).find(p=>p.lo===+s.pos)||{label:`Frets ${s.pos}–${+s.pos+4}`}).label);
+  const key=s.key!=null?`key of ${keyName(s.key)} · `:'', goal=`goal ${s.goal}${pct(E)}`;
+  if(E.line==='scale') return `${rowLabel(E.rows[0],s.pattern)} · ${key}${box} · ${goal}`;
+  if(E.id==='home') return `${rowLabel({all:()=>PLAY_CH},s.plan)} · ${key}${goal}`;
+  if(E.id==='prog'){const pl=rowLabel(E.rows[1],s.plan), str=s.plan==='arp'||isBG(s.plan)?'':` · ${rowLabel(E.rows[2],s.rpat).replace(/^8ths, /,'')}`; return `${rowLabel(E.rows[0],s.prog)} · ${pl}${str} · ${key}${goal}`;}
+  if(E.id==='songs'){const sk=LOG.skills[s.song]; return sk&&!sk.gone?esc(sk.name):songSteps().length?'Your songs, in the order you added them':'Add a song in the Songs tab first';}
+  return `${rowLabel(E.rows[0],s.quiz)} · ${goal} right`;
+}
+// ---- starting and leaving an exercise
+function leaveSongFocus(){ // an exercise that isn't a song puts the focus back on the key you had
+  if(saved.fmode!=='song') return; saved.fmode='key'; const k=saved.fkey;
+  if(k) Object.assign(F,{key:k.key,fam:k.fam,mode:k.mode,pos:k.pos});
+  if(songProg(D.prog)) D.prog=k&&k.prog||'pop';
+}
+const openBox=()=>(cur.pos[0]||{lo:0}).lo; // bluegrass styles play in the lowest box, next to the open strings
+function toDrill(){ if(st.mode!=='drill') setMode('drill'); else {st.picking=false; regen();} }
+function exStart(o){ // one entry in the browser's history for the whole switch
+  const busy=st.navBusy; st.navBusy=true;
+  try{exStartNow(o);}finally{st.navBusy=busy;}
+  navSync();
+}
+function exStartNow(o){
+  const E=EX_BY[o.ex]; if(!E) return;
+  const s=fillSet(o.ex,o.set);
+  stopMet(); st.paused=false; st.sheet=false; st.picking=false;
+  st.ex={rid:o.rid||null,uid:o.uid||null,ex:o.ex,base:s,goal:s.goal};
+  if(isQuiz(E)){ if(st.mode!==s.quiz) setMode(s.quiz); else render(); return; }
+  if(E.id==='songs'){
+    const list=rowChips(E.rows[0],s), id=LOG.skills[s.song]&&!LOG.skills[s.song].gone?s.song:(list[0]||[])[0];
+    if(id){setFocusSong(id); toDrill();} else {leaveSongFocus(); refresh(); fillSelects(); toDrill();}
+    return;
+  }
+  leaveSongFocus();
+  if(s.key!=null) F.key=+s.key;
+  D.line=E.line; D.guide='full';
+  if(E.line==='scale'){D.pattern=s.pattern; D.sub=+s.sub||2; if(E.id==='tones'){D.chord=+s.chord||0; D.resolve=s.resolve==='chord'?'chord':'key';}}
+  else{D.prog=E.id==='home'?'one':s.prog; D.plan=s.plan; D.sev=!!s.sev;}
+  refresh();
+  if(E.line==='prog'){R.pat=RPAT[s.rpat]?s.rpat:'faithful'; R.swing=!!RPAT[R.pat].swing;}
+  if(E.id==='home') F.pos=s.pos!=null&&cur.pos.some(p=>p.lo===+s.pos)?+s.pos:(cur.pos.find(p=>p.lo===F.pos)||cur.pos[0]||{lo:0}).lo;
+  else if(s.pos!=null) F.pos=+s.pos;
+  if(E.line==='prog'&&isBG(D.plan)){st.ex.prevPos=F.pos; refresh(); F.pos=openBox();}
+  refresh(); st.visible=new Set(cur.allowed); fillSelects(); save();
+  toDrill();
+}
+function exGo(r,i){const it=r&&r.items[i]; if(!it) return; saved.rid=r.id; setRun(r,{at:i}); exStart({rid:r.id,uid:it.uid,ex:it.ex,set:it.set});}
+function exEnd(){st.ex=null;}
+function exChoose(k,v){
+  // a chip in the exercise panel: switch that choice and keep playing the exercise
+  const E=EX_BY[st.ex.ex];
+  if(k==='quiz'){if(st.mode!==v) setMode(v); return;}
+  if(k==='song'){if(LOG.skills[v]) setFocusSong(v); return;}
+  if(k==='pattern'){D.pattern=v; save(); regen(); return;}
+  if(k==='prog'){D.prog=v; refresh(); save(); regen(); return;}
+  if(k==='rpat'){R.pat=v; R.swing=!!RPAT[v].swing; save(); regen(); return;}
+  if(k==='pos'){F.pos=+v; refresh(); fillSelects(); save(); regen(); return;}
+  if(k==='plan'){
+    const was=isBG(D.plan); D.plan=v;
+    if(isBG(v)&&!was){st.ex.prevPos=F.pos; F.pos=openBox();} // bluegrass styles move to the open position
+    else if(!isBG(v)&&was&&st.ex.prevPos!==undefined){F.pos=st.ex.prevPos; delete st.ex.prevPos;}
+    refresh(); fillSelects(); save(); regen(); return;
+  }
+  void E;
+}
+function exCapture(){ // the exercise's settings as Drill has them now, to compare with or save to the session
+  const E=EX_BY[st.ex.ex], b=st.ex.base, s={...b,chips:b.chips,goal:st.ex.goal};
+  if(E.line==='scale'){s.pattern=D.pattern; s.sub=D.sub; if(E.id==='tones'){s.chord=D.chord; s.resolve=D.resolve;}}
+  if(E.id==='home'){s.pos=F.pos; s.plan=D.plan; if(RPAT[R.pat]) s.rpat=R.pat;}
+  if(E.id==='prog'){s.prog=PROG_BY[D.prog]?D.prog:b.prog; s.plan=D.plan; if(RPAT[R.pat]) s.rpat=R.pat; s.sev=D.sev;}
+  if(E.id==='songs'&&songProg(D.prog)) s.song=D.prog;
+  if(isQuiz(E)&&(st.mode==='name'||st.mode==='find')) s.quiz=st.mode;
+  return s;
+}
+const EX_KEYS=['pattern','sub','chord','resolve','pos','prog','plan','rpat','sev','song','quiz','goal'];
+function exChange(){ // what's different from the session's settings for this exercise, in words, or ''
+  if(!st.ex||!st.ex.rid) return '';
+  const E=EX_BY[st.ex.ex], b=st.ex.base, c=exCapture();
+  for(const r of E.rows){ if(r.k==='song') continue;
+    if(String(c[r.k]??'')!==String(b[r.k]??'')&&!(r.k==='pos'&&b.pos==null)) return `You changed ${r.name.toLowerCase()} from ${esc(rowLabel(r,b[r.k]))}.`; }
+  if(c.goal!==b.goal) return `You changed the goal from ${b.goal}${pct(E)}.`;
+  if(EX_KEYS.some(k=>k!=='pos'&&!E.rows.some(r=>r.k===k)&&b[k]!==undefined&&String(c[k])!==String(b[k]))) return 'You changed this exercise’s settings.';
+  return '';
+}
+function exSave(){
+  const r=st.ex&&LOG.routines[st.ex.rid], it=r&&r.items.find(x=>x.uid===st.ex.uid); if(!it) return;
+  const c=exCapture(), set={}; EX_KEYS.forEach(k=>{if(c[k]!==undefined&&c[k]!==null) set[k]=c[k];});
+  if(c.key!=null) set.key=c.key; if(st.ex.base.pos==null&&EX_BY[it.ex].id!=='home') delete set.pos;
+  set.chips=c.chips; it.set=set; touch(r); st.ex.base=fillSet(it.ex,set);
+}
+// ---- the exercise panel in Drill (and in Quiz for the interval quiz), and the session strip
+const exHeadEl=document.getElementById('exhead'), exStripEl=document.getElementById('exstrip');
+function exHeadHTML(){
+  const E=EX_BY[st.ex.ex], s={...st.ex.base,goal:st.ex.goal}, pr=exProgress(E,s);
+  const rows=E.rows.map(r=>{
+    const now=String(exNow(E,r.k)), chips=rowChips(r,s);
+    if(E.id==='prog'&&r.k==='rpat'&&(D.plan==='arp'||isBG(D.plan)))
+      return `<div class="exrow off"><span class="lab">${r.name}</span><p class="hint">${isBG(D.plan)?`${rowLabel(E.rows[1],D.plan)} sets its own rhythm.`:'Picked chords have no strum pattern.'}</p></div>`;
+    if(!chips.length) return `<div class="exrow"><span class="lab">${r.name}</span><p class="hint">${r.k==='song'?'Add a song in the Songs tab, and it shows up here.':'Nothing to pick here.'}</p></div>`;
+    const html=chips.map(([v,l])=>{const done=chipDone(E,r.k,v,s.goal,s);
+      return `<button class="chip exc${done?' done':''}" data-act="exchip" data-row="${r.k}" data-v="${esc(v)}" aria-pressed="${v===now}" data-tip="${esc(exChipTip(E,r,v,l,done,s))}">${esc(l)}</button>`;}).join('');
+    return `<div class="exrow" role="group" aria-label="${r.name}"><span class="lab">${r.name}</span><div class="row">${html}</div></div>`;
   }).join('');
-  return `<section class="pstage"><h3>Songs <small>from your Songs tab</small></h3>
-    ${rows?`<ol class="psteps">${rows}</ol>`:'<p class="hint">Add a song you want to learn. Its chords and strum pattern set up Drill, so you can practice the changes here.</p>'}<button class="chip" data-act="songform">+ Add a song</button></section>`;
+  const goal=E.id==='songs'?`<span class="hint">Goal: each song’s own tempo</span>`
+    :`<span class="gstep"><button data-act="exgoal" data-v="-5" aria-label="Lower the goal" data-tip="Lower the goal by 5${isQuiz(E)?' percent':' bpm'}.">−</button><b>goal ${s.goal}${pct(E)}</b><button data-act="exgoal" data-v="5" aria-label="Raise the goal" data-tip="Raise the goal by 5${isQuiz(E)?' percent':' bpm'}.">+</button></span>`;
+  const ch=exChange(), r=st.ex.rid&&LOG.routines[st.ex.rid];
+  const saveRow=ch&&r?`<div class="exsave"><button class="chip" data-act="exsave" data-tip="${esc(`Keep these choices for this exercise in ${r.name}, so it starts this way next time.`)}">Save to session</button><span>${ch} Save keeps it for next time.</span></div>`:'';
+  const close=st.ex.rid?'':`<button class="icon sm" data-act="exclose" aria-label="Close the exercise" data-tip="Close the exercise and go back to Drill’s own controls.">✕</button>`;
+  return `<div class="exh-top"><span class="lab">Exercise</span><span class="sp"></span><button class="chip" data-act="excust" data-tip="${esc(`Choose which chips ${E.name} shows, what it starts with, and its goal${r?`, for this exercise in ${r.name}`:''}.`)}">Customize</button>${close}</div>
+    <div class="exh-title"><b>${E.name}</b><small>${pr.n} of ${pr.m} clean</small></div>${rows}
+    <div class="exh-goal">${goal}</div>${saveRow}`;
 }
+function exChipTip(E,r,v,l,done,s){
+  const ok=done?` ✓ Clean at ${s.goal}${pct(E)}${isQuiz(E)?' right':' bpm'} or better.`:'';
+  l=esc(l);
+  if(r.k==='pattern') return `<b>${l}</b>: ${PAT_TIP[v==='thirds'&&cur.set.size!==7?'thirdsX':v]||''}${ok}`;
+  if(r.k==='prog'){const P=PROG_BY[v]; return `<b>${l}</b>: ${progNames(followKey(),v).join(' ')}${P.degs.length<=8?` (${progRomans(v).join(' ')})`:''}.${ok}`;}
+  if(r.k==='rpat'){const P=RPAT[v]; return `<b>${l}</b>: ${counting(P)}.${ok}`;}
+  if(r.k==='plan') return `<b>${l}</b>.${ok} Applies to every chord in the progression.`;
+  if(r.k==='pos') return `<b>${l}</b>: the home chord, ${progNames(followKey(),'one')[0]}, in this box.${ok}`;
+  if(r.k==='song') return `<b>${l}</b>: its chords, strum pattern and tempo.${ok}`;
+  return `<b>${l}</b>: ${v==='name'?'say which degree the ? note is':'click where a degree sits'}.${done?` ✓ At least ${s.goal}% right in a quiz of 20 or more.`:''}`;
+}
+function exStripHTML(){
+  const r=LOG.routines[st.ex.rid], run=runOf(r), i=r.items.findIndex(x=>x.uid===st.ex.uid);
+  const steps=r.items.map((it,k)=>{const done=(run.done||[]).includes(it.uid)&&k!==i;
+    return `<button class="exstep${done?' done':''}" data-act="exgo" data-i="${k}"${k===i?' aria-current="step"':''} data-tip="${esc(`${esc(itemLabel(r,it))}: ${exSummary(EX_BY[it.ex],fillSet(it.ex,it.set))}`)}"><i>${done?'✓':k+1}</i>${esc(itemLabel(r,it))}</button>`;}).join('');
+  return `<button class="icon sm" data-act="exprev" aria-label="Previous exercise" data-tip="The previous exercise in ${esc(r.name)}."${i<=0?' disabled':''}>‹</button><b>${esc(r.name)}</b>
+    <div class="exsteps">${steps}</div>
+    <button class="icon sm" data-act="exnext" aria-label="Next exercise" data-tip="The next exercise in ${esc(r.name)}."${i>=r.items.length-1?' disabled':''}>›</button>
+    <button class="chip" data-act="exleave" data-tip="Leave ${esc(r.name)}. Your place is kept, so Resume brings you back here.">Leave session</button>`;
+}
+function renderEx(){
+  if(st.ex){ // a session or exercise that went away, or a mode it doesn't belong in
+    const r=st.ex.rid&&LOG.routines[st.ex.rid], gone=st.ex.rid&&(!r||r.gone||!r.items.some(x=>x.uid===st.ex.uid));
+    const fits=isQuiz(EX_BY[st.ex.ex])?st.mode==='name'||st.mode==='find':st.mode==='drill';
+    if(gone||!fits&&st.mode!=='practice'&&st.mode!=='songs') st.ex=null;
+  }
+  const show=!!st.ex&&(st.mode==='drill'&&!picking()||(st.mode==='name'||st.mode==='find')&&isQuiz(EX_BY[st.ex.ex]));
+  exHeadEl.hidden=!show; exHeadEl.innerHTML=show?exHeadHTML():'';
+  const strip=show&&!!st.ex.rid;
+  exStripEl.hidden=!strip; exStripEl.innerHTML=strip?exStripHTML():'';
+  appEl.classList.toggle('has-ex',show); appEl.classList.toggle('has-strip',strip);
+}
+// ---- the Exercises tab: your sessions, the open session, and the library
+function exItemHTML(r,it,k,next){
+  const E=EX_BY[it.ex], s=fillSet(it.ex,it.set), pr=exProgress(E,s), all=pr.m>0&&pr.n===pr.m;
+  const mk=all?'<span class="mk ok">✓</span>':next?'<span class="mk">▶</span>':`<span class="mk">${k+1}</span>`;
+  if(st.exEdit) return `<div class="exi edit" draggable="true" data-i="${k}"><span class="grip" aria-hidden="true">⋮⋮</span>
+    <span class="tx"><b>${E.name}</b><small>${exSummary(E,s)}</small></span>
+    <span class="row exi-acts"><button class="icon sm" data-act="exup" data-i="${k}" aria-label="Move up" data-tip="Move ${E.name} up."${k?'':' disabled'}>↑</button><button class="icon sm" data-act="exdown" data-i="${k}" aria-label="Move down" data-tip="Move ${E.name} down."${k<r.items.length-1?'':' disabled'}>↓</button>
+    <button class="chip" data-act="excusti" data-i="${k}" data-tip="Choose which chips ${E.name} shows here, what it starts with, and its goal.">Customize</button><button class="icon sm" data-act="exdel" data-i="${k}" aria-label="Remove" data-tip="Remove ${E.name} from ${esc(r.name)}. Your progress stays.">✕</button></span></div>`;
+  return `<div class="exi${next?' next':''}">${mk}<span class="tx"><b>${E.name}</b><small>${exSummary(E,s)}</small>
+    <span class="exprog"><span class="bar"><i style="width:${pr.m?Math.round(pr.n/pr.m*100):0}%"></i></span><small>${pr.m?`${pr.n} of ${pr.m} ${E.unit} clean`:'Nothing to play yet'}</small></span></span>
+    <button class="btn" data-act="exitem" data-i="${k}" data-tip="Open ${E.name} in ${isQuiz(E)?'Quiz':'Drill'}, set up as this session has it.">Start</button></div>`;
+}
+function exPageHTML(){
+  const list=routines(), r=openRoutine(), today=mins(entriesSince(startOfDay(now())));
+  const sess=`<section class="exsess"><p class="st-lab">Practice sessions</p><div class="exsess-list">${list.map(x=>{const run=runOf(x), fin=runDone(x);
+      return `<button class="exsess-item" data-act="exsel" data-id="${esc(x.id)}" aria-pressed="${!!r&&x.id===r.id}" data-tip="Open ${esc(x.name)}."><b>${esc(x.name)}</b><small>${x.items.length} exercise${x.items.length===1?'':'s'} · ${run.t?`${dayText(run.t)} · ${fin?'finished':`stopped at ${(run.at||0)+1}`}`:'not played yet'}</small></button>`;}).join('')}
+    <button class="exsess-item add" data-act="exnew" data-tip="Start a new practice session and name it.">+ New session</button></div>
+    <p class="hint">${today} min practiced today. A clean run at the goal tempo counts in every session.</p></section>`;
+  let open='';
+  if(!r) open=`<section class="exopen"><p class="hint">No practice sessions yet. Make one with + New session, then add exercises from the library.</p></section>`;
+  else if(st.exEdit){
+    open=`<section class="exopen"><div class="exs-head"><span class="st-lab">Edit session</span><span class="sp"></span><button class="btn primary" data-act="exdone" data-tip="Finish editing.">Done</button></div>
+      <label class="st-lab" for="exName">Name</label><input id="exName" value="${esc(r.name)}" maxlength="60" aria-label="Session name">
+      <div class="exlist" id="exList">${r.items.map((it,k)=>exItemHTML(r,it,k,false)).join('')||'<p class="hint">No exercises yet. Add some from the library.</p>'}</div>
+      <div class="row"><button class="chip" data-act="exdup" data-tip="Make a copy of ${esc(r.name)} with the same exercises and settings.">Duplicate session</button><button class="chip" data-act="exrm" data-tip="Delete ${esc(r.name)}. Your ✓ progress stays.">Delete session</button></div>
+      ${st.exConfirm?`<div class="exconfirm" role="alertdialog" aria-label="Delete ${esc(r.name)}"><span><b>Delete ${esc(r.name)}?</b> Your ✓ progress stays.</span><span class="row"><button class="btn" data-act="exrmno" data-tip="Keep the session.">Cancel</button><button class="btn danger" data-act="exrmyes" data-tip="Delete ${esc(r.name)} on every device that syncs.">Delete</button></span></div>`:''}</section>`;
+  }else{
+    const run=runOf(r), fin=runDone(r), at=Math.min(run.at||0,Math.max(0,r.items.length-1)), started=!!run.t&&!fin;
+    const go=r.items.length?(started?`<button class="btn primary" data-act="exresume" data-tip="Open exercise ${at+1}, where you stopped.">▶ Resume at ${at+1}</button>`:`<button class="btn primary" data-act="exover" data-tip="Start ${esc(r.name)} from its first exercise.">▶ Start</button>`):'';
+    const when=run.t?`Last played ${dayText(run.t)}, ${fin?'finished':`stopped at ${esc(itemLabel(r,r.items[at]||r.items[0]||{ex:'box'}))}`}`:'Not played yet';
+    open=`<section class="exopen"><div class="exs-head"><b>${esc(r.name)}</b><span class="sp"></span><button class="chip" data-act="exedit" data-tip="Rename ${esc(r.name)}, reorder or remove its exercises, and customize each one.">Edit</button>${started?`<button class="btn" data-act="exover" data-tip="Start ${esc(r.name)} again from its first exercise.">Start over</button>`:''}${go}</div>
+      <p class="hint">${when}</p>
+      <div class="exlist">${r.items.map((it,k)=>exItemHTML(r,it,k,started&&k===at)).join('')||'<p class="hint">No exercises yet. Add some from the library.</p>'}</div></section>`;
+  }
+  const grps=[...new Set(EXS.map(E=>E.grp))];
+  const lib=`<section class="exlib"><p class="st-lab">Library${r?` · adds to ${esc(r.name)}`:''}</p>${grps.map(g=>`<div class="exgrp">${g}</div>`+EXS.filter(E=>E.grp===g).map(E=>{
+      const inR=!!r&&r.items.some(x=>x.ex===E.id);
+      return `<div class="extile${inR?' in':''}" draggable="true" data-ex="${E.id}"><span class="tx"><b>${E.name}</b><small>${E.blurb}</small></span>
+        <button class="chip" data-act="extry" data-ex="${E.id}" data-tip="Try ${E.name} on its own, outside a session.">Try</button>
+        <button class="chip add" data-act="exadd" data-ex="${E.id}" data-tip="${r?`Add ${E.name} to the end of ${esc(r.name)}${inR?' again, with its own settings':''}.`:`Start a new session with ${E.name}.`}">${inR?'+ Add again':'+ Add'}</button></div>`;}).join('')).join('')}</section>`;
+  return `<div class="expage">${sess}${open}${lib}</div>
+    <details class="psync"${st.syncOpen?' open':''}><summary>Sync and backup</summary>${syncHTML()}</details>`;
+}
+function exNewRoutine(name,items){
+  const id=rid('r'), t=now(), r={id,name,created:t,updated:t,items:items||[]};
+  LOG.routines[id]=r; saved.rid=id; saveLog(); save(); return r;
+}
+const newUid=()=>rid('i');
+function exMove(r,from,to){
+  if(from===to||from<0||to<0||from>=r.items.length||to>r.items.length) return;
+  const [it]=r.items.splice(from,1); r.items.splice(to>from?to-1:to,0,it); touch(r);
+}
+// ---- Customize: which chips an exercise shows, what it starts with, and its goal, for one session item or as your default
+const custEl=document.getElementById('cust');
+function custOpen(o){
+  let ex, set=null;
+  if(o.rid){const r=LOG.routines[o.rid], it=r&&r.items.find(x=>x.uid===o.uid); if(!it) return; ex=it.ex; set=it.set;} else ex=o.ex;
+  const s=fillSet(ex,set);
+  if(st.ex&&st.ex.ex===ex&&st.ex.rid===(o.rid||null)&&st.ex.uid===(o.uid||null)) Object.assign(s,exCapture()); // the exercise you're playing starts from what Drill has now
+  st.cust={rid:o.rid||null,uid:o.uid||null,ex,draft:JSON.parse(JSON.stringify(s)),top:0};
+  renderCust(); const c=custEl.querySelector('[data-act="custclose"]'); if(c) c.focus();
+}
+function custAll(r,s){ // a row's choices; a home chord's boxes follow the key it's set to
+  if(r.k!=='pos') return rowAll(r);
+  return positions(s.key!=null?+s.key:cur.key).map(p=>[String(p.lo),p.shape?`${p.shape} shape`:`Frets ${p.lo}–${p.hi}`]);
+}
+function custHTML(){
+  const c=st.cust, E=EX_BY[c.ex], s=c.draft, r=c.rid&&LOG.routines[c.rid], drill=!isQuiz(E)&&E.id!=='songs';
+  const ck=(row,v,l)=>{const on=!s.chips[row.k]||s.chips[row.k].includes(v);
+    return `<button class="ck" data-act="custchip" data-row="${row.k}" data-v="${esc(v)}" aria-pressed="${on}" data-tip="${esc(`${on?'Hide':'Show'} ${esc(l)} as a chip in Drill.`)}">${esc(l)}</button>`;};
+  const left=E.rows.map(row=>{const all=custAll(row,s), n=s.chips[row.k]?all.filter(a=>s.chips[row.k].includes(a[0])).length:all.length;
+    const body=row.k==='rpat'?`<div class="ckgrp">${RPATS.map(([g,list])=>`<div><small>${g}</small>${list.map(p=>ck(row,p[0],p[1])).join('')}</div>`).join('')}</div>`
+      :all.length?`<div class="ckg">${all.map(([v,l])=>ck(row,v,l)).join('')}</div>`:`<p class="hint">${row.k==='song'?'No songs yet. Add them in the Songs tab.':'Nothing here yet.'}</p>`;
+    return `<h4>${row.name} chips · ${n} of ${all.length}</h4>${body}`;}).join('');
+  const line=(label,ctl)=>`<div class="set"><span>${label}</span>${ctl}</div>`;
+  const sel=(k,list,v,label,tip)=>`<select data-cset="${k}" aria-label="${label}" data-tip="${esc(tip)}">${opts(list,v??'')}</select>`;
+  const right=E.rows.map(row=>{
+    const all=custAll(row,s), first=row.k==='pos'?[['','The focus box, or the lowest']]:row.k==='song'?[['','The first song']]:[];
+    return line(row.name,sel(row.k,[...first,...all],s[row.k],row.name,`The ${row.name.toLowerCase()} ${E.name} starts with.`));});
+  if(E.line==='scale') right.push(line('Notes per beat',sel('sub',SUBS,s.sub,'Notes per beat','How many notes to play per beat. A run counts toward a chip at this many or more.')));
+  if(E.id==='tones') right.push(line('Chord',sel('chord',cur.chords.map((ch,i)=>[i,`${ch.roman} ${ch.name}`]),s.chord,'Chord','The chord whose tones the line outlines, in your focus key.')),
+    line('Start and end on',sel('resolve',[['key','Key root'],['chord','Chord root']],s.resolve,'Start and end on','Where each pass starts and ends.')));
+  if(E.id==='home') right.push(line('Each chord',sel('plan',PLAY_CH.slice(0,3),s.plan,'Each chord','Strum the chord, pick it one string at a time, or both.')),
+    line('Strum pattern',sel('rpat',RPAT_LIST,s.rpat,'Strum pattern','The strum pattern for the strummed bars.')));
+  if(E.id==='prog') right.push(line('Add 7ths',`<button class="sw" data-act="custsev" aria-pressed="${!!s.sev}" aria-label="Add 7ths" data-tip="Play 4-note 7th chords instead of triads."></button>`));
+  if(drill){
+    right.push(line('Key',sel('key',[['','Follow the focus'],...KEY_OPTS.map((n,i)=>[i,n])],s.key,'Key','The key this exercise plays in. Follow the focus uses the key in the bar at the top.')));
+    if(E.id!=='home') right.push(line('Box',sel('pos',[['','Follow the focus'],['-1','Whole neck'],...positions(s.key!=null?+s.key:cur.key).map(p=>[String(p.lo),p.label])],s.pos,'Box',
+      E.id==='prog'?'Where the chords are voiced. Boom-chuck, crosspicking and Travis picking always use the open position.':'The box the line runs through.')));
+  }
+  if(E.id!=='songs') right.push(line('Goal',`<span class="gstep"><button data-act="custgoal" data-v="-5" aria-label="Lower the goal" data-tip="Lower the goal by 5.">−</button><b>${s.goal}${isQuiz(E)?'% right':' bpm'}</b><button data-act="custgoal" data-v="5" aria-label="Raise the goal" data-tip="Raise the goal by 5.">+</button></span>`));
+  const where=r?`for ${esc(r.name)}, exercise ${r.items.findIndex(x=>x.uid===c.uid)+1}`:'your default';
+  return `<div class="sets-wrap cust-wrap"><div class="sets cust" role="dialog" aria-modal="true" aria-label="Customize ${E.name}">
+    <div class="sets-top"><span><b>Customize ${E.name}</b> <small>${where}</small></span><button class="icon" data-act="custclose" aria-label="Close without saving" data-tip="Close without saving. Esc does it too.">✕</button></div>
+    <div class="cust-cols"><div class="cust-l">${left}</div><div class="cust-r"><h4>Starts with</h4>${right.join('')}
+      <p class="hint">${r?`These settings belong to ${E.name} in ${esc(r.name)}.`:`These become ${E.name}’s defaults when you try it, and when you add it to a session.`} Your ✓ progress belongs to you and shows in every session.</p></div></div>
+    <div class="actions"><button class="btn" data-act="custclose" data-tip="Close without saving.">Cancel</button><button class="btn primary" data-act="custsave" data-tip="${r?`Save these settings for this exercise in ${esc(r.name)}.`:`Save these as ${E.name}’s defaults.`}">${r?`Save to ${esc(r.name)}`:'Save as default'}</button></div></div></div>`;
+}
+function renderCust(){
+  const box=custEl.querySelector('.sets'); if(box&&st.cust) st.cust.top=box.scrollTop;
+  custEl.hidden=!st.cust; custEl.innerHTML=st.cust?custHTML():'';
+  const nb=custEl.querySelector('.sets'); if(nb&&st.cust) nb.scrollTop=st.cust.top||0;
+}
+function custClose(){st.cust=null; renderCust();}
+function custSave(){
+  const c=st.cust; if(!c) return; const d=c.draft, set={chips:d.chips};
+  [...EX_KEYS,'key'].forEach(k=>{if(d[k]!==undefined&&d[k]!==null&&d[k]!=='') set[k]=d[k];});
+  if(c.rid){const r=LOG.routines[c.rid], it=r&&r.items.find(x=>x.uid===c.uid); if(!it){custClose(); return;} it.set=set; touch(r);}
+  else{LOG.exprefs[c.ex]={set,updated:now()}; saveLog();}
+  custClose();
+  if(st.ex&&st.ex.ex===c.ex&&st.ex.rid===c.rid&&st.ex.uid===c.uid) exStart({rid:c.rid,uid:c.uid,ex:c.ex,set:c.rid?set:null}); // play it as saved
+  else render();
+}
+custEl.addEventListener('click',e=>{
+  if(e.target.classList.contains('cust-wrap')){custClose(); return;}
+  const b=e.target.closest('button'); if(!b||!st.cust) return;
+  const c=st.cust, s=c.draft, E=EX_BY[c.ex];
+  switch(b.dataset.act){
+    case 'custclose': custClose(); return;
+    case 'custsave': custSave(); return;
+    case 'custsev': s.sev=!s.sev; break;
+    case 'custgoal':{const lo=isQuiz(E)?50:30, hi=isQuiz(E)?100:260; s.goal=Math.max(lo,Math.min(hi,s.goal+(+b.dataset.v))); break;}
+    case 'custchip':{const row=E.rows.find(x=>x.k===b.dataset.row), all=custAll(row,s).map(a=>a[0]), v=b.dataset.v;
+      let on=s.chips[row.k]?s.chips[row.k].filter(x=>all.includes(x)):[...all];
+      on=on.includes(v)?on.filter(x=>x!==v):all.filter(x=>x===v||on.includes(x));
+      if(!on.length) return; // a row keeps at least one chip
+      s.chips[row.k]=on; break;}
+    default: return;
+  }
+  const sel=`[data-act="${b.dataset.act}"]${b.dataset.v?`[data-v="${b.dataset.v}"]`:''}${b.dataset.row?`[data-row="${b.dataset.row}"]`:''}`;
+  renderCust(); const n=custEl.querySelector(sel); if(n) n.focus({preventScroll:true});
+});
+custEl.addEventListener('change',e=>{
+  const k=e.target.dataset.cset; if(!k||!st.cust) return; const s=st.cust.draft, v=e.target.value;
+  s[k]=v===''?null:['sub','chord','key'].includes(k)?+v:v;
+  if(k==='key'){const ps=custAll({k:'pos'},s).map(a=>a[0]); if(s.pos!=null&&+s.pos>=0&&!ps.includes(String(s.pos))) s.pos=null; if(s.chips.pos) s.chips.pos=null;} // boxes move with the key
+  renderCust(); const n=custEl.querySelector(`[data-cset="${k}"]`); if(n) n.focus({preventScroll:true});
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&st.cust){custClose(); e.stopPropagation();} },true);
 // ---------- songs tab ----------
 // A list of your songs, and the open song: its details, its chords split into parts, a voicing for each chord, and its strum pattern.
 function songParts(sk){ return sk.parts&&sk.parts.length?sk.parts:[{name:'Verse',text:sk.chordText||''}]; }
@@ -2278,15 +2653,6 @@ function songsPage(){
   return `<div class="songs"><nav class="songlist" aria-label="Your songs"><p class="st-lab">Your songs</p>${items}<button class="sl-item sl-add" data-act="songform" aria-pressed="${!!(st.newSong||!list.length)}">+ Add a song</button></nav>
     <div class="song-ed">${st.newSong||!st.song?newSongHTML():songEditor(st.song)}</div></div>`;
 }
-function practiceHTML(){
-  const n=nextStep();
-  const next=n?`<div class="pnext"><p class="st-lab">Next up</p><b>${n.title}</b><p>${stepWhat(n)} ${goalText(n)}</p><button class="btn primary" data-act="step" data-id="${n.id}">Start in Drill</button></div>`:'';
-  const stages=buildPath().map(g=>{const own=g.id==='bluegrass'&&g.steps.find(x=>!stepState(x).done); // its own track marks its own next step
-    return `<section class="pstage"><h3>${g.name} <small>${g.sub}</small></h3><ol class="psteps">${g.steps.map(s=>stepRow(s,n&&s===n||s===own)).join('')}</ol></section>`;});
-  stages.splice(3,0,songsHTML());
-  return `<div class="path">${next}${stages.join('')}
-    <details class="psync"${st.syncOpen?' open':''}><summary>Sync and backup</summary>${syncHTML()}</details></div>`;
-}
 function syncHTML(){
   const backup=`<p class="st-lab">Backup</p>
     <div class="actions"><button class="btn" data-act="lgexport">Export file</button><button class="btn" data-act="lgimport">Import file</button></div>
@@ -2315,14 +2681,15 @@ function renderSheet(){
   // what you play: the chord chips for scale lines, or one tile per bar for a progression or song
   const el=sheetEl, show=st.mode==='drill'&&!picking();
   el.hidden=!show; if(!show){el.innerHTML=''; return;}
-  const playSeg=`<div class="row">${seg('Play','line',[['scale','Scale lines'],['prog','Strum chords']],D.line)}</div>`;
+  const exOn=!!st.ex; // in an exercise, its panel above has the line, the pattern, the progression and how to play it
+  const playSeg=exOn?'':`<div class="row">${seg('Play','line',[['scale','Scale lines'],['prog','Strum chords']],D.line)}</div>`;
   if(D.line!=='prog'){
     const chips=cur.chords.map((c,i)=>`<button class="chip" data-act="chord" data-i="${i}" aria-pressed="${i===D.chord}">${c.roman?c.roman+' ':''}${c.name}</button>`).join('');
     const per=[0,0,0,0,0,0]; boxNotes().forEach(n=>per[n.s]++);
-    el.innerHTML=`${playSeg}${pathNote()}
+    el.innerHTML=`${playSeg}${songNote()}
       <div class="sh-head"><b class="sh-name">${cur.chord.name}</b><span>${cur.chord.roman?cur.chord.roman+' in ':'Over '}${keyName()} ${F.fam==='chrom'?'':esc(modeName())}</span></div>
       <div class="row sh-chips" role="group" aria-label="Chord to drill over">${chips}</div>
-      <div class="drow"><select data-set="pattern" aria-label="Pattern">${opts(PATTERNS.map(([k,l])=>[k,k==='thirds'&&cur.set.size!==7?'Skip a note':l]),D.pattern)}</select></div>
+      ${exOn?'':`<div class="drow"><select data-set="pattern" aria-label="Pattern">${opts(PATTERNS.map(([k,l])=>[k,k==='thirds'&&cur.set.size!==7?'Skip a note':l]),D.pattern)}</select></div>`}
       <p class="hint">Solid dots are ${term('chordtone','chord tones')} of ${cur.chord.name}, pearl dots ${term('passing','passing tones')}, and a gold ring marks ${D.resolve==='chord'?rootName(cur.chord):keyName()}, where each pass starts and ends. Notes per string, low to high: ${per.join(' ')}.${D.pad&&!cur.voicing?' No voicing fits this box, so the chord step is skipped.':''} Tap the chosen chord again to hear it.</p>`;
     return;
   }
@@ -2336,10 +2703,11 @@ function renderSheet(){
   const missing=[...new Set(cur.prog.filter(p=>!p.voicing).map(p=>p.ch.name))];
   const notes=[missing.length&&D.plan!=='arp'?`No voicing of ${missing.map(esc).join(', ')} fits this box, so ${missing.length===1?'it is':'they are'} picked instead.`:'',
     cur.chords.length!==7&&!S?`${esc(modeName())} has too few notes to build these chords, so they come from ${keyName()} ${FAMS.major.modes[TO_DIATONIC[F.fam][F.mode]||0][0]}, the nearest 7-note mode${F.fam==='blues'?' (the blue note sits outside it)':''}.`:''].filter(Boolean).join(' ');
-  el.innerHTML=`${playSeg}${pathNote()}
-    <div class="sh-top">${sheetSel()}<span class="sh-sub">${sub}</span><span class="sh-no" id="barNo">bar ${cur.prog[cur.pci].bar+1} of ${n}</span></div>
+  const title=exOn?`<b class="sh-title sh-static">${S?esc(S.name):esc((PROG_BY[D.prog]||PROG_BY.pop).name)}</b>`:sheetSel();
+  el.innerHTML=`${playSeg}${songNote()}
+    <div class="sh-top">${title}<span class="sh-sub">${sub}</span><span class="sh-no" id="barNo">bar ${cur.prog[cur.pci].bar+1} of ${n}</span></div>
     ${partSeg}<div class="sh-bars" role="group" aria-label="Bars, one chord each">${tiles}</div>
-    ${wide?`<div class="row">${seg('Each chord','plan',[['both','Strum, then pick'],['strum','Strum'],['arp','Pick']],D.plan)}${seg('Bluegrass','plan',BG_PLANS,D.plan)}</div>`:''}
+    ${wide&&!exOn?`<div class="row">${seg('Each chord','plan',[['both','Strum, then pick'],['strum','Strum'],['arp','Pick']],D.plan)}${seg('Bluegrass','plan',BG_PLANS,D.plan)}</div>`:''}
     ${notes?`<p class="hint">${notes}</p>`:''}`;
 }
 function strumOwnerHTML(){
@@ -2406,7 +2774,7 @@ function setsHTML(){
 }
 function renderPanel(){
   const q=st.q;
-  if(st.mode==='practice'){panel.innerHTML=practiceHTML(); return;}
+  if(st.mode==='practice'){panel.innerHTML=exPageHTML(); return;}
   if(st.mode==='songs'){panel.innerHTML=songsPage(); return;}
   if(st.mode==='drill'){
     if(picking()){
@@ -2448,7 +2816,9 @@ function setMode(m){
   else if(st.mode==='drill'){st.picking=false; st.seq=genSeq(); render();}
   else newQuestion();
 }
-document.getElementById('modes').addEventListener('click',e=>{const b=e.target.closest('button'); if(b) setMode(b.dataset.mode);});
+document.getElementById('modes').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return;
+  if(st.ex&&!(b.dataset.mode==='quiz'&&isQuiz(EX_BY[st.ex.ex]))) exEnd(); // a tab opens on its own controls; a session keeps your place
+  setMode(b.dataset.mode);});
 document.getElementById('soundBtn').addEventListener('click',()=>{saved.sound=!saved.sound;save();renderStats();if(saved.sound)tone(57);});
 neck.addEventListener('click',e=>{
   const c=e.target.closest('.cell'); if(!c) return;
@@ -2506,6 +2876,7 @@ const onChange=e=>{
   if(e.target.id==='lgFile'){const f=e.target.files[0]; if(!f) return;
     f.text().then(t=>{const err=importLog(t); st.importMsg=err||`Imported ${f.name}.`; render();}); return;}
   if(st.mode==='songs'&&songChange(e)) return;
+  if(e.target.id==='exName'){const r=openRoutine(), v=e.target.value.trim(); if(r&&v&&v!==r.name){r.name=v.slice(0,60); touch(r);} render(); return;}
   const k=e.target.dataset.set; if(!k) return;
   const v=e.target.value;
   if(k==='rpat'){R.pat=v; if(RPAT[v]) R.swing=RPAT[v].swing; save(); keepSongStrum(); regen(); return;}
@@ -2523,6 +2894,16 @@ function keepSets(sel){ // the settings sheet redraws with every change; keep it
   if(box) box.scrollTop=top;
   const n=document.querySelector('.sets '+sel); if(n) n.focus({preventScroll:true});
 }
+// in the Exercises tab, drag a session's exercises to reorder them, or drag one in from the library
+panel.addEventListener('dragstart',e=>{const t=e.target.closest&&e.target.closest('.exi.edit,.extile'); if(!t) return;
+  st.drag=t.dataset.ex?{ex:t.dataset.ex}:{i:+t.dataset.i}; try{e.dataTransfer.setData('text/plain',t.dataset.ex||t.dataset.i); e.dataTransfer.effectAllowed='copyMove';}catch(err){}});
+panel.addEventListener('dragover',e=>{if(!st.drag||!(e.target.closest&&e.target.closest('.exlist'))) return; e.preventDefault();
+  const row=e.target.closest('.exi'); panel.querySelectorAll('.exi.drop').forEach(x=>{if(x!==row) x.classList.remove('drop');}); if(row) row.classList.add('drop');});
+panel.addEventListener('drop',e=>{const d=st.drag; st.drag=null; if(!d||!(e.target.closest&&e.target.closest('.exlist'))) return; e.preventDefault();
+  const r=openRoutine(); if(!r) return; const row=e.target.closest('.exi.edit'), to=row?+row.dataset.i:r.items.length;
+  if(d.ex){r.items.splice(to,0,{uid:newUid(),ex:d.ex,set:{}}); touch(r);} else exMove(r,d.i,to);
+  render();});
+panel.addEventListener('dragend',()=>{st.drag=null; panel.querySelectorAll('.exi.drop').forEach(x=>x.classList.remove('drop'));});
 panel.addEventListener('toggle',e=>{ if(e.target.classList&&e.target.classList.contains('psync')) st.syncOpen=e.target.open; },true);
 const onClick=e=>{
   if(e.target.classList.contains('sets-wrap')){st.sheet=false; render(); return;}
@@ -2548,13 +2929,31 @@ const onClick=e=>{
     case 'lbl': if(b.dataset.v==='notes') saved.labels='notes'; else {saved.labels='iv'; D.ref=b.dataset.v;} save(); render(); return;
     case 'play': togglePlay(); return;
     case 'clean': toggleClean(); return;
-    case 'step':{buildPath(); const S=STEP_BY[b.dataset.id]; if(!S) return;
-      if(S.tune){const t=tuneSong(S); // a tune you've added plays like any song; otherwise Songs opens to add it
-        if(t){if(saved.fmode!=='song') saved.fkey={key:F.key,fam:F.fam,mode:F.mode,pos:F.pos,line:D.line,prog:songProg(D.prog)?'pop':D.prog}; saved.fmode='song'; saved.fsong=t.id; applySetup(songSetup(t.s,t.id));}
-        else{st.prefill={name:S.name,artist:S.artist,link:S.link}; st.newSong=true; st.vpick=null; if(st.mode!=='songs') setMode('songs'); else render();}
-        return;}
-      saved.fmode='key'; applySetup(S); return;}
-    case 'topath': document.querySelector('#modes [data-mode="practice"]').click(); return;
+    case 'exchip': if(st.ex) exChoose(b.dataset.row,b.dataset.v); return;
+    case 'exgoal':{if(!st.ex) return; const q=isQuiz(EX_BY[st.ex.ex]); st.ex.goal=Math.max(q?50:30,Math.min(q?100:260,st.ex.goal+(+b.dataset.v))); render(); return;}
+    case 'exsave': exSave(); render(); return;
+    case 'exclose': exEnd(); render(); return;
+    case 'excust': if(st.ex) custOpen(st.ex.rid?{rid:st.ex.rid,uid:st.ex.uid}:{ex:st.ex.ex}); return;
+    case 'exgo': case 'exprev': case 'exnext':{const r=st.ex&&LOG.routines[st.ex.rid]; if(!r) return; const k=r.items.findIndex(x=>x.uid===st.ex.uid);
+      exGo(r,act==='exgo'?i:act==='exprev'?k-1:k+1); return;}
+    case 'exleave': exEnd(); setMode('practice'); return;
+    case 'exsel': saved.rid=b.dataset.id; st.exEdit=false; st.exConfirm=false; save(); render(); return;
+    case 'exnew':{exNewRoutine(`Session ${routines().length+1}`); st.exEdit=true; st.exConfirm=false; render(); const el=document.getElementById('exName'); if(el){el.focus(); el.select();} return;}
+    case 'exedit': st.exEdit=true; st.exConfirm=false; render(); return;
+    case 'exdone': st.exEdit=false; st.exConfirm=false; render(); return;
+    case 'exup': case 'exdown':{const r=openRoutine(); if(r) exMove(r,i,act==='exup'?i-1:i+2); render(); return;}
+    case 'excusti':{const r=openRoutine(), it=r&&r.items[i]; if(it) custOpen({rid:r.id,uid:it.uid}); return;}
+    case 'exdel':{const r=openRoutine(); if(!r||!r.items[i]) return; r.items.splice(i,1); touch(r); render(); return;}
+    case 'exdup':{const r=openRoutine(); if(!r) return; exNewRoutine(`${r.name} copy`,r.items.map(it=>({uid:newUid(),ex:it.ex,set:JSON.parse(JSON.stringify(it.set||{}))}))); render(); return;}
+    case 'exrm': st.exConfirm=true; render(); return;
+    case 'exrmno': st.exConfirm=false; render(); return;
+    case 'exrmyes':{const r=openRoutine(); if(!r) return; r.gone=true; r.items=[]; touch(r); // kept as a marker, so a sync doesn't bring it back
+      if(st.ex&&st.ex.rid===r.id) st.ex=null; st.exConfirm=false; st.exEdit=false; saved.rid=null; save(); render(); return;}
+    case 'exitem': exGo(openRoutine(),i); return;
+    case 'exresume':{const r=openRoutine(); if(r) exGo(r,Math.min(runOf(r).at||0,r.items.length-1)); return;}
+    case 'exover':{const r=openRoutine(); if(!r||!r.items.length) return; LOG.runs[r.id]={at:0,done:[],t:0}; exGo(r,0); return;}
+    case 'extry': exStart({ex:b.dataset.ex}); return;
+    case 'exadd':{const r=openRoutine()||exNewRoutine('My session'); r.items.push({uid:newUid(),ex:b.dataset.ex,set:{}}); touch(r); render(); return;}
     case 'songopen': st.song=b.dataset.id; st.newSong=false; st.vpick=null;
       if(focusSong()&&saved.fsong!==st.song){setFocusSong(st.song);} // in Song mode, the open song is the focus
       if(st.mode!=='songs') setMode('songs'); else render(); return;
@@ -2642,7 +3041,7 @@ const onClick=e=>{
   }
   save(); render();
 };
-[panel,sheetEl].forEach(el=>el.addEventListener('click',onClick));
+[panel,sheetEl,exHeadEl,exStripEl].forEach(el=>el.addEventListener('click',onClick));
 function hearFrets(f){ try{ensureAC(); let j=0; f.forEach((x,s)=>{if(x!==null) toneAt(MIDI[s]+capo()+x,ac.currentTime+0.02+(j++)*0.03,0.16);});}catch(err){} }
 function strumNow(){ if(!cur.voicing) return; try{ensureAC(); strum(ac.currentTime+0.02,0.2);}catch(err){} st.flashUntil=Date.now()+1600; renderBoard(); setTimeout(renderBoard,1650); }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&st.sheet&&document.getElementById('gloss').hidden){st.sheet=false; render(); const g=document.querySelector('[data-act="sheet"]'); if(g) g.focus();} });
@@ -2773,8 +3172,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElemen
 
 // ---------- browser history ----------
 // The app stays one page, but each tab, the song open in Songs, the settings sheet and the glossary get an entry in the browser's history, so Back returns to the previous screen.
-function navNow(){return {mode:st.mode,song:st.mode==='songs'?(st.newSong?'+':st.song||null):null,sheet:!!st.sheet&&st.mode==='drill',gloss:!document.getElementById('gloss').hidden};}
-const navKey=s=>s?[s.mode,s.song,s.sheet,s.gloss].join('|'):'';
+const exKey=()=>st.ex?`${st.ex.rid||''}/${st.ex.uid||st.ex.ex}`:null;
+function navNow(){return {mode:st.mode,song:st.mode==='songs'?(st.newSong?'+':st.song||null):null,sheet:!!st.sheet&&st.mode==='drill',gloss:!document.getElementById('gloss').hidden,ex:exKey()};}
+const navKey=s=>s?[s.mode,s.song,s.sheet,s.gloss,s.ex||''].join('|'):'';
 function navSync(){
   if(st.navBusy||!window.history||!history.replaceState) return;
   const now=navNow(), hs=history.state, was=hs&&hs.fm;
@@ -2789,6 +3189,10 @@ addEventListener('popstate',e=>{
   st.navBusy=true;
   try{
     if(!s.gloss&&!document.getElementById('gloss').hidden) closeGloss();
+    if((s.ex||null)!==exKey()){ // back into an exercise, or out of one
+      const [r_,u]=(s.ex||'/').split('/'), r=r_&&LOG.routines[r_], k=r?r.items.findIndex(x=>x.uid===u):-1;
+      if(k>=0) exGo(r,k); else if(!r_&&EX_BY[u]) exStart({ex:u}); else st.ex=null;
+    }
     if(s.mode!==st.mode) setMode(s.mode);
     if(s.mode==='songs'){
       st.newSong=s.song==='+'; st.vpick=null;
@@ -2815,7 +3219,7 @@ const PAT_TIP={updown:'Every scale note in the box: from the root up to the top,
  walk:'A new random line every pass that lands on a chord tone on each beat.'};
 const GUIDE_TIP={full:'The whole box stays visible while you play.',next:'While playing, only the current note and the next one are shown.',
  blind:'While playing, the shape is hidden. Follow the tab or play it from memory.'};
-const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 function formulaText(c){return c.rel.map(r=>chordIv(c,r)[0]).join(' ');}
 function degreeText(p){
   const ivK=ivOf(p,cur.key), n=noteName(pc(p.s,p.f));
@@ -2870,12 +3274,10 @@ const TIPS=[
  ['[data-act="sheet"]',()=>'Drill settings: what you play, what you hear, what the neck shows, and the tempo ramp.'],
  ['[data-act="sheetclose"]',()=>'Close the settings. Esc does it too.'],
  ['[data-pci]',el=>{const p=cur.prog&&cur.prog[+el.dataset.pci]; if(!p) return ''; return `<b>${p.ch.name}</b> (${p.ch.roman}): ${formulaText(p.ch)}${p.voicing?', played '+p.voicing.frets.map(f=>f===null?'x':f).join(' '):''}.${p.voicing&&p.voicing.own?' Your own voicing.':''}${st.playing?'':' Click to hear it and see it on the neck.'}`;}],
- ['#modes [data-mode="practice"]',()=>'<b>Path</b>: your learning path from scales to chords to progressions to songs, with a rhythm track. Each step opens Drill set up for it. (4)'],
- ['[data-act="clean"]',()=>lg.last&&lg.last.clean?`Marked clean at ${lg.last.clean} bpm. Click to unmark it.`:`If that run was ${term('clean','clean')}, mark it at ${lg.last?lg.last.bpm[1]:saved.bpm} bpm. A step on the path is done when a run is marked clean at its goal tempo.`],
- ['[data-act="step"]',el=>{buildPath(); const t=STEP_BY[el.dataset.id]; if(t.tune) return tuneSong(t)?`<b>${esc(t.name)}</b>: opens Drill on the song, with the chords you typed for it.`:`<b>${esc(t.name)}</b>: opens Songs to add it, with a Songsterr search to find its chords.`; return `<b>${t.title}</b>: ${stepWhat(t)} Opens Drill set up for this step.`;}],
- ['[data-act="topath"]',()=>'Go back to the learning path.'],
+ ['#modes [data-mode="practice"]',()=>'<b>Exercises</b>: your practice sessions and the library of exercises. Each exercise opens Drill with its choices as chips, so you can switch between them as you play. (4)'],
+ ['[data-act="clean"]',()=>lg.last&&lg.last.clean?`Marked clean at ${lg.last.clean} bpm. Click to unmark it.`:`If that run was ${term('clean','clean')}, mark it at ${lg.last?lg.last.bpm[1]:saved.bpm} bpm. An exercise’s chip gets a ✓ when a run of it is marked clean at the goal tempo.`],
  ['[data-act="songform"]',()=>'Add a song you’re learning, with its chords, in the Songs tab.'],
- ['[data-act="songadd"]',()=>'Add this song. It shows up on the Path too.'],
+ ['[data-act="songadd"]',()=>'Add this song. It shows up in Drill’s progression menu and in the Your songs exercise.'],
  ['[data-act="songcancel"]',()=>'Close the form without adding a song.'],
  ['[data-act="rate"]',el=>`Rate how well you play it: ${el.dataset.v} of 5. Click your current rating again to lower it.`],
  ['[data-act="songplay"]',el=>{const sk=LOG.skills[el.dataset.id]; return sk?`Practice: open Drill on ${esc(sk.name)}’s ${sk.chords&&sk.chords.length?'chords':'key and progression'}, in open position: strum each chord, then arpeggiate it.`:'';}],
@@ -2896,7 +3298,7 @@ const TIPS=[
  ['[data-sf="key"]',()=>'The song’s key. Roman numerals in Drill count from it.'],
  ['[data-sf="minor"]',()=>'Whether the song is in a major or a minor key.'],
  ['[data-sf="capo"]',()=>'The fret the capo sits on. Type chords and shapes as you play them with the capo on, the way most tabs write them. Fretmap counts frets from the capo and plays every note that many half steps higher, so it matches the recording.'],
- ['[data-sf="tempo"]',()=>'The song’s tempo. Practice starts Drill at it, and the song is done on the Path when a run is clean at it.'],
+ ['[data-sf="tempo"]',()=>'The song’s tempo. Practice starts Drill at it, and the song gets its ✓ in Your songs when a run is clean at it.'],
  ['[data-sf="prog"]',()=>'With no chords typed yet, practice this common progression in the song’s key.'],
  ['[data-act="lgtoken"]',()=>'Save the token in this browser and sync now. It finds your existing Fretmap gist, or makes a new private one.'],
  ['[data-act="lgsync"]',()=>'Merge this browser’s log with the gist now. Nothing is ever deleted by a sync.'],
@@ -2999,7 +3401,7 @@ document.addEventListener('keydown',e=>{const t=e.target.closest&&e.target.close
 addEventListener('scroll',hideTip,true);
 addEventListener('resize',hideTip);
 
-window.__fretDebug={tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,get PATH(){return buildPath()},get STEP_BY(){buildPath(); return STEP_BY},setupSkill,stepState,nextStep,followKey,stepWhat,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule};
+window.__fretDebug={tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,EXS,EX_BY,exStart,exGo,routines,openRoutine,chipDone,exProgress,fillSet,custOpen,runOf,setupSkill,stepState,followKey,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule};
 fillSelects();
 render();
 setTimeout(syncNow,300); // does nothing without a token

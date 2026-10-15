@@ -75,42 +75,84 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   const nS=X.LOG.sessions.length; w.__clock+=25*60e3;
   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(30); click(d.querySelector('[data-act=play]'));
   ok(X.LOG.sessions.length===nS+1,'new-session',X.LOG.sessions.length);
-  // the path is built from the focus: over the whole neck it goes box by box from the open strings up
-  Object.assign(X.F,{key:9,fam:'pent',mode:1,pos:-1}); X.refresh();
-  mode('practice'); ok(!/undefined|NaN|\[object/.test(d.querySelector('.app').textContent),'path-text');
-  ok([...d.querySelectorAll('.psteps [data-act=step][data-id^=s]')].map(e=>e.dataset.id).join(' ')==='s0 s2 s5 s7 sw','path-scale-order');
-  ok(d.querySelector('.pnext [data-act=step]').dataset.id==='s0','path-next-s0');
-  // a position picked in the header keeps every step in it
-  Object.assign(X.F,{pos:5}); X.refresh(); mode('drill'); mode('practice');
-  ok([...d.querySelectorAll('.psteps [data-act=step][data-id^=s],.psteps [data-act=step][data-id^=c]')].map(e=>e.dataset.id).join(' ')==='s5 c5'&&[...X.PATH.filter(g=>g.id!=='bluegrass').flatMap(g=>g.steps)].every(s=>s.pos===5),'path-one-position');
-  ok(d.querySelector('.pnext [data-act=step]').dataset.id==='s5','path-next-s5');
-  click(d.querySelector('.pnext [data-act=step]'));
-  ok(X.st.mode==='drill'&&X.F.key===9&&X.F.fam==='pent'&&X.F.mode===1&&X.F.pos===5&&X.D.line==='scale'&&X.D.pattern==='thirds','step-setup',[X.st.mode,X.F.key,X.F.fam,X.F.mode,X.F.pos,X.D.line,X.D.pattern].join(' '));
-  ok(/Em shape, frets 5–9 · goal 80/.test(d.getElementById('sheet').textContent),'path-note');
+  // exercises: the Exercises tab starts with a Weeknight session, and an exercise opens Drill with its choices as chips
+  Object.assign(X.F,{key:9,fam:'pent',mode:1,pos:5}); X.refresh();
+  mode('practice'); ok(!/undefined|NaN|\[object/.test(d.querySelector('.app').textContent),'ex-text');
+  ok(d.querySelector('#modes [data-mode=practice]').textContent==='Exercises','ex-tab-name');
+  ok(X.routines().length===1&&X.openRoutine().name==='Weeknight'&&X.openRoutine().items.map(x=>x.ex).join(' ')==='box tech prog songs','ex-starter');
+  ok(d.querySelectorAll('.exopen .exi').length===4&&d.querySelectorAll('.exlib .extile').length===7,'ex-page');
+  click(d.querySelector('[data-act=exitem][data-i="0"]'));
+  ok(X.st.mode==='drill'&&X.st.ex&&X.st.ex.ex==='box'&&X.F.key===9&&X.F.fam==='pent'&&X.F.pos===5&&X.D.line==='scale'&&X.D.pattern==='thirds','ex-box-setup',[X.st.mode,X.F.key,X.F.fam,X.F.pos,X.D.line,X.D.pattern].join(' '));
+  ok(!d.getElementById('exhead').hidden&&!d.getElementById('exstrip').hidden&&d.querySelectorAll('#exhead [data-act=exchip]').length===5,'ex-panel');
+  ok(!d.querySelector('#sheet [data-set=pattern]')&&!d.querySelector('#sheet [data-act=line]'),'ex-panel-replaces');
+  ok(/Weeknight/.test(d.getElementById('exstrip').textContent)&&d.querySelector('#exstrip [aria-current=step]').dataset.i==='0','ex-strip');
+  ok(/Skip a note/.test(d.getElementById('exhead').textContent),'ex-pent-skip-label');
+  click(d.querySelector('#exhead [data-act=exchip][data-v=g3]')); ok(X.D.pattern==='g3'&&X.st.ex,'ex-chip-switch');
   const runClean=(bpm,secs)=>{X.saved.bpm=bpm; click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(secs); click(d.querySelector('[data-act=play]')); const c=d.querySelector('[data-act=clean]'); ok(c,'clean-chip-'+bpm); if(c) click(c);};
-  runClean(70,20); ok(!X.stepState(X.STEP_BY.s5).done,'step-not-done-below-goal');
-  runClean(80,20); ok(X.stepState(X.STEP_BY.s5).done,'step-done-at-goal');
-  click(d.querySelector('[data-act=topath]')); ok(X.st.mode==='practice'&&d.querySelector('[data-act=step][data-id=s5]').classList.contains('done'),'path-shows-done');
-  ok(d.querySelector('.pnext [data-act=step]').dataset.id==='c5','path-next-c5');
-  // a chord step keeps the pentatonic focus and borrows Aeolian's chords
-  click(d.querySelector('[data-act=step][data-id=c5]'));
-  ok(X.F.fam==='pent'&&X.F.mode===1&&X.D.line==='prog'&&X.D.prog==='one'&&X.D.plan==='both'&&X.R.pat==='quarters'&&X.cur.prog&&X.cur.prog.length===1&&X.cur.prog[0].ch.name==='Am','chord-step',[X.F.fam,X.D.line,X.D.prog,X.D.plan,X.R.pat].join(' '));
+  runClean(70,20); ok(!d.querySelector('#exhead [data-v=g3]').classList.contains('done'),'ex-not-done-below-goal');
+  runClean(80,20); ok(d.querySelector('#exhead [data-v=g3]').classList.contains('done')&&/2 of 5 clean/.test(d.getElementById('exhead').textContent),'ex-done-at-goal',d.getElementById('exhead').textContent.replace(/\s+/g,' ').slice(0,300)+JSON.stringify(entries(X).slice(-1)));
+  ok(X.runOf(X.openRoutine()).done.includes('w1'),'ex-run-mark');
+  ok(/You changed pattern from Skip a note/.test(d.getElementById('exhead').textContent),'ex-change-shown',d.getElementById('exhead').textContent.slice(-120));
+  click(d.querySelector('[data-act=exsave]')); ok(X.openRoutine().items[0].set.pattern==='g3'&&!d.querySelector('[data-act=exsave]'),'ex-save',JSON.stringify(X.openRoutine().items[0].set));
+  click(d.querySelector('[data-act=exnext]')); ok(X.st.ex.ex==='tech'&&X.D.pattern==='altpick'&&d.querySelector('#exstrip .exstep.done[data-i="0"]'),'ex-next');
+  click(d.querySelector('[data-act=exnext]'));
+  ok(X.st.ex.ex==='prog'&&X.D.line==='prog'&&X.D.prog==='pop'&&X.D.plan==='both'&&X.R.pat==='backbeat'&&X.F.pos===5&&!X.D.sev,'ex-prog-setup',[X.D.line,X.D.prog,X.D.plan,X.R.pat,X.F.pos].join(' '));
+  ok(d.querySelectorAll('#exhead [data-row=prog]').length===4&&d.querySelectorAll('#exhead [data-row=plan]').length===6&&d.querySelectorAll('#exhead [data-row=rpat]').length===5,'ex-prog-rows');
+  ok(X.cur.prog.map(p=>p.ch.name).join(' ')==='Am Em F Dm'&&/Strum pattern/.test(d.getElementById('exhead').textContent),'ex-prog-chords',X.cur.prog.map(p=>p.ch.name).join(' '));
+  click(d.querySelector('#exhead [data-row=prog][data-v="50s"]')); ok(X.D.prog==='50s'&&X.R.pat==='backbeat'&&X.cur.prog.map(p=>p.ch.name).join(' ')==='Am F Dm Em','ex-doowop',X.cur.prog.map(p=>p.ch.name).join(' '));
+  // boom-chuck moves to the open position and greys out the strum row; strumming again goes back to the box
+  click(d.querySelector('#exhead [data-row=plan][data-v=boom]')); ok(X.D.plan==='boom'&&X.F.pos===X.cur.pos[0].lo&&d.querySelector('#exhead .exrow.off')&&/Boom-chuck sets its own rhythm/.test(d.getElementById('exhead').textContent),'ex-boom',X.F.pos);
+  click(d.querySelector('#exhead [data-row=plan][data-v=strum]')); ok(X.D.plan==='strum'&&X.F.pos===5,'ex-boom-back',X.F.pos);
+  // a strum pattern, a progression and a way of playing each count as soon as any run with them is clean at the goal
+  click(d.querySelector('#exhead [data-row=rpat][data-v=gallop]')); runClean(80,20);
+  ok(['[data-row=rpat][data-v=gallop]','[data-row=prog][data-v="50s"]','[data-row=plan][data-v=strum]'].every(q=>d.querySelector('#exhead '+q).classList.contains('done'))&&!d.querySelector('#exhead [data-row=prog][data-v=pop]').classList.contains('done'),'ex-prog-chips-done');
+  // leave, then resume where you stopped
+  click(d.querySelector('[data-act=exleave]')); ok(X.st.mode==='practice'&&!X.st.ex&&/Resume at 3/.test(d.querySelector('.exopen').textContent)&&/stopped at 3/.test(d.querySelector('.exsess').textContent),'ex-resume-shown');
+  click(d.querySelector('[data-act=exresume]')); ok(X.st.ex&&X.st.ex.ex==='prog'&&X.st.ex.uid==='w3'&&X.st.mode==='drill','ex-resume');
+  // the Drill tab itself is free Drill
+  mode('drill'); ok(!X.st.ex&&d.getElementById('exhead').hidden&&d.getElementById('exstrip').hidden&&d.querySelector('#sheet [data-act=line]'),'ex-free-drill');
+  // a home chord on its own: a chip per box, the tonic borrowed from Aeolian
+  mode('practice'); click(d.querySelector('[data-act=extry][data-ex=home]'));
+  ok(X.st.ex&&!X.st.ex.rid&&d.getElementById('exstrip').hidden&&X.D.prog==='one'&&X.cur.prog[0].ch.name==='Am'&&X.F.pos===5&&X.R.pat==='quarters','ex-home',[X.D.prog,X.F.pos,X.R.pat].join(' '));
   ok(/comes? from A Aeolian/.test(d.getElementById('sheet').textContent),'borrowed-chords-hint');
-  runClean(80,20); ok(X.stepState(X.STEP_BY.c5).done,'chord-step-done');
-  click(d.querySelector('[data-act=topath]'));
-  ok(X.stepWhat(X.STEP_BY.p145)==='Am Dm Em Am, without leaving frets 5–9.','prog-step-text',X.stepWhat(X.STEP_BY.p145));
-  click(d.querySelector('[data-act=step][data-id=r5]'));
-  ok(X.R.swing===true&&X.D.plan==='strum'&&X.F.key===9&&X.F.fam==='pent'&&X.F.pos===5&&X.cur.prog.map(p=>p.ch.name).join(' ')==='Am Dm Em Am','rhythm-step-follows-focus',[X.F.key,X.F.fam,X.F.mode,X.F.pos,X.cur.prog.map(p=>p.ch.name)].join(' '));
-  runClean(80,20); ok(X.stepState(X.STEP_BY.r5).done,'rhythm-step-done');
-  // a new focus rebuilds the path; rhythm runs count in any key, scale runs don't
-  Object.assign(X.F,{key:0,fam:'major',mode:0,pos:-1}); X.refresh();
-  mode('practice'); ok(/C Ionian \(major\), box by box up the neck/.test(d.querySelector('.path').textContent),'path-follows-focus');
-  ok(X.stepWhat(X.STEP_BY.r1)==='C F, a bar each. Keep the hand moving down and up.','rhythm-what',X.stepWhat(X.STEP_BY.r1));
-  ok(X.stepState(X.STEP_BY.r5).done&&!X.stepState(X.PATH[0].steps[0]).done,'done-per-focus');
-  click(d.querySelector('.pnext [data-act=step]')); ok(X.F.key===0&&X.F.fam==='major'&&X.F.mode===0,'step-keeps-focus');
+  ok(d.querySelectorAll('#exhead [data-row=pos]').length===X.cur.pos.length,'ex-home-chips');
+  click(d.querySelector('[data-act=exclose]')); ok(!X.st.ex&&d.getElementById('exhead').hidden,'ex-close');
+  // the interval quiz, in Quiz
+  mode('practice'); click(d.querySelector('[data-act=extry][data-ex=quiz]')); ok(X.st.mode==='name'&&!d.getElementById('exhead').hidden,'ex-quiz');
+  for(let k=0;k<20;k++){w.__clock+=3000; click(d.querySelector(`[data-act=answer][data-i="${X.st.q.iv}"]`)); click(d.querySelector('[data-act=next]'));}
+  ok(d.querySelector('#exhead [data-v=name]').classList.contains('done')&&!d.querySelector('#exhead [data-v=find]').classList.contains('done'),'ex-quiz-done');
+  click(d.querySelector('#exhead [data-v=find]')); ok(X.st.mode==='find'&&X.st.ex&&X.st.ex.ex==='quiz','ex-quiz-find');
+  // editing a session: add, reorder, remove, rename, duplicate, delete
+  mode('practice'); click(d.querySelector('[data-act=exadd][data-ex=tones]')); ok(X.openRoutine().items.length===5&&X.openRoutine().items[4].ex==='tones','ex-add');
+  click(d.querySelector('[data-act=exedit]')); click(d.querySelector('[data-act=exup][data-i="4"]')); ok(X.openRoutine().items[3].ex==='tones','ex-up');
+  click(d.querySelector('[data-act=exdown][data-i="0"]')); ok(X.openRoutine().items.map(x=>x.ex).join(' ')==='tech box prog tones songs','ex-down',X.openRoutine().items.map(x=>x.ex).join(' '));
+  click(d.querySelector('[data-act=exdel][data-i="3"]')); ok(X.openRoutine().items.length===4,'ex-del');
+  {const nm=d.getElementById('exName'); nm.value='Weeknights "short"'; nm.dispatchEvent(new w.Event('change',{bubbles:true}));}
+  ok(X.openRoutine().name==='Weeknights "short"'&&d.getElementById('exName').value==='Weeknights "short"','ex-rename');
+  click(d.querySelector('[data-act=exdup]')); ok(X.routines().length===2&&X.openRoutine().name==='Weeknights "short" copy'&&X.openRoutine().items.length===4,'ex-dup');
+  ok(X.st.exEdit,'ex-dup-edits'); click(d.querySelector('[data-act=exrm]')); ok(d.querySelector('.exconfirm'),'ex-rm-confirm');
+  click(d.querySelector('[data-act=exrmyes]')); const goneR=Object.values(X.LOG.routines).find(r=>r.gone);
+  ok(X.routines().length===1&&goneR&&X.openRoutine().name==='Weeknights "short"','ex-rm');
+  ok(X.mergeLogs(X.LOG,{v:1,sessions:[],skills:{},routines:{[goneR.id]:{...goneR,gone:false,updated:1}}}).routines[goneR.id].gone,'ex-rm-merge');
+  // Customize a session's exercise: its chips, what it starts with, its goal
+  click(d.querySelector('[data-act=exedit]')); click(d.querySelector('[data-act=excusti][data-i="2"]'));
+  ok(!d.getElementById('cust').hidden&&/Customize Progressions/.test(d.getElementById('cust').textContent),'cust-open');
+  const setC=(k,v)=>{const e=d.querySelector(`#cust [data-cset=${k}]`); e.value=v; e.dispatchEvent(new w.Event('change',{bubbles:true}));};
+  click(d.querySelector('#cust [data-act=custchip][data-row=prog][data-v=blues]')); setC('prog','blues'); setC('plan','thumb');
+  click(d.querySelector('#cust [data-act=custgoal][data-v="-5"]')); click(d.querySelector('#cust [data-act=custsave]'));
+  {const s=X.openRoutine().items[2].set; ok(s.prog==='blues'&&s.plan==='thumb'&&s.goal===75&&s.chips.prog.join(' ')==='two 145 pop 50s blues'&&d.getElementById('cust').hidden,'cust-save',JSON.stringify(s));}
+  click(d.querySelector('[data-act=exdone]')); click(d.querySelector('[data-act=exitem][data-i="2"]'));
+  ok(X.D.prog==='blues'&&X.D.plan==='thumb'&&X.F.pos===X.cur.pos[0].lo&&d.querySelectorAll('#exhead [data-row=prog]').length===5&&/goal 75/.test(d.getElementById('exhead').textContent),'cust-applied');
+  // Customize as you play, from the panel; Cancel keeps things as they were
+  click(d.querySelector('#exhead [data-act=excust]')); click(d.querySelector('#cust [data-act=custgoal][data-v="5"]')); click(d.querySelector('#cust [data-act=custclose]'));
+  ok(X.openRoutine().items[2].set.goal===75&&d.getElementById('cust').hidden,'cust-cancel');
+  // sessions sync: the newer copy of a session wins, and an import brings sessions in
+  {const r=X.openRoutine(), old={...r,name:'Old name',updated:1}; ok(X.mergeLogs(X.LOG,{v:1,sessions:[],skills:{},routines:{[r.id]:old}}).routines[r.id].name==='Weeknights "short"','ex-merge-newer');
+   const nw={id:'rX',name:'From phone',created:5,updated:5,items:[{uid:'a',ex:'quiz',set:{}}]}; ok(X.mergeLogs(X.LOG,{v:1,sessions:[],skills:{},routines:{rX:nw}}).routines.rX.name==='From phone','ex-merge-new');}
+  mode('explore'); X.F.pos=-1; Object.assign(X.F,{key:0,fam:'major',mode:0,pos:-1}); X.refresh();
   // songs: add in the Songs tab, rate, and play its changes
   const setF=(sel,v)=>{const e=d.querySelector(sel); e.value=v; e.dispatchEvent(new w.Event('change',{bubbles:true}));};
-  mode('practice'); click(d.querySelector('[data-act=songform]')); ok(X.st.mode==='songs'&&d.getElementById('sgName'),'path-add-opens-songs');
+  mode('songs'); click(d.querySelector('[data-act=songform]')); ok(X.st.mode==='songs'&&d.getElementById('sgName'),'add-opens-songs');
   d.getElementById('sgName').value='Wish You Were Here'; d.getElementById('sgArtist').value='Pink Floyd';
   d.getElementById('sgLink').value='https://www.songsterr.com/a/wsa/pink-floyd-wish-you-were-here-tab-s49';
   click(d.querySelector('[data-act=songadd]'));
@@ -123,8 +165,8 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   click(d.querySelector(`[data-act=rate][data-id="${song[0]}"][data-v="4"]`)); ok(X.LOG.skills[song[0]].rating===4,'song-rated');
   const older={v:1,sessions:[],skills:{[song[0]]:{...X.LOG.skills[song[0]],rating:2,updated:1}}};
   ok(X.mergeLogs(X.LOG,older).skills[song[0]].rating===4,'older-rating-loses');
-  mode('practice'); ok(d.querySelector(`.path [data-act=songopen][data-id="${song[0]}"]`)&&/★★★★☆/.test(d.querySelector('.path').textContent),'song-on-path');
-  click(d.querySelector(`[data-act=songplay][data-id="${song[0]}"]`));
+  mode('practice'); click(d.querySelector('[data-act=extry][data-ex=songs]')); ok(X.st.ex&&d.querySelector(`#exhead [data-row=song][data-v="${song[0]}"]`),'song-in-exercise');
+  mode('songs'); click(d.querySelector(`[data-act=songopen][data-id="${song[0]}"]`)); click(d.querySelector(`[data-act=songplay][data-id="${song[0]}"]`));
   ok(X.st.mode==='drill'&&X.F.key===7&&X.F.mode===0&&X.D.line==='prog'&&X.D.prog==='145'&&X.F.pos===0,'song-play',[X.F.key,X.F.mode,X.D.prog,X.F.pos].join(' '));
   ok(/Wish You Were Here: play the changes/.test(d.getElementById('sheet').textContent),'song-path-note');
   // a song with its own typed chords
@@ -165,7 +207,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   click(d.querySelector('[data-act=rstep][data-i="1"]'));
   const sp=X.LOG.skills['song:here-pavement'].strum; ok(sp&&sp.pat==='custom'&&sp.custom.steps===X.R.custom.steps,'song-strum-saved',JSON.stringify(sp));
   const stepsNow=X.R.custom.steps; X.R.pat='faithful'; X.R.custom={res:8,steps:'x.......'};
-  mode('practice'); click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]'));
+  mode('songs'); click(d.querySelector('[data-act=songopen][data-id="song:here-pavement"]')); click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]'));
   ok(X.R.pat==='custom'&&X.R.custom.steps===stepsNow,'song-strum-restored',X.R.pat+' '+X.R.custom.steps+' want '+stepsNow+' saved '+JSON.stringify(X.LOG.skills['song:here-pavement'].strum));
   ok(/Here: play the changes/.test(d.getElementById('sheet').textContent),'song-strum-pathnote');
   // ...and edited in the Songs tab, which Drill then plays
@@ -274,9 +316,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
       X.D.plan='roll'; X.refresh(); const rb=X.genSeq().slice(0,8).map(n=>nm(n)+n.pk).join(' '); ok(rb==='G0↓ B0↑ e3↓ G0↑ B0↓ e3↑ G0↓ B0↑','bg-roll',rb);
       Object.assign(X.D,{line:'scale',pattern:'slurs'}); X.refresh(); const sl=X.genSeq().slice(0,6).map(n=>nm(n)+(n.sl||'')).join(' '); ok(sl==='E3 A0 A2h A3 D0 D2h','bg-slurs',sl);
       X.D.pattern='altpick'; X.refresh(); ok(X.genSeq().slice(0,4).map(n=>n.pk).join('')==='↓↑↓↑'&&/alternate picking/.test(X.skillNow().name),'bg-altpick',X.skillNow().name);
-      mode('practice'); click(d.querySelector('[data-act=step][data-id=tune1]'));
-      ok(X.st.mode==='songs'&&d.getElementById('sgName').value==='Black Mountain Rag'&&/songsterr\.com\/\?pattern=Black%20Mountain%20Rag/.test(d.getElementById('sgLink').value),'bg-tune-form',d.getElementById('sgName')&&d.getElementById('sgName').value);
-      click(d.querySelector('[data-act=songcancel]')); X.D.pattern='updown'; }
+      X.D.pattern='updown'; }
     Object.assign(X.F,f0); Object.assign(X.D,{sev,line,prog}); X.saved.fmode=fm; X.refresh(); mode('drill'); mode('explore'); }
   // the browser's Back button returns to the previous tab, and closing the settings sheet doesn't leave an entry behind
   { mode('explore'); mode('drill'); const n=w.history.length; click(d.querySelector('[data-act=sheet]')); ok(X.st.sheet&&w.history.length===n+1,'back-sheet-entry',w.history.length-n);

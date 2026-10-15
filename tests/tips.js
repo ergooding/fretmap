@@ -26,8 +26,12 @@ async function run(wide){
      click(d.querySelector('[data-act=tog][data-k=pad]')); check('drill pad'); click(d.querySelector('[data-act=sheetclose]')); check('drill settings closed');
      click(d.querySelector('[data-act=chord][aria-pressed=true]')); check('drill chord heard');
      X.F.pos=-1; X.refresh(); click(d.querySelector('[data-mode=explore]')); click(d.querySelector('[data-mode=drill]')); check('drill pick');}
-   if(m==='practice'){d.querySelector('.psync').open=true; check('path sync open');
-     click(d.querySelector('[data-act=songform]')); check('song form');
+   if(m==='practice'){d.querySelector('.psync').open=true; check('exercises sync open');
+     click(d.querySelector('[data-act=exedit]')); check('exercises edit'); click(d.querySelector('[data-act=exrm]')); check('exercises delete confirm'); click(d.querySelector('[data-act=exrmno]'));
+     click(d.querySelector('[data-act=excusti][data-i="2"]')); check('customize progressions'); click(d.querySelector('#cust [data-act=custclose]'));
+     click(d.querySelector('[data-act=excusti][data-i="0"]')); check('customize box'); click(d.querySelector('#cust [data-act=custclose]'));
+     click(d.querySelector('[data-act=exdone]')); check('exercises done editing');
+     goMode(d,click,'songs'); click(d.querySelector('[data-act=songform]')); check('song form');
      d.getElementById('sgName').value='Wish You Were Here'; d.getElementById('sgLink').value='https://www.songsterr.com/x'; d.getElementById('sgChords').value='C D Am G'; click(d.querySelector('[data-act=songadd]')); check('song added');
      click(d.querySelector('[data-act=rate][data-v="3"]')); check('song rated');
      click(d.querySelector('[data-act=vpick]')); check('song voicing picker');
@@ -35,7 +39,7 @@ async function run(wide){
      click(d.querySelector('[data-act=partadd]')); check('song part added');
      click(d.querySelector('[data-act=sgstep][data-i="1"]')); check('song strum custom');
      click(d.querySelector('[data-act=songform]')); check('second song form');
-     goMode(d,click,'practice'); check('path with song');
+     goMode(d,click,'practice'); check('exercises with song');
      click(d.querySelector('[data-fm=song]')); check('focus on song'); goMode(d,click,'drill'); check('drill focused on song');
      {const sk=X.LOG.skills[X.saved.fsong]; X.saveParts(X.saved.fsong,[{name:'Verse',text:'C D'},{name:'Chorus',text:'Am G'}]); goMode(d,click,'explore'); goMode(d,click,'drill'); check('drill song parts');
       const sp=d.querySelector('[data-act=spart][data-v="1"]'); if(sp){click(sp); check('drill song chorus');} else {bad++; console.log('NO PART SEG');}
@@ -44,11 +48,15 @@ async function run(wide){
       X.st.newSong=false; X.st.song=X.saved.fsong; goMode(d,click,'songs'); check('songs part strum'); click(d.querySelector('[data-act=pown]')); check('songs part strum on');}
      goMode(d,click,'explore'); check('explore song'); click(d.querySelector('.cchips [data-act=exch]:last-child')); check('explore song chord');
      click(d.querySelector('[data-act=exlab][data-v=key]')); check('explore song key labels'); click(d.querySelector('.cell[data-s="1"][data-f="3"]')); check('explore song tap'); click(d.querySelector('[data-fm=key]')); goMode(d,click,'practice'); check('focus back on key');
-     click(d.querySelector('.pnext [data-act=step]')); check('drill from path');
-     click(d.querySelector('[data-act=topath]')); check('back to path');
-     click(d.querySelector('[data-act=step][data-id=r3]')); check('rhythm step from path');
-     click(d.querySelector('[data-act=topath]'));
-     click(d.querySelector('[data-act=songplay]')); check('song changes in drill');}
+     click(d.querySelector('[data-act=exitem][data-i="0"]')); check('drill from exercises');
+     click(d.querySelector('[data-act=exnext]')); check('exercise next');
+     click(d.querySelector('[data-act=exnext]')); check('exercise progressions');
+     for(const v of ['boom','roll','thumb','arp','strum']){click(d.querySelector(`#exhead [data-row=plan][data-v=${v}]`)); check('exercise plan '+v);}
+     click(d.querySelector('#exhead [data-act=excust]')); check('customize from drill'); click(d.querySelector('#cust [data-act=custclose]'));
+     click(d.querySelector('[data-act=exnext]')); check('exercise songs');
+     click(d.querySelector('[data-act=exleave]')); check('left session');
+     for(const x of ['home','tones','quiz']){goMode(d,click,'practice'); click(d.querySelector(`[data-act=extry][data-ex=${x}]`)); check('try '+x); if(x!=='quiz') {click(d.querySelector('#exhead [data-act=excust]')); check('customize '+x); click(d.querySelector('#cust [data-act=custclose]'));}}
+     goMode(d,click,'songs'); click(d.querySelector('[data-act=songplay]')); check('song changes in drill');}
    if(m==='drill'){(()=>{const sp=d.getElementById('selPos'); sp.value='5'; sp.dispatchEvent(new w.Event('change',{bubbles:true}));})();
      click(d.querySelector('[data-act=line][data-v=prog]')); check('drill prog');
      click(d.querySelector('.rstep[data-i="1"]')); check('prog custom');
