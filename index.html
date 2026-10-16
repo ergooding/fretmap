@@ -316,6 +316,8 @@ html.wide{font-size:19px}
 .stars button{border:0;background:none;font-size:1.25rem;padding:0 2px;cursor:pointer;color:var(--line)}
 .stars button[aria-pressed="true"]{color:var(--gold)}
 .psync{border-top:1px solid var(--line);padding-top:8px;font-size:.9rem}
+.fold>summary{cursor:pointer;color:var(--muted);font-weight:600;font-size:.82rem;text-align:left;margin-top:6px;width:max-content;max-width:100%}
+.fold[open]>summary{margin-bottom:2px}
 .psync summary{cursor:pointer;color:var(--muted);font-weight:600}
 .psync[open]{display:flex;flex-direction:column;gap:8px}
 .pathnote{display:flex;gap:8px;align-items:center;justify-content:space-between;border:1px solid var(--gold);border-radius:999px;padding:3px 3px 3px 12px;font-size:.8rem;background:color-mix(in srgb,var(--gold) 10%,var(--surface));flex:none}
@@ -854,6 +856,8 @@ const RHY_DEF={pat:'faithful',custom:{res:8,steps:'x.xx.xxx'},swing:false};
 try{const raw=localStorage.getItem(KEY); if(raw){const o=JSON.parse(raw); saved=Object.assign(saved,o);
   if(!o.focus) saved.focus={key:0,fam:'major',mode:0,pos:-1}; saved.drill=Object.assign({...DRILL_DEF},o.drill||{}); if(!saved.bpm) saved.bpm=80;}}catch(e){}
 saved.rhythm=Object.assign({...RHY_DEF},saved.rhythm||{});
+saved.fold=saved.fold||{}; // explanation blocks you collapsed
+const fold=(k,sum,body)=>`<details class="fold" data-fold="${k}"${saved.fold[k]?'':' open'}><summary>${sum}</summary>${body}</details>`;
 if(!FAMS[saved.focus.fam]) saved.focus={key:0,fam:'major',mode:0,pos:-1};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
 const F=saved.focus, D=saved.drill, R=saved.rhythm;
@@ -1942,10 +1946,11 @@ function renderVoice(){
   const v=cur.voicing;
   const ctxt=`${F.fam==='chrom'?'':' in '+keyName()+' '+modeName()}`;
   const head=`<div class="vc-head"><b>${cur.chord.name}</b><b class="rn term" data-term="roman" tabindex="0">${cur.chord.roman}</b><span>${ctxt.trim()}</span></div>`;
-  if(!v){el.innerHTML=`${head}${chordFormula(null)}<p>No playable voicing with the root in the bass fits ${cur.whole?'anywhere on the neck':`frets ${cur.lo}–${cur.hi}. Try the next position`}.</p>`;return;}
+  const built=`How ${cur.chord.name} is built`;
+  if(!v){el.innerHTML=`${head}${fold('formula',built,chordFormula(null))}<p>No playable voicing with the root in the bass fits ${cur.whole?'anywhere on the neck':`frets ${cur.lo}–${cur.hi}. Try the next position`}.</p>`;return;}
   const tabTxt=v.frets.some(f=>f!==null&&f>9)?v.frets.map(f=>f===null?'x':f).join(' '):v.frets.map(f=>f===null?'x':f).join('');
-  el.innerHTML=`${head}<p class="vc-shape">${v.own?esc(v.name):`${v.name.startsWith('Drop')?term('drop3',v.name):v.name.startsWith('Found')?v.name:term('shape',v.name)}, frets ${vFrets(v)}`}</p>
-    ${chordFormula(v)}
+  el.innerHTML=`${head}${fold('formula',built,`<p class="vc-shape">${v.own?esc(v.name):`${v.name.startsWith('Drop')?term('drop3',v.name):v.name.startsWith('Found')?v.name:term('shape',v.name)}, frets ${vFrets(v)}`}</p>
+    ${chordFormula(v)}`)}
     <button class="vc-diag" aria-label="Play ${cur.chord.name} and show it on the neck">${voiceSVG(v)}</button>
     <p><code>${tabTxt}</code><br>Tap the diagram to hear it and see it on the neck.</p>`;
 }
@@ -2690,7 +2695,7 @@ function renderSheet(){
       <div class="sh-head"><b class="sh-name">${cur.chord.name}</b><span>${cur.chord.roman?cur.chord.roman+' in ':'Over '}${keyName()} ${F.fam==='chrom'?'':esc(modeName())}</span></div>
       <div class="row sh-chips" role="group" aria-label="Chord to drill over">${chips}</div>
       ${exOn?'':`<div class="drow"><select data-set="pattern" aria-label="Pattern">${opts(PATTERNS.map(([k,l])=>[k,k==='thirds'&&cur.set.size!==7?'Skip a note':l]),D.pattern)}</select></div>`}
-      <p class="hint">Solid dots are ${term('chordtone','chord tones')} of ${cur.chord.name}, pearl dots ${term('passing','passing tones')}, and a gold ring marks ${D.resolve==='chord'?rootName(cur.chord):keyName()}, where each pass starts and ends. Notes per string, low to high: ${per.join(' ')}.${D.pad&&!cur.voicing?' No voicing fits this box, so the chord step is skipped.':''} Tap the chosen chord again to hear it.</p>`;
+      ${fold('dots','Reading the dots',`<p class="hint">Solid dots are ${term('chordtone','chord tones')} of ${cur.chord.name}, pearl dots ${term('passing','passing tones')}, and a gold ring marks ${D.resolve==='chord'?rootName(cur.chord):keyName()}, where each pass starts and ends. Notes per string, low to high: ${per.join(' ')}.${D.pad&&!cur.voicing?' No voicing fits this box, so the chord step is skipped.':''} Tap the chosen chord again to hear it.</p>`)}`;
     return;
   }
   if(!cur.prog){el.innerHTML=`${playSeg}<p class="hint">Progressions are built from the chords of a 7-note scale. Pick a mode of Major, Harmonic minor, or Melodic minor in the focus settings.</p>`; return;}
@@ -2904,6 +2909,7 @@ panel.addEventListener('drop',e=>{const d=st.drag; st.drag=null; if(!d||!(e.targ
   if(d.ex){r.items.splice(to,0,{uid:newUid(),ex:d.ex,set:{}}); touch(r);} else exMove(r,d.i,to);
   render();});
 panel.addEventListener('dragend',()=>{st.drag=null; panel.querySelectorAll('.exi.drop').forEach(x=>x.classList.remove('drop'));});
+document.addEventListener('toggle',e=>{const k=e.target.dataset&&e.target.dataset.fold; if(k&&!!saved.fold[k]===e.target.open){saved.fold[k]=!e.target.open; save();}},true);
 panel.addEventListener('toggle',e=>{ if(e.target.classList&&e.target.classList.contains('psync')) st.syncOpen=e.target.open; },true);
 const onClick=e=>{
   if(e.target.classList.contains('sets-wrap')){st.sheet=false; render(); return;}
