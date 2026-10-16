@@ -488,7 +488,7 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 .icon.sm{width:30px;height:30px;font-size:.9rem;flex:none}
 .icon:disabled{opacity:.35;cursor:default}
 .exhead{display:flex;flex-direction:column;gap:8px;border:2px solid var(--gold);background:var(--surface);border-radius:14px;padding:10px 12px;flex:none;min-width:0}
-.exhead[hidden],.exstrip[hidden],#cust[hidden]{display:none}
+.exhead[hidden],.exstrip[hidden]{display:none}
 .exh-top{display:flex;align-items:center;gap:8px}
 .exh-title{display:flex;align-items:baseline;gap:8px}
 .exh-title b{font-size:1.15rem;flex:1;min-width:0}
@@ -528,7 +528,7 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 .swrow .seg button{font-size:.78rem;padding:4px 10px}
 .bfoot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:8px}
 .bnew{display:flex;gap:6px;align-items:center;flex:1;min-width:0}
-.bnew input,.cust input.cname{flex:1;min-width:0;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.bnew input,input.ename{flex:1;min-width:0;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
 .bnew .btn{flex:none;padding:7px 12px}
 .bmsg{font-size:.78rem;color:var(--good);font-weight:600}
 .bwrap>summary{cursor:pointer;font-size:.8rem;font-weight:600;list-style-position:inside}
@@ -599,20 +599,23 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 .app.wide.m-practice .panel>.expage{max-width:1500px;display:grid;grid-template-columns:250px minmax(0,1fr) 360px;gap:22px;align-items:start}
 .app.wide .exsess-list{flex-direction:column;overflow:visible}
 .app.wide .exsess-item{align-self:stretch}
-.sets.cust{width:min(1060px,100%)}
 .sets-top small{color:var(--muted);font-size:.8rem;font-weight:400}
-.cust-cols{display:grid;grid-template-columns:minmax(0,1fr);gap:4px 22px}
-.app.wide~#cust .cust-cols,html.wide #cust .cust-cols{grid-template-columns:minmax(0,1fr) 320px}
-html.wide #cust .cust-r{border-left:1px solid var(--line);padding-left:20px}
-.ckg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0 12px}
-.ckgrp{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 12px}
-.ckgrp small{display:block;font-weight:700;font-size:.74rem;margin:2px 0}
-.ck{display:flex;align-items:flex-start;gap:7px;border:0;background:none;padding:4px 0;font-size:.82rem;text-align:left;cursor:pointer;line-height:1.3;width:100%}
-.ck::before{content:"";width:16px;height:16px;border:1.5px solid var(--muted);border-radius:4px;flex:none;margin-top:1px;display:grid;place-items:center;font-size:.66rem;font-weight:700}
-.ck[aria-pressed="true"]::before{content:"✓";background:var(--ink);border-color:var(--ink);color:var(--bg)}
-.cust .set select{max-width:100%;min-width:0}
-.cust .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
-.cust .actions .btn{flex:none;padding:10px 18px}
+.bh{display:flex;align-items:center;gap:8px;min-width:0}
+.swl{margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-size:.76rem;color:var(--muted);white-space:nowrap}
+.sw.sm{width:34px;height:20px}
+.sw.sm::after{width:14px;height:14px}
+.sw.sm[aria-pressed="true"]::after{transform:translateX(14px)}
+span.blab{cursor:default}
+span.blab::before{content:none}
+.smenu .mg{display:flex;flex-direction:column;gap:2px;min-width:0}
+.smenu.cols2{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 10px;max-height:min(70vh,560px);overflow:auto}
+.eline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.eline.rel{position:relative}
+.eline .btn{flex:none;padding:8px 16px}
+.sumc{display:flex;flex-wrap:wrap;gap:4px;margin:3px 0 1px}
+.chip.sm{padding:2px 9px;font-size:.74rem;cursor:default;background:color-mix(in srgb,var(--ink) 5%,var(--surface));white-space:normal}
+.exi.open{grid-template-columns:auto minmax(0,1fr);border:2px solid var(--gold);align-items:start}
+.exi .tx.ed{gap:10px}
 </style>
 </head>
 <body>
@@ -659,7 +662,6 @@ html.wide #cust .cust-r{border-left:1px solid var(--line);padding-left:20px}
 </div>
 
 <div id="gloss" hidden></div>
-<div id="cust" hidden></div>
 <div id="tip" role="tooltip" aria-hidden="true"></div>
 <script>
 (function(){
@@ -893,7 +895,7 @@ const ivOf=(p,key)=>(pc(p.s,p.f)-key+12)%12;
 
 // ---------- persistence ----------
 const KEY='fret-iv-v1';
-const DRILL_DEF={pattern:'updown',guide:'full',ref:'key',sev:true,sub:2,ramp:0,click:true,notes:true,pad:false,chord:0,resolve:'key',line:'scale',prog:'one',plan:'line',tech:'any',over:'through',where:'focus',b2:1};
+const DRILL_DEF={pattern:'updown',guide:'full',ref:'key',sev:true,sub:2,ramp:0,click:true,notes:true,pad:false,chord:0,resolve:'key',line:'scale',prog:'one',plan:'line',sbg:'',pick:'arp',tech:'any',over:'through',where:'focus',b2:1};
 let saved={hits:0,total:0,streak:0,best:0,weights:Array(12).fill(1),sound:true,labels:'iv',bpm:80,
   focus:{key:0,fam:'major',mode:0,pos:-1},drill:{...DRILL_DEF}};
 const RHY_DEF={pat:'faithful',custom:{res:8,steps:'x.xx.xxx'},swing:false};
@@ -905,8 +907,8 @@ const fold=(k,sum,body)=>`<details class="fold" data-fold="${k}"${saved.fold[k]?
 if(!FAMS[saved.focus.fam]) saved.focus={key:0,fam:'major',mode:0,pos:-1};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
 const F=saved.focus, D=saved.drill, R=saved.rhythm;
-// One builder: what you play over (one chord, a progression or a song), how you play each chord (strummed, picked, a
-// bluegrass style, a scale line or chord tones), the technique, and where on the neck. A scale line or chord tones over
+// One builder: what you play over (one chord, a progression or a song), how you play each chord (strummed, picked,
+// strummed then picked, a scale line or chord tones), the strum and the pick, the technique, and where on the neck. A scale line or chord tones over
 // one chord runs on the scale-line engine; everything else runs on the progression player.
 const LINE_PATS=['updown','thirds','g3','g4','strings'], TONE_PATS=['arp','enclose','walk'];
 const isLinePlan=p=>p==='line'||p==='tones';
@@ -915,6 +917,18 @@ if(!D.b2){ // settings from before the builder: Scale lines become a scale line 
   if(D.pattern==='altpick'||D.pattern==='slurs'){D.tech=D.pattern; D.pattern='updown';}
   D.b2=1;
 }
+// Strumming can be a strum pattern or boom-chuck, and picking an arpeggio, crosspicking or Travis picking, so Strum,
+// then pick pairs any of them. Before Strum and Pick had rows of their own, the bluegrass styles were ways to play each chord.
+const PICK_CH=[['arp','Arpeggio'],['roll','Crosspick'],['thumb','Travis']];
+const PLAN_OLD={boom:['strum','boom','arp'],roll:['arp','','roll'],thumb:['arp','','thumb']};
+function planFix(x){ // an old setup or Drill's own settings, brought up to date in place
+  const o=PLAN_OLD[x.plan]; if(o){x.plan=o[0]; x.sbg=o[1]; x.pick=o[2];}
+  if(x.sbg!=='boom') x.sbg=''; if(!PICK_CH.some(p=>p[0]===x.pick)) x.pick='arp';
+  return x;
+}
+planFix(D);
+const strums=x=>x.plan==='strum'||x.plan==='both', picks=x=>x.plan==='arp'||x.plan==='both';
+const isBG=x=>strums(x)&&x.sbg==='boom'||picks(x)&&x.pick!=='arp'; // a bluegrass style is playing, so the open position
 function fixLine(){ // the engine follows the builder; a pattern always fits the way you play
   if(D.plan==='line'&&!LINE_PATS.includes(D.pattern)) D.pattern=LINE_PATS.includes(D.lpat)?D.lpat:'updown';
   if(D.plan==='tones'&&!TONE_PATS.includes(D.pattern)) D.pattern=TONE_PATS.includes(D.tpat)?D.tpat:'arp';
@@ -1014,7 +1028,20 @@ function refresh(){
     cur.nbars=items.length?items[items.length-1].bar+1:0;
     setProgChord(0);
   }
+  cur.pset=null; cur.borrow=null;
+  if(cur.prog&&!song&&PROG_FIX[D.prog]&&cur.set.size===7&&F.fam!=='chrom'){
+    // a progression named for its own chords can borrow from another mode; while it plays, the neck and the lines use
+    // that mode's notes (Minor epic in A major: A minor), and the notes outside your focus are marked
+    const out=new Set(); cur.prog.forEach(p=>p.pcs.forEach(x=>{const iv=(x-cur.key+12)%12; if(!cur.set.has(iv)) out.add(iv);}));
+    const fk=followKey(), A=steps7(fk.fam,fk.mode), fx=PROG_FIX[D.prog], v=fx[A.includes(3)&&!A.includes(4)?'min':'maj']?(A.includes(3)&&!A.includes(4)?'min':'maj'):fx.maj?'maj':'min';
+    const home=D.prog==='blues'?null:v==='min'?[[0,2,3,5,7,8,10],'minor']:D.prog==='flat7'?[[0,2,4,5,7,9,10],'Mixolydian']:[[0,2,4,5,7,9,11],'major'];
+    if(out.size&&home&&home[0].some(x=>!cur.set.has(x))){
+      cur.pset=new Set(home[0]);
+      cur.borrow={name:`${keyName()} ${home[1]}`,out:home[0].filter(x=>!cur.set.has(x)),was:[...cur.set].filter(x=>!cur.pset.has(x))};
+    }
+  }
 }
+function dset(){return cur.pset||cur.set;} // the notes Drill draws and plays: the focus scale, or the mode a progression borrows from
 function vFrets(v){ // where a voicing sits: its box, or with the whole neck, the frets it actually uses
   if(!cur.whole) return `${cur.lo}–${cur.hi}`;
   const fr=v.frets.filter(f=>f!==null); return `${Math.min(...fr)}–${Math.max(...fr)}`;
@@ -1329,7 +1356,7 @@ function record(ok){
 function boxNotes(){
   if(cur.whole&&(D.line!=='prog'||isLinePlan(D.plan))&&cur.pos.length) return climbNotes();
   const list=[];
-  for(let s=0;s<6;s++)for(let f=cur.lo;f<=cur.hi;f++) if(cur.set.has(ivOf({s,f},cur.key))) list.push({s,f,m:MIDI[s]+capo()+f});
+  for(let s=0;s<6;s++)for(let f=cur.lo;f<=cur.hi;f++) if(dset().has(ivOf({s,f},cur.key))) list.push({s,f,m:MIDI[s]+capo()+f});
   list.sort((a,b)=>a.m-b.m||b.s-a.s); // same pitch twice: keep the higher string (less stretching)
   return list.filter((n,i)=>i===0||n.m!==list[i-1].m);
 }
@@ -1337,7 +1364,7 @@ function climbNotes(){
   // the whole neck as one run: every scale note from the lowest root of the first shape up to the top of the last,
   // shifting up through the shapes in order, so each shape gets its share of the run (each note keeps its box for fingering)
   const S=F.fam==='chrom'?cur.pos.filter(p=>p.lo%4===0):cur.pos, all=[]; // all 12 notes: three boxes, frets 0–4, 4–8 and 8–12
-  for(let s=0;s<6;s++)for(let f=0;f<=12;f++) if(cur.set.has(ivOf({s,f},cur.key))) all.push({s,f,m:MIDI[s]+capo()+f});
+  for(let s=0;s<6;s++)for(let f=0;f<=12;f++) if(dset().has(ivOf({s,f},cur.key))) all.push({s,f,m:MIDI[s]+capo()+f});
   const inBox=(n,b)=>n.f>=b.lo-(b.lo?0:1)&&n.f<=b.hi;
   const first=all.filter(n=>inBox(n,S[0])&&pc(n.s,n.f)===cur.key).sort((a,b)=>a.m-b.m)[0];
   const top=Math.max(...all.filter(n=>n.s===5&&inBox(n,S[S.length-1])).map(n=>n.m));
@@ -1362,7 +1389,6 @@ function arpNotes(p){
 }
 // Bluegrass right-hand patterns for each chord of a progression
 const TECH={altpick:'alternate picking',slurs:'hammer-ons and pull-offs'};
-const BG_PLANS=[['boom','Boom-chuck'],['roll','Crosspick'],['thumb','Travis']], isBG=p=>BG_PLANS.some(x=>x[0]===p);
 const nOf=(s,f)=>({s,f,m:MIDI[s]+capo()+f});
 function bassOf(v){const s=v.frets.findIndex(f=>f!==null); return nOf(s,v.frets[s]);}
 function altOf(p){
@@ -1380,21 +1406,21 @@ function walkTo(from,to){
   // a bass run: up to two scale notes stepping from this chord's bass toward the next chord's bass, on the low strings
   if(!to||to.m===from.m) return [];
   const up=to.m>from.m, ms=[];
-  for(let m=Math.min(from.m,to.m)+1;m<Math.max(from.m,to.m);m++) if(cur.set.has(((m-capo()-cur.key)%12+12)%12)) ms.push(m);
+  for(let m=Math.min(from.m,to.m)+1;m<Math.max(from.m,to.m);m++) if(dset().has(((m-capo()-cur.key)%12+12)%12)) ms.push(m);
   const pick=up?ms.slice(-2):ms.slice(0,2).reverse();
   return pick.map(m=>{let best=null; for(let s=0;s<=2;s++){const f=m-capo()-MIDI[s]; if(f<0||f>5) continue; const c=f+Math.abs(s-from.s)*1.5; if(!best||c<best.c) best={c,n:nOf(s,f)};} return best&&best.n;}).filter(Boolean);
 }
-function bgBar(p,next,bar,ci,head){
-  // one bar of a bluegrass pattern over one chord; next is the chord the following bar starts on
-  const v=p.voicing, b=bassOf(v), a=altOf(p), out=[], at=(k,n,x)=>out.push({...x,ci,bar,k,n,head:head&&k===0});
-  if(D.plan==='boom'){
+function bgBar(style,p,next,bar,ci,head){
+  // one bar of a bluegrass pattern over one chord; next is the chord the following bar starts on, when it's a new one
+  const v=p.voicing, b=bassOf(v), a=altOf(p), out=[], at=(k,n,x)=>out.push({...x,ci,bar,k,n,bg:style,head:head&&k===0});
+  if(style==='boom'){
     // boom-chuck: bass on 1 and 3, the treble strings strummed down on 2 and 4; into a new chord, the bass walks on 3 and 4
     const low=Math.max(b.s,a.s), chuck={frets:v.frets.map((f,s)=>s>low?f:null)};
     const w=next&&next.voicing?walkTo(b,bassOf(next.voicing)):[];
     at(0,4,{...b,pk:'↓'}); at(1,4,{chord:true,strum:'x',v:chuck,down:true});
     if(w.length===2){at(2,4,{...w[0],pk:'↓',walk:true}); at(3,4,{...w[1],pk:'↓',walk:true});}
     else{at(2,4,{...a,pk:'↓'}); if(w.length===1) at(3,4,{...w[0],pk:'↓',walk:true}); else at(3,4,{chord:true,strum:'x',v:chuck,down:true});}
-  }else if(D.plan==='roll'){
+  }else if(style==='roll'){
     // crosspicking: the top three strings of the shape rolled low to high in 8ths (3 + 3 + 2), the pick down on the beat, up on the and
     const S=v.frets.map((f,s)=>f===null?-1:s).filter(s=>s>=0).slice(-3);
     for(let k=0;k<8;k++){const s=S[k%3]??S[S.length-1]; at(k,8,{...nOf(s,v.frets[s]),pk:k%2?'↑':'↓'});}
@@ -1535,13 +1561,13 @@ function genProg(){
     const idx=cur.prog.map((p,i)=>p.bar===b?i:-1).filter(i=>i>=0); if(!idx.length) continue;
     const at=f=>idx.find(i=>f<cur.prog[i].to-1e-9)??idx[idx.length-1];
     const P=patFor(cur.prog[idx[0]].part), voiced=idx.every(i=>cur.prog[i].voicing);
-    if(isBG(D.plan)&&voiced&&idx.length===1){ // a bar split between chords falls back to strumming
-      const i=idx[0], nx=cur.prog.find(q=>q.bar===(b+1)%cur.nbars);
-      seq.push(...bgBar(cur.prog[i],nx&&nx.ch.name!==cur.prog[i].ch.name?nx:null,bar,i,true)); bar++; continue;
-    }
-    if(D.plan!=='arp'&&voiced){ let prev=-1;
+    // a bar split between chords falls back to the strum pattern or the arpeggio
+    const one=voiced&&idx.length===1, i=idx[0], nx=cur.prog.find(q=>q.bar===(b+1)%cur.nbars), nxt=D.plan==='strum'&&nx&&nx.ch.name!==cur.prog[i].ch.name?nx:null;
+    if(strums(D)&&D.sbg==='boom'&&one){seq.push(...bgBar('boom',cur.prog[i],nxt,bar,i,true)); bar++;} // in Strum, then pick the next bar is the same chord, so no walk
+    else if(strums(D)&&voiced){ let prev=-1;
       for(let k=0;k<P.res;k++){const ci=at(k/P.res); seq.push({chord:true,strum:P.steps[k],ci,bar,k,n:P.res,sw:P.swing,live:!!P.live,head:ci!==prev}); prev=ci;} bar++; }
-    if(D.plan!=='strum'||!voiced){
+    if(picks(D)&&D.pick!=='arp'&&one){seq.push(...bgBar(D.pick,cur.prog[i],null,bar,i,true)); bar++; continue;}
+    if(picks(D)||!voiced){
       const A={}, L=4*D.sub; idx.forEach(i=>A[i]=arpNotes(cur.prog[i]));
       if(!idx.some(i=>A[i].length)) continue;
       let prev=-1, s0=0;
@@ -1697,10 +1723,7 @@ function passEnd(t){
   if(fresh){st.seq=genSeq(); met.queue.push({t,newSeq:true,shape});}
   if(D.ramp){saved.bpm=Math.min(260,saved.bpm+D.ramp); met.queue.push({t,bpm:true});}
 }
-function cycleShapes(){ // the shapes each shape in turn goes through: every box, or the ones the exercise shows
-  const all=cur.pos.map(p=>p.lo), E=st.ex&&exOf(st.ex.ex), on=E&&E.rows.some(r=>r.k==='pos')&&st.ex.base.chips&&st.ex.base.chips.pos;
-  const S=on?all.filter(lo=>on.includes(String(lo))):all; return S.length?S:all;
-}
+function cycleShapes(){return cur.pos.map(p=>p.lo);} // the shapes each shape in turn goes through: every box
 function cycleNext(){
   const S=cycleShapes(); if(S.length<2) return false;
   F.pos=S[(S.indexOf(F.pos)+1)%S.length]; refresh(); save();
@@ -1821,6 +1844,16 @@ function sessionFor(t){
   if(!s||t-s.end>GAP){s={id:rid('s'),start:t,end:t,entries:[]}; LOG.sessions.push(s);}
   return s;
 }
+function playId(x,pat){ // how each chord is played, as the log names it: the strum pattern or boom, then any pick style but the arpeggio
+  const sp=x.sbg==='boom'?'boom':pat, pk=x.pick&&x.pick!=='arp'?x.pick:'';
+  return x.plan==='strum'?sp:x.plan==='arp'?pk||'-':sp+(pk?'+'+pk:'');
+}
+function skillPlay(p){ // a logged progression's plan, strum and pick, reading the old bluegrass plans as the strum or pick they are now
+  const o=PLAN_OLD[p[6]]; if(o) return {plan:o[0],strum:o[1]||null,pick:o[2]};
+  const [a,b]=(p[7]||'').split('+');
+  return p[6]==='strum'?{plan:'strum',strum:a,pick:null}:p[6]==='arp'?{plan:'arp',strum:null,pick:a==='-'?'arp':a}
+    :p[6]==='both'?{plan:'both',strum:a,pick:b||'arp'}:{plan:p[6],strum:null,pick:null};
+}
 function lineId(s){ // a scale line or chord tones over the changes, as the log names it: the pattern, how it meets the changes, the technique
   return `${s.pattern}${s.plan==='line'&&s.over==='restart'&&s.prog!=='one'?'-restart':''}${TECH[s.tech]?'-'+s.tech:''}`;
 }
@@ -1829,11 +1862,12 @@ function skillNow(){
   const k=cur.key, cyc=D.where==='cycle', wh=cyc?'c':cur.whole?'w':cur.lo, where=cyc?'each shape in turn':cur.whole?'whole neck':`frets ${cur.lo}–${cur.hi}`;
   if(D.line==='prog'&&cur.prog){
     const P=curPat(), pat=P.id==='custom'?`custom-${P.res}-${P.steps}`:P.id, tech=TECH[D.tech]?`, ${TECH[D.tech]}`:'';
-    const plan=D.plan==='arp'?'':isBG(D.plan)?`, ${BG_PLANS.find(x=>x[0]===D.plan)[1].toLowerCase()}`
+    const sn=D.sbg==='boom'?'boom-chuck':P.id==='custom'?'your pattern':P.name.toLowerCase(), pn=D.pick!=='arp'?listLabel(PICK_CH,D.pick).toLowerCase():'';
+    const plan=D.plan==='arp'?(pn?`, ${pn}`:'')
       :D.plan==='line'?`, ${patLabel(D.pattern).toLowerCase()}${D.over==='restart'&&D.prog!=='one'?' from each chord':''}${tech}`:D.plan==='tones'?`, ${patLabel(D.pattern).toLowerCase()}${tech}`
-      :`, ${P.id==='custom'?'your pattern':P.name.toLowerCase()}`;
+      :`, ${sn}${D.plan==='both'&&pn?`, then ${pn}`:''}`;
     const pid=D.prog==='one'&&D.chord?`one-${D.chord}`:D.prog;
-    return {id:`prog:${k}:${F.fam}:${F.mode}:${wh}:${pid}:${D.plan}:${isLinePlan(D.plan)?lineId(D):D.plan==='arp'||isBG(D.plan)?'-':pat}`,kind:'prog',
+    return {id:`prog:${k}:${F.fam}:${F.mode}:${wh}:${pid}:${D.plan}:${isLinePlan(D.plan)?lineId(D):playId(D,pat)}`,kind:'prog',
       name:`${keyName(k)} ${modeName()}: ${progLabel(D.prog)}, ${where}${plan}`};
   }
   const tech=TECH[D.tech]; // a picking or slur drill is its own skill, apart from the box's other patterns
@@ -1988,7 +2022,7 @@ const picking=()=>st.mode==='drill'&&st.picking;
 function drillLabel(p){
   const ivK=ivOf(p,cur.key), ivC=ivOf(p,cur.chord.root);
   const ref=D.ref==='chord'?ivC:ivK;
-  const t=saved.labels==='notes'?noteName(pc(p.s,p.f)):(D.ref==='chord'?chordIv(cur.chord,ivC)[0]:lab(ivK)[0]);
+  const t=saved.labels==='notes'?noteName(pc(p.s,p.f)):(D.ref==='chord'?chordIv(cur.chord,ivC)[0]:F.fam==='chrom'?IV[ivK][0]:labIn(ivK,dset())[0]);
   return {ref,t};
 }
 function renderBoard(){
@@ -2028,15 +2062,16 @@ function renderBoard(){
       const out=!inWin(f); c.classList.toggle('out',out);
       const inV=cur.voicing&&cur.voicing.frets[s]===f;
       const isNow=same(nowN,s,f)||(nowN&&nowN.chord&&inV), isNext=same(nextN,s,f)||(nextN&&nextN.chord&&inV);
-      if(!isNow&&!isNext&&(out||!cur.set.has(ivOf({s,f},cur.key))||(played&&!(inV&&D.pad)&&!played.has(s+':'+f)))){dot(c,null);continue;}
-      const {ref,t}=drillLabel({s,f}), isC=cur.chordPcs.has(pc(s,f));
+      const ivK=ivOf({s,f},cur.key), isC=cur.chordPcs.has(pc(s,f)), inS=dset().has(ivK)||(D.line==='prog'&&isC);
+      if(!isNow&&!isNext&&(out||!inS||(played&&!(inV&&D.pad)&&!played.has(s+':'+f)))){dot(c,null);continue;}
+      const {ref,t}=drillLabel({s,f});
       let show=true;
       if(st.playing&&st.idx>=0){
         if(D.guide==='next') show=isNow||isNext;
         if(D.guide==='blind') show=false;
       }
       if(!show){dot(c,null);continue;}
-      let cls=(isC?(ref===0?'root':''):'pass')+(D.line!=='prog'&&pc(s,f)===home?' home':''); // solid: chord tone; pearl: passing tone; gold ring: where each pass starts and ends
+      let cls=(isC?(ref===0?'root':''):'pass')+(D.line!=='prog'&&pc(s,f)===home?' home':'')+(F.fam!=='chrom'&&!cur.set.has(ivK)?' outk':''); // solid: chord tone; pearl: passing tone; gold ring: where each pass starts and ends; dashed: outside the focus
       if(isNow) cls+=' now'; else if(isNext&&D.guide!=='full') cls+=' nextup';
       if(st.flashUntil>Date.now()&&cur.voicing&&cur.voicing.frets[s]===f) cls+=' vc';
       dot(c,{t,c:COL[ref],cls});
@@ -2275,7 +2310,7 @@ function followKey(){
 function progNames(k,prog){return progChords(prog,k,false).map(c=>c.name);} // chord names of a progression in a key, without touching the current focus
 function setupSkill(s){
   const wh=s.where==='cycle'?'c':s.pos, line=s.line||(isLinePlan(s.plan)&&s.prog==='one'?'scale':'prog');
-  return line==='prog'?`prog:${s.key}:${s.fam}:${s.mode}:${wh}:${s.prog==='one'&&+s.chord?'one-'+s.chord:s.prog}:${s.plan}:${isLinePlan(s.plan)?lineId(s):s.plan==='arp'||isBG(s.plan)?'-':s.rpat}`
+  return line==='prog'?`prog:${s.key}:${s.fam}:${s.mode}:${wh}:${s.prog==='one'&&+s.chord?'one-'+s.chord:s.prog}:${s.plan}:${isLinePlan(s.plan)?lineId(s):playId(s,s.rpat)}`
     :`box:${s.key}:${s.fam}:${s.mode}:${wh}${TECH[s.tech]?':'+s.tech:TECH[s.pattern]?':'+s.pattern:''}`;
 }
 function stepState(s){ const b=bestOf(setupSkill(s)); return {best:b,done:!!b&&b.bpm>=s.goal}; } // a song's changes, clean at its goal
@@ -2301,7 +2336,7 @@ function songNote(){
   const step=songSetup(song.s,song.id), {best:b,done}=stepState(step);
   return `<div class="pathnote" data-tip="${done?'Done: a run is marked clean at the song’s tempo.':'Play a run at the song’s tempo, then tap Mark last run clean if it was clean.'}"><span><b>${done?'✓ ':''}${esc(song.s.name)}: play the changes</b> · goal ${step.goal} bpm${b?`, best ${b.bpm}`:''}</span></div>`;
 }
-const PLAY_CH=[['strum','Strum'],['both','Strum, then pick'],['arp','Pick'],...BG_PLANS,['line','Scale line'],['tones','Chord tones']];
+const PLAY_CH=[['strum','Strum'],['arp','Pick'],['both','Strum, then pick'],['line','Scale line'],['tones','Chord tones']];
 const WHERE=[['focus','Follow the focus'],['open','Open position'],['cycle','Each shape in turn'],['whole','Whole neck']];
 function setWhere(v){
   // where on the neck: the focus position, the open position, a new CAGED shape each pass, or the whole neck;
@@ -2318,40 +2353,45 @@ function focusPosChanged(){ // the position picked in the bar at the top: Where 
   if(D.where==='cycle'&&F.pos>=0) return;
   D.where=F.pos<0?'whole':'focus'; if(F.pos>=0) D.wpos=F.pos;
 }
-function setPlan(v){
-  // how you play each chord; a bluegrass style moves to the open position, and leaving it goes back
-  const was=isBG(D.plan); D.plan=v;
-  if(isBG(v)&&!was&&D.where!=='open'){D.bgFrom=D.where; setWhere('open');}
-  else if(!isBG(v)&&was&&D.where==='open'&&D.bgFrom){setWhere(D.bgFrom); delete D.bgFrom;}
+function setPlay(fn){
+  // how you play each chord, the strum or the pick; a bluegrass style moves to the open position, and leaving it goes back
+  const was=isBG(D); fn(); const now=isBG(D);
+  if(now&&!was&&D.where!=='open'){D.bgFrom=D.where; setWhere('open');}
+  else if(!now&&was&&D.where==='open'&&D.bgFrom){setWhere(D.bgFrom); delete D.bgFrom;}
   refresh();
 }
+function setPlan(v){setPlay(()=>{D.plan=v; if(PLAN_OLD[v]) planFix(D);});}
+function setStrum(v){setPlay(()=>{if(v==='boom') D.sbg='boom'; else{D.sbg=''; if(RPAT[v]||v==='custom'){R.pat=v; if(RPAT[v]) R.swing=!!RPAT[v].swing;}}});}
 const RPAT_LIST=RPATS.flatMap(([g,list])=>list.map(p=>[p[0],p[1]]));
 const patLabel=v=>v==='thirds'&&cur.set.size!==7?'Skip a note':(PATTERNS.find(p=>p[0]===v)||[v,v])[1];
 const pats=list=>()=>list.map(v=>[v,patLabel(v)]);
 const TECH_CH=[['any','Any picking'],['altpick','Strict alternate'],['slurs','Hammer-ons and pull-offs']];
 const OVER_CH=[['through','Run through'],['restart','Restart each chord']];
-const RPAT_DEF=['eighths','backbeat','faithful','gallop','tresillo']; // the strum chips Drill shows; the strum card has every pattern
+const RPAT_DEF=['eighths','backbeat','chuck8','faithful','tresillo']; // the strum chips the Strum row shows; its All 21 patterns menu has the rest
+const rowName=n=>n.replace(/^8ths, (.)/,(m,c)=>c.toUpperCase()); // in the Strum row, the 8ths patterns go by their accents
+const STRUM_ROW=()=>[...RPAT_LIST.filter(([v])=>RPAT_DEF.includes(v)).map(([v,n])=>[v,rowName(n)]),['boom','Boom-chuck']];
 // Every exercise is a setup of the one builder. The six starting points keep their names, and each counts its ✓ over the
-// chips of its main row; the setups you save yourself live under Yours.
-const BUILD_DEF={prog:'one',chord:0,plan:'line',pattern:'updown',tech:'any',over:'through',where:'focus',sub:2,goal:80};
+// chips of its own rows; the setups you save yourself live under Yours.
+const BUILD_DEF={prog:'one',chord:0,plan:'line',sbg:'',pick:'arp',pattern:'updown',tech:'any',over:'through',where:'focus',sub:2,goal:80};
 const EXS=[
   {id:'box',name:'Box patterns',grp:'Starting points',unit:'patterns',
-    rows:[{k:'pattern',name:'Line',all:pats(LINE_PATS),def:LINE_PATS}],def:{prog:'one',plan:'line',pattern:'thirds',goal:80}},
+    rows:[{k:'pattern',name:'Line',all:pats(LINE_PATS)}],def:{prog:'one',plan:'line',pattern:'thirds',goal:80}},
   {id:'tones',name:'Chord tones',grp:'Starting points',unit:'patterns',
-    rows:[{k:'pattern',name:'Chord tones',all:pats(TONE_PATS),def:TONE_PATS}],def:{prog:'pop',plan:'tones',pattern:'arp',sev:false,goal:70}},
+    rows:[{k:'pattern',name:'Chord tones',all:pats(TONE_PATS)}],def:{prog:'pop',plan:'tones',pattern:'arp',sev:false,goal:70}},
   {id:'tech',name:'Picking technique',grp:'Starting points',unit:'techniques',
-    rows:[{k:'tech',name:'Technique',all:()=>TECH_CH.slice(1),def:['altpick','slurs']}],def:{prog:'one',plan:'line',pattern:'updown',tech:'altpick',goal:100}},
+    rows:[{k:'tech',name:'Technique',all:()=>TECH_CH.slice(1)}],def:{prog:'one',plan:'line',pattern:'updown',tech:'altpick',goal:100}},
   {id:'home',name:'Home chord',grp:'Starting points',unit:'shapes',
-    rows:[{k:'pos',name:'Shapes, one per pass',all:()=>cur.pos.map(p=>[String(p.lo),p.shape?`${p.shape} shape`:`Frets ${p.lo}–${p.hi}`]),def:null}],def:{prog:'one',plan:'both',rpat:'quarters',where:'cycle',goal:80}},
+    rows:[{k:'pos',name:'Shapes, one per pass',all:()=>cur.pos.map(p=>[String(p.lo),p.shape?`${p.shape} shape`:`Frets ${p.lo}–${p.hi}`])}],def:{prog:'one',plan:'both',rpat:'quarters',where:'cycle',goal:80}},
   {id:'prog',name:'Progressions',grp:'Starting points',unit:'choices',
-    rows:[{k:'prog',name:'Chords',all:()=>PROGS.map(p=>[p[0],p[1]]),def:['two','145','pop','50s']},
-      {k:'plan',name:'Play each chord',all:()=>PLAY_CH,def:PLAY_CH.map(p=>p[0])},
-      {k:'rpat',name:'Strum pattern',all:()=>RPAT_LIST,def:RPAT_DEF}],
+    rows:[{k:'prog',name:'Chords',all:()=>PROGS.map(p=>[p[0],p[1]])},
+      {k:'plan',name:'Play each chord',all:()=>PLAY_CH},
+      {k:'rpat',name:'Strum',all:STRUM_ROW},
+      {k:'pick',name:'Pick',all:()=>PICK_CH}],
     def:{prog:'pop',plan:'both',rpat:'backbeat',sev:false,goal:80}},
   {id:'songs',name:'Your songs',grp:'Starting points',unit:'songs',
-    rows:[{k:'song',name:'Song',all:()=>songSteps().map(({id,s})=>[id,s.name]),def:null}],def:{song:'',plan:'both'}},
+    rows:[{k:'song',name:'Song',all:()=>songSteps().map(({id,s})=>[id,s.name])}],def:{song:'',plan:'both'}},
   {id:'quiz',name:'Interval quiz',grp:'Ear',unit:'quizzes',
-    rows:[{k:'quiz',name:'Quiz',all:()=>[['name','Name it'],['find','Find it']],def:['name','find']}],def:{quiz:'name',goal:90}}];
+    rows:[{k:'quiz',name:'Quiz',all:()=>[['name','Name it'],['find','Find it']]}],def:{quiz:'name',goal:90}}];
 const EX_BY=Object.fromEntries(EXS.map(E=>[E.id,E]));
 function userEx(id){ // a setup you saved: an exercise of its own, with one ✓ for the whole setup
   const u=/^u:/.test(id||'')&&LOG.exuser&&LOG.exuser[id.slice(2)]; if(!u||u.gone) return null;
@@ -2363,18 +2403,17 @@ const isQuiz=E=>E.id==='quiz', pct=E=>isQuiz(E)?'%':'';
 function fillSet(ex,set){ // an exercise's settings: the builder's, the exercise's, your saved defaults for it, then the session's own
   const E=exOf(ex), pref=E.user?{}:(LOG.exprefs[ex]||{}).set||{}, s={...BUILD_DEF,...E.def,key:null,pos:null,...pref,...(set||{})};
   if(TECH[s.pattern]){s.tech=s.pattern; s.pattern='updown';} // picking technique was a pattern before it was its own row
-  const chipsOf=k=>(set&&set.chips&&set.chips[k])||(pref.chips&&pref.chips[k])||(k==='tech'&&((set&&set.chips&&set.chips.pattern)||(pref.chips&&pref.chips.pattern)));
-  s.chips={}; E.rows.forEach(r=>{const c=chipsOf(r.k)||r.def; s.chips[r.k]=c?[...c]:null;});
-  return s;
+  delete s.chips; // which chips an exercise showed, from before every exercise showed them all
+  return planFix(s);
 }
 const rowAll=r=>r.all().map(([v,l])=>[String(v),l]);
-function rowChips(r,s){const all=rowAll(r), on=s.chips[r.k]; return on?all.filter(([v])=>on.includes(v)):all;}
+const rowChips=r=>rowAll(r);
 const rowLabel=(r,v)=>(rowAll(r).find(x=>x[0]===String(v))||[v,String(v)])[1];
 const listLabel=(list,v)=>(list.find(x=>String(x[0])===String(v))||[v,String(v)])[1];
 // the choice that's playing now, read from Drill itself, so the ⚙ settings and the focus bar change it too
 function exNow(E,k){
   if(k==='pattern') return D.pattern; if(k==='tech') return D.tech;
-  if(k==='prog') return D.prog; if(k==='plan') return D.plan; if(k==='rpat') return R.pat;
+  if(k==='prog') return D.prog; if(k==='plan') return D.plan; if(k==='rpat') return D.sbg==='boom'?'boom':R.pat; if(k==='pick') return D.pick;
   if(k==='pos') return String(F.pos); if(k==='song') return D.prog;
   if(k==='quiz') return st.mode;
   return '';
@@ -2390,18 +2429,20 @@ function chipDone(E,k,v,goal,s){
   if(k==='tech') return cl.some(e=>entryTech(e)===v&&deep(e));
   const P=e=>e.skill.split(':'); // prog:key:fam:mode:box:progression:plan:strum
   if(k==='pos') return cl.some(e=>{const p=P(e); return p[0]==='prog'&&p[1]===String(cur.key)&&p[2]===F.fam&&p[3]===String(F.mode)&&(p[4]===v||p[4]==='c'&&(e.shapes||[]).map(String).includes(v))&&p[5]==='one';});
-  // a progression, a way to play each chord or a strum pattern counts in any key and box, with any of the other choices
-  return cl.some(e=>{const p=P(e); if(p[0]!=='prog'||!PROG_BY[p[5]]) return false; return k==='prog'?p[5]===v:k==='plan'?p[6]===v:p[7]===v;});
+  // a progression, a way to play each chord, a strum or a pick counts in any key and box, with any of the other choices
+  return cl.some(e=>{const p=P(e); if(p[0]!=='prog'||!PROG_BY[p[5]]) return false; const x=skillPlay(p);
+    return k==='prog'?p[5]===v:k==='plan'?x.plan===v:k==='rpat'?x.strum===v:k==='pick'?x.pick===v:false;});
 }
 function setupDone(s){ // a saved setup is clean when a run of it is, in any key and box
   return LOG.sessions.flatMap(x=>x.entries).some(e=>{ if(!(e.clean>=s.goal)) return false; const p=e.skill.split(':');
     if(isLinePlan(s.plan)&&s.prog==='one') return p[0]==='box'&&entryPat(e)===s.pattern&&entryTech(e)===(s.tech||'any')&&(e.sub||1)>=(s.sub||2);
     const pid=s.prog==='one'&&+s.chord?'one-'+s.chord:s.prog;
-    return p[0]==='prog'&&p[5]===pid&&p[6]===s.plan&&(isLinePlan(s.plan)?p[7]===lineId(s):s.plan==='arp'||isBG(s.plan)||p[7]===s.rpat);});
+    if(p[0]!=='prog'||p[5]!==pid) return false; if(isLinePlan(s.plan)) return p[6]===s.plan&&p[7]===lineId(s);
+    const x=skillPlay(p); return x.plan===s.plan&&(!strums(s)||x.strum===(s.sbg==='boom'?'boom':s.rpat))&&(!picks(s)||x.pick===s.pick);});
 }
 function exProgress(E,s){
   if(!E.rows.length) return {n:setupDone(s)?1:0,m:1};
-  let n=0,m=0; E.rows.forEach(r=>rowChips(r,s).forEach(([v])=>{m++; if(chipDone(E,r.k,v,s.goal,s)) n++;}));
+  let n=0,m=0; E.rows.forEach(r=>rowAll(r).forEach(([v])=>{m++; if(chipDone(E,r.k,v,s.goal,s)) n++;}));
   return {n,m};
 }
 // ---- practice sessions
@@ -2427,7 +2468,7 @@ const items=r=>r.items.filter(it=>exOf(it.ex)); // a saved setup you deleted dro
 function itemLabel(r,it){ // the exercise's name, plus its main choice when the session has it more than once
   const E=exOf(it.ex), s=fillSet(it.ex,it.set), twice=r.items.filter(x=>x.ex===it.ex).length>1;
   if(!twice||!E.rows.length) return E.name;
-  const main=E.id==='prog'?(isBG(s.plan)?rowLabel(E.rows[1],s.plan):rowLabel(E.rows[0],s.prog)):E.rows[0].k==='pos'?'':rowLabel(E.rows[0],s[E.rows[0].k]);
+  const main=E.rows[0].k==='pos'?'':rowLabel(E.rows[0],s[E.rows[0].k]);
   return main?`${E.name} · ${main}`:E.name;
 }
 function buildText(s){
@@ -2435,7 +2476,7 @@ function buildText(s){
   const S=/^song:/.test(s.prog||'')&&LOG.skills[s.prog];
   const ov=overList(), ch=s.prog==='one'?`One chord, ${bareRoman((ov[+s.chord||0]||ov[0]).roman)}`:S?esc(S.name):(PROG_BY[s.prog]||PROG_BY.pop).name;
   const play=s.plan==='line'?`scale line, ${patLabel(s.pattern).toLowerCase()}${s.over==='restart'&&s.prog!=='one'?' from each chord':''}`
-    :s.plan==='tones'?`chord tones, ${patLabel(s.pattern).toLowerCase()}`:listLabel(PLAY_CH,s.plan).toLowerCase()+((s.plan==='strum'||s.plan==='both')&&RPAT[s.rpat]&&!S?` · ${RPAT[s.rpat].name.replace(/^8ths, /,'').toLowerCase()}`:'');
+    :s.plan==='tones'?`chord tones, ${patLabel(s.pattern).toLowerCase()}`:esc(playBits(s,!!S).map(x=>x.replace(/^8ths, /,'')).join(' · ').toLowerCase());
   const tech=isLinePlan(s.plan)&&TECH[s.tech]?` · ${listLabel(TECH_CH,s.tech).toLowerCase()}`:'';
   const where=s.where&&s.where!=='focus'?` · ${listLabel(WHERE,s.where).toLowerCase()}`:s.pos!=null?` · ${+s.pos<0?'whole neck':((positions(s.key??cur.key).find(p=>p.lo===+s.pos)||{label:`frets ${s.pos}–${+s.pos+4}`}).label)}`:'';
   return `${ch} · ${play}${tech}${where}`;
@@ -2463,7 +2504,7 @@ function applyBuild(s){
   // a setup onto Drill: the chords, how to play each, the pattern, technique and strum, then where on the neck
   D.guide='full';
   if(s.prog==='one'||PROG_BY[s.prog]) D.prog=s.prog; else if(!songProg(D.prog)) D.prog='pop';
-  D.chord=+s.chord||0; D.plan=PLAY_CH.some(p=>p[0]===s.plan)?s.plan:'both';
+  D.chord=+s.chord||0; D.plan=PLAY_CH.some(p=>p[0]===s.plan)?s.plan:'both'; D.sbg=s.sbg==='boom'?'boom':''; D.pick=PICK_CH.some(p=>p[0]===s.pick)?s.pick:'arp';
   if(s.pattern) D.pattern=s.pattern;
   D.tech=TECH[s.tech]?s.tech:'any'; D.over=s.over==='restart'?'restart':'through';
   if(s.sub) D.sub=+s.sub; if(s.sev!==undefined) D.sev=!!s.sev; D.resolve=s.resolve==='chord'?'chord':'key';
@@ -2474,19 +2515,19 @@ function applyBuild(s){
   if(s.pos!=null&&w!=='open'&&w!=='whole') F.pos=+s.pos;
   delete D.bgFrom;
   if(w==='focus'){D.where=F.pos<0?'whole':'focus'; if(F.pos>=0) D.wpos=F.pos;
-    if(isBG(D.plan)){D.bgFrom=D.where; setWhere('open');}} // a bluegrass style plays in the open position, as picking it does
+    if(isBG(D)&&s.pos==null){D.bgFrom=D.where; setWhere('open');}} // a bluegrass style plays in the open position, unless the exercise has its own box
   else setWhere(w);
   refresh();
 }
 function exStartNow(o){
   const E=exOf(o.ex); if(!E) return;
   const s=fillSet(o.ex,o.set);
-  stopMet(); st.paused=false; st.sheet=false; st.picking=false; st.songMenu=false; st.bnew=null;
+  stopMet(); st.paused=false; st.sheet=false; st.picking=false; st.songMenu=false; st.bnew=null; st.edit=null; st.pmenu=null;
   st.ex={rid:o.rid||null,uid:o.uid||null,ex:o.ex,base:s,goal:s.goal};
   if(isQuiz(E)){ if(st.mode!==s.quiz) setMode(s.quiz); else render(); return; }
   if(E.id==='songs'){
     const list=rowChips(E.rows[0],s), id=LOG.skills[s.song]&&!LOG.skills[s.song].gone?s.song:(list[0]||[])[0];
-    if(id){setFocusSong(id); if(s.plan&&s.plan!==D.plan){setPlan(s.plan);} toDrill();} else {leaveSongFocus(); refresh(); fillSelects(); toDrill();}
+    if(id){setFocusSong(id); setPlay(()=>{D.plan=s.plan||D.plan; D.sbg=s.sbg; D.pick=s.pick;}); toDrill();} else {leaveSongFocus(); refresh(); fillSelects(); toDrill();}
     return;
   }
   const song=/^song:/.test(s.prog)&&LOG.skills[s.prog]&&!LOG.skills[s.prog].gone; // a setup you saved over one of your songs
@@ -2496,20 +2537,22 @@ function exStartNow(o){
   toDrill();
 }
 function exGo(r,i){const it=r&&r.items[i]; if(!it||!exOf(it.ex)) return; saved.rid=r.id; setRun(r,{at:i}); exStart({rid:r.id,uid:it.uid,ex:it.ex,set:it.set});}
-function exEnd(){st.ex=null; st.songMenu=false; st.bnew=null;}
+function exEnd(){st.ex=null; st.songMenu=false; st.bnew=null; st.edit=null; st.pmenu=null;}
 function bchoose(k,v){
   // a chip in the builder: switch that choice and keep playing
   if(k==='quiz'){if(st.mode!==v) setMode(v); return;}
   if(k==='chord'&&+v===D.chord&&!st.playing){strumNow(); return;} // the chord that's on: hear it
+  if(k==='wpos'||k==='ekey'){if(st.edit) editPick(k,v); return;}
   switch(k){
     case 'prog': if(saved.fmode==='song') saved.fmode='key'; D.prog=v; break; // a common progression stays in the song's key
     case 'chord': D.chord=+v; break;
     case 'spart': if(!songProg(D.prog)) return; saved.spart={...(saved.spart||{}),[D.prog]:+v}; break;
     case 'plan': setPlan(v); break;
+    case 'pick': setPlay(()=>{D.pick=v;}); break;
     case 'lpat': case 'tpat': D.pattern=v; break;
     case 'tech': D.tech=v; break;
     case 'over': D.over=v; break;
-    case 'rpat': R.pat=v; R.swing=!!RPAT[v].swing; break;
+    case 'rpat': setStrum(v); keepSongStrum(); break; // a song keeps the pattern you pick for it
     case 'where': setWhere(v); break;
     case 'pos': F.pos=+v; break;
     default: return;
@@ -2518,17 +2561,17 @@ function bchoose(k,v){
 }
 function bsong(id){ // a song from the Chords row's menu: its key and chords, keeping how you play each chord
   st.songMenu=false; if(!LOG.skills[id]) return;
-  const plan=D.plan; setFocusSong(id);
-  if(D.plan!==plan){setPlan(plan); save(); if(st.mode==='drill') regen(); else render();}
+  const plan=D.plan, sbg=D.sbg, pick=D.pick; setFocusSong(id);
+  if(D.plan!==plan){setPlay(()=>{D.plan=plan; D.sbg=sbg; D.pick=pick;}); save(); if(st.mode==='drill') regen(); else render();}
 }
 function captureBuild(){
-  const s={prog:D.prog,chord:D.chord,plan:D.plan,tech:D.tech,over:D.over,where:D.where,sub:D.sub,sev:D.sev,resolve:D.resolve};
+  const s={prog:D.prog,chord:D.chord,plan:D.plan,sbg:D.sbg,pick:D.pick,tech:D.tech,over:D.over,where:D.where,sub:D.sub,sev:D.sev,resolve:D.resolve};
   if(isLinePlan(D.plan)) s.pattern=D.pattern;
   if(RPAT[R.pat]&&!songNow()) s.rpat=R.pat;
   return s;
 }
 function exCapture(){ // the exercise's settings as Drill has them now, to compare with or save to the session
-  const E=exOf(st.ex.ex), b=st.ex.base, s={...b,chips:b.chips,goal:st.ex.goal};
+  const E=exOf(st.ex.ex), b=st.ex.base, s={...b,goal:st.ex.goal};
   if(isQuiz(E)){if(st.mode==='name'||st.mode==='find') s.quiz=st.mode; return s;}
   Object.assign(s,captureBuild());
   if(!isLinePlan(D.plan)) s.pattern=b.pattern;
@@ -2538,15 +2581,16 @@ function exCapture(){ // the exercise's settings as Drill has them now, to compa
   if(D.where==='focus'&&b.where!=='focus'&&b.where) s.pos=F.pos;
   return s;
 }
-const EX_KEYS=['prog','chord','plan','pattern','tech','over','rpat','where','pos','sub','sev','resolve','song','quiz','goal'];
+const EX_KEYS=['prog','chord','plan','sbg','pick','pattern','tech','over','rpat','where','pos','sub','sev','resolve','song','quiz','goal'];
 function exChange(){ // what's different from the session's settings for this exercise, in words, or ''
   if(!st.ex||!st.ex.rid) return '';
   const E=exOf(st.ex.ex), b=st.ex.base, c=exCapture();
   if(isQuiz(E)) return c.quiz!==b.quiz?`You changed the quiz from ${rowLabel(E.rows[0],b.quiz)}.`:c.goal!==b.goal?`You changed the goal from ${b.goal}%.`:'';
   const ov=overList(), lab={prog:['chords',v=>v==='one'?'One chord':(PROG_BY[v]||{name:v}).name],chord:['the chord',v=>(ov[+v]||ov[0]).name],plan:['how you play each chord',v=>listLabel(PLAY_CH,v)],
     pattern:[D.plan==='tones'?'the chord-tone pattern':'the line',patLabel],over:['how the line meets the changes',v=>listLabel(OVER_CH,v)],tech:['the technique',v=>listLabel(TECH_CH,v)],
-    rpat:['the strum pattern',v=>RPAT[v]?RPAT[v].name:v],where:['where you play',v=>listLabel(WHERE,v)]};
-  const live=k=>k==='chord'?c.prog==='one':k==='pattern'?isLinePlan(c.plan):k==='over'?c.plan==='line'&&c.prog!=='one':k==='tech'?isLinePlan(c.plan):k==='rpat'?(c.plan==='strum'||c.plan==='both')&&!songNow():true;
+    sbg:['the strum',v=>v==='boom'?'Boom-chuck':'a strum pattern'],rpat:['the strum pattern',v=>RPAT[v]?RPAT[v].name:v],pick:['the pick',v=>listLabel(PICK_CH,v)],where:['where you play',v=>listLabel(WHERE,v)]};
+  const live=k=>k==='chord'?c.prog==='one':k==='pattern'?isLinePlan(c.plan):k==='over'?c.plan==='line'&&c.prog!=='one':k==='tech'?isLinePlan(c.plan)
+    :k==='sbg'?strums(c):k==='rpat'?strums(c)&&c.sbg!=='boom'&&!songNow():k==='pick'?picks(c):true;
   for(const k of Object.keys(lab)){ if(!live(k)||E.id==='songs'&&k==='prog') continue;
     if(String(c[k]??'')!==String(b[k]??'')) return `You changed ${lab[k][0]} from ${esc(lab[k][1](b[k]))}.`; }
   if(c.goal!==b.goal) return `You changed the goal from ${b.goal}${pct(E)}.`;
@@ -2557,7 +2601,7 @@ function exSave(){
   const r=st.ex&&LOG.routines[st.ex.rid], it=r&&r.items.find(x=>x.uid===st.ex.uid); if(!it) return;
   const c=exCapture(), set={}; EX_KEYS.forEach(k=>{if(c[k]!==undefined&&c[k]!==null) set[k]=c[k];});
   if(c.key!=null) set.key=c.key; if(st.ex.base.pos==null&&c.pos===st.ex.base.pos) delete set.pos;
-  set.chips=c.chips; it.set=set; touch(r); st.ex.base=fillSet(it.ex,set);
+  it.set=set; touch(r); st.ex.base=fillSet(it.ex,set);
 }
 function saveNewEx(name){
   // Save as a new exercise: this setup, under Yours in the library
@@ -2575,38 +2619,50 @@ function exRowFor(E,k){ // the exercise's own row behind a builder row, whose ch
   return r;
 }
 const bareRoman=r=>r.replace(/(\(maj7\)|maj7♭5|maj7|7♭5|7|6|sus4|sus2)$/,''); // the numeral alone; the chord name beside it gives the quality
-function bRows(){
-  const S=songProg(D.prog), sk=S&&LOG.skills[D.prog];
+function liveV(){return {prog:D.prog,chord:D.chord,plan:D.plan,sbg:D.sbg,pick:D.pick,pattern:D.pattern,tech:D.tech,over:D.over,rpat:R.pat,where:D.where,pos:F.pos,sev:D.sev};}
+function bRows(V,live){
+  // the rows a setup shows: V is Drill itself (live) or a setup being customized in the Exercises tab
+  const S=live&&songProg(V.prog), sk=S&&LOG.skills[V.prog];
   const parts=S&&sk.parts?sk.parts.map((p,k)=>[String(k),p.name]).filter(([k])=>parseChords(sk.parts[+k].text).chords.length):[];
   const rows=[{k:'prog',name:'Chords'}];
-  if(D.prog==='one') rows.push({k:'chord',name:'Over',sub:1});
+  if(V.prog==='one') rows.push({k:'chord',name:'Over',sub:1});
   if(parts.length>1) rows.push({k:'spart',name:'Part',sub:1,list:[['-1','Whole song'],...parts]});
   rows.push({k:'plan',name:'Play each chord'});
-  if(D.plan==='line') rows.push({k:'lpat',name:'Line',sub:1});
-  if(D.plan==='tones') rows.push({k:'tpat',name:'Chord tones',sub:1});
-  if(isLinePlan(D.plan)) rows.push({k:'tech',name:'Technique',sub:1});
-  if(D.plan==='strum'||D.plan==='both') rows.push({k:'rpat',name:'Strum pattern',sub:1});
+  if(V.plan==='line') rows.push({k:'lpat',name:'Line',sub:1});
+  if(V.plan==='tones') rows.push({k:'tpat',name:'Chord tones',sub:1});
+  if(isLinePlan(V.plan)) rows.push({k:'tech',name:'Technique',sub:1});
+  if(strums(V)) rows.push({k:'rpat',name:'Strum',sub:1});
+  if(picks(V)) rows.push({k:'pick',name:'Pick',sub:1});
   rows.push({k:'where',name:'Where'});
-  if(D.where==='cycle') rows.push({k:'pos',name:'Shapes, one per pass',sub:1});
+  if(V.where==='cycle') rows.push({k:'pos',name:'Shapes, one per pass',sub:1});
   return rows;
 }
-function bList(r){ // a row's choices, as [value, label]
+const boxesOf=(V,live)=>live?cur.pos:positions(V.key!=null?+V.key:cur.key);
+function bList(r,V,live){ // a row's chips, as [value, label]
   switch(r.k){
-    case 'prog': return PROGS.map(p=>[p[0],p[1]]);
-    case 'chord': return overList().map((c,i)=>[String(i),`${bareRoman(c.roman)} ${c.name}`]);
+    case 'prog':{const L=PROGS.map(p=>[p[0],p[1]]), sk=!live&&/^song:/.test(V.prog||'')&&LOG.skills[V.prog]; return sk?[[V.prog,sk.name],...L]:L;}
+    case 'chord': {const other=!live&&V.key!=null&&+V.key!==cur.key; return overList().map((c,i)=>[String(i),other?bareRoman(c.roman):`${bareRoman(c.roman)} ${c.name}`]);}
     case 'spart': return r.list;
     case 'plan': return PLAY_CH;
     case 'lpat': return LINE_PATS.map(v=>[v,patLabel(v)]);
     case 'tpat': return TONE_PATS.map(v=>[v,patLabel(v)]);
     case 'tech': return TECH_CH;
-    case 'rpat': return [...RPAT_LIST.filter(([v])=>RPAT_DEF.includes(v)||v===R.pat),...(R.pat==='custom'?[['custom','Your pattern']]:[])];
+    case 'rpat':{ // the common patterns and boom-chuck; one picked from the menu joins them. A song shows its own pattern
+      if(live&&songNow()) return [[R.pat,R.pat==='custom'?'Your pattern':RPAT[R.pat].name],['boom','Boom-chuck']];
+      const L=STRUM_ROW(), x=RPAT[V.rpat]&&!RPAT_DEF.includes(V.rpat)?[V.rpat,rowName(RPAT[V.rpat].name)]:live&&V.rpat==='custom'?['custom','Your pattern']:null;
+      if(x) L.splice(L.length-1,0,x); return L;}
+    case 'pick': return PICK_CH;
     case 'where': return WHERE;
-    case 'pos': return cur.pos.map(p=>[String(p.lo),p.shape?`${p.shape} shape`:`Frets ${p.lo}–${p.hi}`]);
+    case 'pos': return boxesOf(V,live).map(p=>[String(p.lo),p.shape?`${p.shape} shape`:`Frets ${p.lo}–${p.hi}`]);
+    case 'song': return [['','The first song'],...songSteps().map(({id,s})=>[id,s.name])];
+    case 'quiz': return EX_BY.quiz.rows[0].all();
   }
   return [];
 }
-function bNow(k){
-  return String({prog:D.prog,chord:D.chord,spart:songProg(D.prog)?songPart(D.prog):-1,plan:D.plan,lpat:D.pattern,tpat:D.pattern,tech:D.tech,rpat:R.pat,where:D.where,pos:F.pos}[k]);
+function bNow(k,V,live){
+  if(k==='rpat') return V.sbg==='boom'?'boom':String(V.rpat);
+  if(k==='spart') return String(songProg(D.prog)?songPart(D.prog):-1);
+  return String({prog:V.prog,chord:V.chord,plan:V.plan,pick:V.pick,lpat:V.pattern,tpat:V.pattern,tech:V.tech,where:V.where,pos:V.pos,song:V.song||'',quiz:V.quiz}[k]);
 }
 function scaleRun(n){const A=[...cur.set].sort((a,b)=>a-b); return Array.from({length:n},(_,i)=>noteName((cur.key+A[i%A.length])%12));}
 const PROG_TIP={one:'Stay on a single chord the whole time, picked in the Over row. The easiest way to learn a box.',
@@ -2620,10 +2676,11 @@ const PROG_TIP={one:'Stay on a single chord the whole time, picked in the Over r
  epic:'i ♭VI ♭III ♭VII, a minor-key sound from film scores and power ballads.',
  andalusian:'i ♭VII ♭VI V, four chords stepping down, heard in flamenco and many rock songs.',
  blues:'Twelve bars of I, IV and V: the form behind most blues and early rock and roll.'};
-const PLAN_TIP={strum:'Strum the whole chord in the strum pattern.',both:'A bar of strumming, then a bar picking the same shape one string at a time.',
- arp:'Hold the chord shape and pick its notes one string at a time, low to high.',boom:'Bluegrass rhythm. A bass note on beats 1 and 3, a short strum of the high strings on 2 and 4.',
- roll:'Roll across three strings with strict alternate picking, in groups of 3, 3 and 2, so it sounds like a banjo roll.',
- thumb:'Your thumb swaps between two bass notes on every beat while your fingers pick the high strings in between.'};
+const PLAN_TIP={strum:'Strum each chord, in the pattern picked in the Strum row.',both:'A bar of strumming, then a bar picking the same shape. The Strum and Pick rows choose each one, so any strum pairs with any pick.',
+ arp:'Hold the chord shape and pick it, in the style picked in the Pick row.'};
+const PICK_TIP={arp:'Pick the chord’s notes one string at a time, low to high.',roll:'Bluegrass crosspicking. Roll across three strings with strict alternate picking, in groups of 3, 3 and 2, so it sounds like a banjo roll.',
+ thumb:'Travis picking. Your thumb swaps between two bass notes on every beat while your fingers pick the high strings in between.'};
+const BOOM_TIP='Bluegrass rhythm. A bass note on beats 1 and 3, a short strum of the high strings on 2 and 4, and the bass walks into each new chord.';
 const LINE_TIP={updown:'Every note of the scale in this box, from the root to the highest note, down to the lowest, and back to the root.',
  thirds:'Play a note, skip the next one, then step back to the note you skipped and skip again. You hear pairs a 3rd apart, the sound chords are made of.',
  g3:'Three scale notes in a row, then start again one note higher.',g4:'Four scale notes in a row, then start again one note higher.',
@@ -2648,7 +2705,7 @@ function bTip(k,v,l,done,goal){
   else if(k==='spart') t=v==='-1'?'Every part of the song, one after another.':'Only this part, so you can work on it on its own.';
   else if(k==='plan') t=v==='line'?(D.prog==='one'?'Play a scale pattern, chosen in the Line row, over the chord.':'Play a scale pattern, chosen in the Line row, while the chords change underneath.')
     :v==='tones'?(D.prog==='one'?'Play only the notes of the chord, one at a time, in the pattern chosen in the Chord tones row.':'Play only the notes of whichever chord is sounding, so your line changes with each chord.')
-    :PLAN_TIP[v]+(v==='boom'?ex('Boom, chuck, boom, chuck'):'');
+    :PLAN_TIP[v];
   else if(k==='lpat'){const N=scaleRun(12), seven=cur.set.size===7;
     t=v==='thirds'&&!seven?PAT_TIP.thirdsX:LINE_TIP[v];
     const e={updown:N.slice(0,10).join(' ')+'…',thirds:[0,1,2,3].map(i=>`${N[i]} ${N[i+2]}`).join(', ')+'…',g3:[0,1,2].map(i=>N.slice(i,i+3).join(' ')).join(', ')+'…',g4:[0,1,2].map(i=>N.slice(i,i+4).join(' ')).join(', ')+'…'}[v];
@@ -2660,28 +2717,81 @@ function bTip(k,v,l,done,goal){
       t+=ex(`To land on ${n[1]}: ${noteName((cur.key+up)%12)}, ${noteName((cur.key+dn+12)%12)}, ${n[1]}`);}}
   else if(k==='tech') t=TECH_TIP[v];
   else if(k==='over') t=v==='restart'?'Start the pattern again from each new chord’s root. It’s easier to hear each chord change.':'One long pass of the pattern while the chords go round underneath. It sounds the most like a solo.';
-  else if(k==='rpat'){const P=v==='custom'?curPat():RPAT[v]; t=`${counting(P)}. A number is a strum on the beat${P.res===16?', e, & and a split the beat in four':', & is the strum halfway to the next beat'}, and a count in brackets is a miss: the hand keeps moving but skips the strings.`;}
+  else if(k==='rpat'){
+    if(v==='boom') t=BOOM_TIP+ex('Boom, chuck, boom, chuck');
+    else{const P=v==='custom'?(R.pat==='custom'?curPat():{...R.custom,id:'custom'}):RPAT[v]; t=`${v==='custom'?'The pattern you make by clicking the steps in the strum card. ':''}${counting(P)}. A number is a strum on the beat${P.res===16?', e, & and a split the beat in four':', & is the strum halfway to the next beat'}, and a count in brackets is a miss: the hand keeps moving but skips the strings.${songNow()?' It’s saved with the song.':''}`;}}
+  else if(k==='pick') t=PICK_TIP[v];
   else if(k==='where') t=WHERE_TIP[v]+(v==='cycle'&&cur.pos.some(p=>p.shape)?ex(`In ${key}: ${cur.pos.map(p=>p.shape+' shape').join(', ')}`):'');
   else if(k==='pos'){const p=cur.pos.find(p=>p.lo===+v); t=`${p?`frets ${p.lo}–${p.hi}`:''}: the pass in this shape.${+v===F.pos?' It’s the one playing now.':' Click to jump to it.'}`;}
   return `<b>${l}</b>${k==='chord'||k==='pos'?'':':'} ${t}${ok}`;
 }
-function builderHTML(){
-  const E=st.ex&&exOf(st.ex.ex), s=E?{...st.ex.base,goal:st.ex.goal}:null, S=songProg(D.prog), sk=S&&LOG.skills[D.prog];
-  const rows=bRows().map(r=>{
-    const xr=exRowFor(E,r.k), now=bNow(r.k), all=bList(r), on=xr&&s.chips[xr.k];
-    let list=on?all.filter(([v])=>on.includes(v)||v===now):all;
-    const shut=!!saved.fold['b-'+r.k], picked=r.k==='prog'&&S?S.name:listLabel(all,now);
-    const chip=([v,l])=>{const done=!!xr&&chipDone(E,xr.k,v,s.goal,s);
-      return `<button class="chip bc${done?' done':''}" data-act="bchip" data-row="${r.k}" data-v="${esc(v)}" aria-pressed="${v===now}" data-tip="${esc(bTip(r.k,v,esc(l),done,s&&s.goal))}">${esc(l)}</button>`;};
-    let body;
-    if(r.k==='rpat'&&songNow()) body=`<p class="hint">${esc(S.name)}’s own pattern. Change it in the strum card, and it’s saved with the song.</p>`;
-    else{
-      if(r.k==='prog'&&S) list=list.filter(([v])=>v!==D.prog);
-      body=`<div class="row">${list.map(chip).join('')}${r.k==='prog'?songPill(E,s):''}</div>`;
-      if(r.k==='lpat'&&D.prog!=='one') body+=`<div class="swrow"><span class="lab">Over the changes</span><div class="seg" role="group" aria-label="Over the changes">${OVER_CH.map(([v,l])=>`<button data-act="bchip" data-row="over" data-v="${v}" aria-pressed="${D.over===v}" data-tip="${esc(bTip('over',v,l))}">${l}</button>`).join('')}</div></div>`;
-    }
-    return `<div class="brow${r.sub?' sub':''}${shut?' shut':''}${r.k==='prog'?' rel':''}" role="group" aria-label="${r.name}"><button class="blab" data-act="bfold" data-k="${r.k}" aria-expanded="${!shut}" data-tip="${shut?'Open':'Fold'} the ${r.name} row${shut?'':'. A folded row shows only what’s picked'}.">${r.name}${shut?`<span class="pk"> · ${esc(picked)}</span>`:''}</button>${shut?'':body}</div>`;
+function pill(c,m,label,pressed,groups,tip,cols){
+  // a dropdown pill and its menu: a long list (every strum pattern, the boxes, the keys) behind one chip that shows the pick
+  const id=(c.live?'':'e-')+m, open=st.pmenu===id;
+  const menu=open?`<div class="smenu${cols?' cols2':''}" role="menu" aria-label="${esc(label)}">${groups.map(([g,list])=>`<div class="mg">${g?`<small>${g}</small>`:''}${list.map(([v,l,row,on,t])=>`<button class="mi" role="menuitemradio" data-act="${c.act}" data-row="${row}" data-v="${esc(v)}" aria-checked="${!!on}" data-tip="${esc(t)}">${esc(l)}</button>`).join('')}</div>`).join('')}</div>`:'';
+  return `<span class="spick"><button class="chip songpick" data-act="pmenu" data-m="${id}" aria-haspopup="menu" aria-expanded="${open}" aria-pressed="${!!pressed}" data-tip="${esc(tip)}">${esc(label)} ▾</button></span>${menu}`;
+}
+function boxLabel(c,pin){ // where a customized exercise sits when it follows the focus: the focus, or a box pinned for it
+  if(pin==null) return 'Follow the focus'; if(+pin<0) return 'Whole neck';
+  const p=boxesOf(c.V,c.live).find(p=>p.lo===+pin); return p?p.label:`Frets ${pin}–${+pin+4}`;
+}
+function rowsHTML(c){
+  // the builder's rows. c.V is the setup they show, c.live says it's Drill's own, c.act is what a chip does,
+  // c.E and c.s give an exercise's ✓, c.edit is Customize, where Follow the focus can pin a box (c.pin)
+  const {V,live,act,E,s}=c, S=live&&songProg(D.prog);
+  return (c.rows||bRows(V,live)).map(r=>{
+    const xr=exRowFor(E,r.k), now=bNow(r.k,V,live), all=bList(r,V,live);
+    let list=all, extra='', first='';
+    const shut=c.fold&&!!saved.fold['b-'+r.k], picked=r.k==='prog'&&S?S.name:r.k==='where'&&c.edit&&V.where==='focus'?boxLabel(c,c.pin):listLabel(all,now);
+    const chip=([v,l])=>{const done=!!xr&&!!s&&chipDone(E,xr.k,v,s.goal,s);
+      return `<button class="chip bc${done?' done':''}" data-act="${act}" data-row="${r.k}" data-v="${esc(v)}" aria-pressed="${v===now}" data-tip="${esc(bTip(r.k,v,esc(l),done,s&&s.goal))}">${esc(l)}</button>`;};
+    if(r.k==='prog'&&S) list=list.filter(([v])=>v!==D.prog);
+    if(r.k==='prog'&&live) extra=songPill(E,s);
+    if(r.k==='rpat'){ // every pattern, grouped, plus boom-chuck and your own
+      const it=(v,l)=>[v,l,'rpat',now===v,bTip('rpat',v,esc(l))];
+      extra=pill(c,'rpat',`All ${RPAT_LIST.length+1} patterns`,false,[...RPATS.map(([g,L])=>[g,L.map(p=>it(p[0],p[1]))]),
+        ['Bluegrass',[it('boom','Boom-chuck')]],...(live?[['Your own',[it('custom','Your pattern')]]]:[])],
+        '<b>All the strum patterns</b>: quarters and 8ths, ghost strums, 16ths, syncopation, shuffles, and boom-chuck. Your pattern is the one you edit in the strum card.',true);}
+    if(r.k==='where'&&c.edit){ // Follow the focus can pin the exercise to one box
+      list=list.filter(([v])=>v!=='focus');
+      const boxes=boxesOf(V,live), on=x=>V.where==='focus'&&String(c.pin??'')===x;
+      first=pill(c,'wpos',boxLabel(c,c.pin),V.where==='focus',[['',[['','Follow the focus','wpos',on(''),'Use whatever box is picked in the bar at the top.'],
+        ...boxes.map(p=>[String(p.lo),p.label,'wpos',on(String(p.lo)),`Always start ${esc(E?E.name:'it')} in this box.`])]]],
+        '<b>Follow the focus</b>: play in the box picked in the bar at the top, or pick one box for this exercise to always start in.');}
+    let body=`<div class="row">${first}${list.map(chip).join('')}${extra}</div>`;
+    if(r.k==='lpat'&&V.prog!=='one') body+=`<div class="swrow"><span class="lab">Over the changes</span><div class="seg" role="group" aria-label="Over the changes">${OVER_CH.map(([v,l])=>`<button data-act="${act}" data-row="over" data-v="${v}" aria-pressed="${V.over===v}" data-tip="${esc(bTip('over',v,l))}">${l}</button>`).join('')}</div></div>`;
+    const lab=c.fold?`<button class="blab" data-act="bfold" data-k="${r.k}" aria-expanded="${!shut}" data-tip="${shut?'Open':'Fold'} the ${r.name} row${shut?'':'. A folded row shows only what’s picked'}.">${r.name}${shut?`<span class="pk"> · ${esc(picked)}</span>`:''}</button>`:`<span class="blab">${r.name}</span>`;
+    const sev=r.k==='prog'&&(!live||cur.set.size===7||D.line==='prog'&&cur.prog)?`<span class="swl">Add 7ths<button class="sw sm" data-act="${live?'sev':act}" data-row="sev" aria-pressed="${!!V.sev}" aria-label="Add 7ths" data-tip="<b>Add 7ths</b>: play 4-note 7th chords, like Am7 and Gmaj7, instead of 3-note triads."></button></span>`:'';
+    return `<div class="brow${r.sub?' sub':''}${shut?' shut':''} rel" role="group" aria-label="${r.name}">${sev?`<div class="bh">${lab}${sev}</div>`:lab}${shut?'':body}</div>`;
   }).join('');
+}
+function keyLine(c,key){
+  const on=x=>String(key??'')===x;
+  return `<div class="eline rel"><span class="lab">Key</span>${pill(c,'key',key==null?'Follow the focus':keyName(+key),key!=null,
+    [['',[['','Follow the focus','ekey',on(''),'Play in the key picked in the bar at the top.']]],['',KEY_OPTS.map((n,i)=>[String(i),n,'ekey',on(String(i)),`Always play this exercise in ${n}.`])]],
+    '<b>Key</b>: follow the key in the bar at the top, or always play this exercise in one key.',true)}</div>`;
+}
+function goalLine(E,goal,act,save,cancel,saveLabel,saveTip){
+  const q=isQuiz(E), g=E.id==='songs'?`<span class="hint">Goal: each song’s own tempo</span>`
+    :`<span class="gstep"><button data-act="${act}" data-v="-5" aria-label="Lower the goal" data-tip="Lower the goal by 5${q?' percent':' bpm'}.">−</button><b>goal ${goal}${q?'%':' bpm'}</b><button data-act="${act}" data-v="5" aria-label="Raise the goal" data-tip="Raise the goal by 5${q?' percent':' bpm'}.">+</button></span>`;
+  return `<div class="eline"><span class="lab">Goal</span>${g}<span class="sp"></span><button class="btn" data-act="${cancel}" data-tip="Put everything back the way it was.">Cancel</button><button class="btn primary" data-act="${save}" data-tip="${esc(saveTip)}">${saveLabel}</button></div>`;
+}
+function editWhere(E,rid,uid){ // whose settings Customize changes
+  const r=rid&&LOG.routines[rid];
+  return r?{lab:`for ${esc(r.name)}, exercise ${r.items.findIndex(x=>x.uid===uid)+1}`,save:`Save to ${esc(r.name)}`,tip:`Keep these settings for this exercise in ${esc(r.name)}.`}
+    :E.user?{lab:'',save:'Save',tip:`Save ${esc(E.name)}.`}:{lab:'your default',save:'Save as default',tip:`${esc(E.name)} starts this way when you try it, and when you add it to a session.`};
+}
+function builderHTML(){
+  const E=st.ex&&exOf(st.ex.ex), s=E?{...st.ex.base,goal:st.ex.goal}:null;
+  const ctx={V:liveV(),live:true,act:'bchip',E,s,fold:true,edit:!!st.edit,pin:st.edit&&st.edit.pos};
+  const rows=rowsHTML(ctx);
+  if(E&&st.edit){ // Customize: the same rows set where the exercise starts, and the neck plays what you pick
+    const w=editWhere(E,st.ex.rid,st.ex.uid);
+    return `<div class="exh-top"><span class="lab">Customize</span></div><div class="exh-title"><b>${esc(E.name)}</b><small>${w.lab}</small></div>
+      ${E.user?`<input id="edName" class="ename" value="${esc(st.edit.name)}" maxlength="60" aria-label="Name" data-tip="The exercise’s name, under Yours in the Exercises tab.">`:''}
+      <p class="hint">Tap a chip to start ${esc(E.name)} there. The neck plays what you pick.</p>${rows}
+      ${E.id==='songs'?'':keyLine(ctx,st.edit.key)}${goalLine(E,st.ex.goal,'exgoal','edsave','edcancel',w.save,w.tip)}`;
+  }
   const nw=st.bnew?`<div class="bnew"><input id="bName" value="${esc(st.bnew.name)}" maxlength="60" aria-label="Name for the new exercise"><button class="btn primary" data-act="bnewok" data-tip="Save this setup under Yours in the Exercises tab.">Save</button><button class="btn" data-act="bnewno" data-tip="Don’t save it.">Cancel</button></div>`
     :`<button class="chip" data-act="bnew" data-tip="Keep this setup as an exercise of your own, under Yours in the Exercises tab, to start it again or add it to a session.">Save as a new exercise</button>`;
   const msg=st.bmsg?`<span class="bmsg">${st.bmsg}</span>`:'';
@@ -2692,14 +2802,15 @@ function builderHTML(){
     :`<span class="gstep"><button data-act="exgoal" data-v="-5" aria-label="Lower the goal" data-tip="Lower the goal by 5 bpm.">−</button><b>goal ${s.goal}</b><button data-act="exgoal" data-v="5" aria-label="Raise the goal" data-tip="Raise the goal by 5 bpm.">+</button></span>`;
   const saveRow=ch&&r?`<div class="exsave"><button class="chip" data-act="exsave" data-tip="${esc(`Keep these choices for this exercise in ${r.name}, so it starts this way next time.`)}">Save to session</button><span>${ch} Save keeps it for next time.</span></div>`:'';
   const close=st.ex.rid?'':`<button class="icon sm" data-act="exclose" aria-label="Close the exercise" data-tip="Close the exercise. Drill keeps these settings.">✕</button>`;
-  return `<div class="exh-top"><span class="lab">Exercise</span><span class="sp"></span><button class="chip" data-act="excust" data-tip="${esc(E.user?`Rename ${E.name}, or change what it starts with and its goal.`:`Choose which chips ${E.name} shows, what it starts with, and its goal${r?`, for this exercise in ${r.name}`:''}.`)}">Customize</button>${close}</div>
+  return `<div class="exh-top"><span class="lab">Exercise</span><span class="sp"></span><button class="chip" data-act="excust" data-tip="${esc(custTip(E,r))}">Customize</button>${close}</div>
     <div class="exh-title"><b>${esc(E.name)}</b><small>${pr.n} of ${pr.m} clean</small></div>${rows}
     <div class="exh-goal">${goal}</div>${saveRow}<div class="bfoot">${nw}${msg}</div>`;
 }
+const custTip=(E,r)=>E.user?`Rename ${E.name}, or change where it starts and its goal. The rows switch to editing in place.`
+  :`Change where ${E.name} starts and its goal${r?`, for this exercise in ${r.name}`:', as your default'}. The rows switch to editing in place.`;
 function songPill(E,s){
   // your songs as one pill: it reads Song until you pick one, then the song's name; its menu lists every song
-  const S=songProg(D.prog)?LOG.skills[D.prog]:null, songs=songSteps(), xr=E&&E.id==='songs'&&E.rows[0], on=xr&&s.chips.song;
-  const list=on?songs.filter(({id})=>on.includes(id)||id===D.prog):songs;
+  const S=songProg(D.prog)?LOG.skills[D.prog]:null, list=songSteps();
   const menu=st.songMenu?`<div class="smenu" role="menu" aria-label="Your songs"><small>Your songs</small>${list.map(({id,s:k})=>`<button class="mi" role="menuitemradio" data-act="bsongpick" data-id="${esc(id)}" aria-checked="${id===D.prog}" data-tip="${esc(`Play over ${esc(k.name)}’s chords, in its key.`)}"><b>${esc(k.name)}</b>${k.artist?` · ${esc(k.artist)}`:''}<em>${esc(songKey(k).replace(' major',''))}</em></button>`).join('')}
     <button class="mi add" data-act="songform" data-tip="Add a song you’re learning, with its chords, in the Songs tab.">+ Add a song in the Songs tab</button></div>`:'';
   return `<span class="spick"><button class="chip songpick" data-act="bsong" aria-haspopup="menu" aria-expanded="${!!st.songMenu}" aria-pressed="${!!S}" data-tip="${esc(S?`<b>${esc(S.name)}</b>: its chords, in its key. Click to pick another song.`:'<b>Song</b>: Practice over the chords of a song you added in the Songs tab.')}">${S?`${esc(S.name)}${S.artist?` · ${esc(S.artist)}`:''}`:'Song'} ▾</button></span>${menu}`;
@@ -2707,15 +2818,17 @@ function songPill(E,s){
 function exHeadHTML(){ // the interval quiz's panel
   const E=exOf(st.ex.ex), s={...st.ex.base,goal:st.ex.goal}, pr=exProgress(E,s);
   const rows=E.rows.map(r=>{
-    const now=String(exNow(E,r.k)), chips=rowChips(r,s);
+    const now=String(exNow(E,r.k)), chips=rowAll(r);
     const html=chips.map(([v,l])=>{const done=chipDone(E,r.k,v,s.goal,s);
       return `<button class="chip exc${done?' done':''}" data-act="exchip" data-row="${r.k}" data-v="${esc(v)}" aria-pressed="${v===now}" data-tip="${esc(`<b>${esc(l)}</b>: ${v==='name'?'say which degree the ? note is':'click where a degree sits'}.${done?` ✓ At least ${s.goal}% right in a quiz of 20 or more.`:''}`)}">${esc(l)}</button>`;}).join('');
     return `<div class="exrow" role="group" aria-label="${r.name}"><span class="lab">${r.name}</span><div class="row">${html}</div></div>`;
   }).join('');
   const ch=exChange(), r=st.ex.rid&&LOG.routines[st.ex.rid];
   const saveRow=ch&&r?`<div class="exsave"><button class="chip" data-act="exsave" data-tip="${esc(`Keep these choices for this exercise in ${r.name}, so it starts this way next time.`)}">Save to session</button><span>${ch} Save keeps it for next time.</span></div>`:'';
+  if(st.edit){const w=editWhere(E,st.ex.rid,st.ex.uid);
+    return `<div class="exh-top"><span class="lab">Customize</span></div><div class="exh-title"><b>${E.name}</b><small>${w.lab}</small></div><p class="hint">Tap a quiz to start ${E.name} there.</p>${rows}${goalLine(E,st.ex.goal,'exgoal','edsave','edcancel',w.save,w.tip)}`;}
   const close=st.ex.rid?'':`<button class="icon sm" data-act="exclose" aria-label="Close the exercise" data-tip="Close the exercise and go back to the Quiz’s own controls.">✕</button>`;
-  return `<div class="exh-top"><span class="lab">Exercise</span><span class="sp"></span><button class="chip" data-act="excust" data-tip="${esc(`Choose which chips ${E.name} shows, what it starts with, and its goal${r?`, for this exercise in ${r.name}`:''}.`)}">Customize</button>${close}</div>
+  return `<div class="exh-top"><span class="lab">Exercise</span><span class="sp"></span><button class="chip" data-act="excust" data-tip="${esc(custTip(E,r))}">Customize</button>${close}</div>
     <div class="exh-title"><b>${E.name}</b><small>${pr.n} of ${pr.m} clean</small></div>${rows}
     <div class="exh-goal"><span class="gstep"><button data-act="exgoal" data-v="-5" aria-label="Lower the goal" data-tip="Lower the goal by 5 percent.">−</button><b>goal ${s.goal}%</b><button data-act="exgoal" data-v="5" aria-label="Raise the goal" data-tip="Raise the goal by 5 percent.">+</button></span></div>${saveRow}`;
 }
@@ -2747,11 +2860,12 @@ function exItemHTML(r,it,k,next){
   const E=exOf(it.ex); if(!E) return ''; // a saved setup you deleted
   const s=fillSet(it.ex,it.set), pr=exProgress(E,s), all=pr.m>0&&pr.n===pr.m;
   const mk=all?'<span class="mk ok">✓</span>':next?'<span class="mk">▶</span>':`<span class="mk">${k+1}</span>`;
+  if(st.exEdit&&st.cedit&&st.cedit.uid===it.uid) return ceditHTML(r,it,k);
   if(st.exEdit) return `<div class="exi edit" draggable="true" data-i="${k}"><span class="grip" aria-hidden="true">⋮⋮</span>
-    <span class="tx"><b>${E.name}</b><small>${exSummary(E,s)}</small></span>
+    <span class="tx"><b>${E.name}</b>${sumChips(E,s)}<small>${goalText(E,s)}</small></span>
     <span class="row exi-acts"><button class="icon sm" data-act="exup" data-i="${k}" aria-label="Move up" data-tip="Move ${E.name} up."${k?'':' disabled'}>↑</button><button class="icon sm" data-act="exdown" data-i="${k}" aria-label="Move down" data-tip="Move ${E.name} down."${k<r.items.length-1?'':' disabled'}>↓</button>
-    <button class="chip" data-act="excusti" data-i="${k}" data-tip="Choose which chips ${E.name} shows here, what it starts with, and its goal.">Customize</button><button class="icon sm" data-act="exdel" data-i="${k}" aria-label="Remove" data-tip="Remove ${E.name} from ${esc(r.name)}. Your progress stays.">✕</button></span></div>`;
-  return `<div class="exi${next?' next':''}">${mk}<span class="tx"><b>${E.name}</b><small>${exSummary(E,s)}</small>
+    <button class="chip" data-act="excusti" data-i="${k}" data-tip="Change where ${E.name} starts here and its goal. It opens right in the list.">Customize</button><button class="icon sm" data-act="exdel" data-i="${k}" aria-label="Remove" data-tip="Remove ${E.name} from ${esc(r.name)}. Your progress stays.">✕</button></span></div>`;
+  return `<div class="exi${next?' next':''}">${mk}<span class="tx"><b>${E.name}</b>${sumChips(E,s)}<small>${goalText(E,s)}</small>
     <span class="exprog"><span class="bar"><i style="width:${pr.m?Math.round(pr.n/pr.m*100):0}%"></i></span><small>${pr.m?`${pr.n} of ${pr.m} ${E.unit} clean`:'Nothing to play yet'}</small></span></span>
     <button class="btn" data-act="exitem" data-i="${k}" data-tip="Open ${E.name} in ${isQuiz(E)?'Quiz':'Drill'}, set up as this session has it.">Start</button></div>`;
 }
@@ -2779,8 +2893,8 @@ function exPageHTML(){
   }
   const tile=E=>{
       const inR=!!r&&r.items.some(x=>x.ex===E.id), del=E.user&&st.exDel===E.id;
-      const blurb=E.id==='songs'?'A song · its own strum':isQuiz(E)?'Name it, find it':buildText(fillSet(E.id));
-      return `<div class="extile${inR?' in':''}" draggable="true" data-ex="${esc(E.id)}"><span class="tx"><b>${esc(E.name)}</b><small>${blurb}</small></span>
+      const blurb=E.id==='songs'?'<span class="sumc"><span class="chip sm">A song</span><span class="chip sm">Its own strum</span></span>':isQuiz(E)?'<span class="sumc"><span class="chip sm">Name it</span><span class="chip sm">Find it</span></span>':sumChips(E,fillSet(E.id));
+      return `<div class="extile${inR?' in':''}" draggable="true" data-ex="${esc(E.id)}"><span class="tx"><b>${esc(E.name)}</b>${blurb}</span>
         <button class="chip" data-act="extry" data-ex="${esc(E.id)}" data-tip="Try ${esc(E.name)} on its own, outside a session.">Try</button>
         <button class="chip add" data-act="exadd" data-ex="${esc(E.id)}" data-tip="${r?`Add ${esc(E.name)} to the end of ${esc(r.name)}${inR?' again, with its own settings':''}.`:`Start a new session with ${esc(E.name)}.`}">${inR?'+ Add again':'+ Add'}</button>
         ${E.user?`<button class="${del?'btn danger sm':'icon sm'}" data-act="exudel" data-ex="${esc(E.id)}" aria-label="Delete ${esc(E.name)}" data-tip="${del?`Delete ${esc(E.name)} for good, and take it out of every session.`:`Delete ${esc(E.name)}. Click again to confirm.`}">${del?'Delete':'✕'}</button>`:''}</div>`;};
@@ -2802,104 +2916,109 @@ function exMove(r,from,to){
   if(from===to||from<0||to<0||from>=r.items.length||to>r.items.length) return;
   const [it]=r.items.splice(from,1); r.items.splice(to>from?to-1:to,0,it); touch(r);
 }
-// ---- Customize: which chips an exercise shows, what it starts with, and its goal, for one session item or as your default
-const custEl=document.getElementById('cust');
-function custOpen(o){
-  let ex, set=null;
-  if(o.rid){const r=LOG.routines[o.rid], it=r&&r.items.find(x=>x.uid===o.uid); if(!it) return; ex=it.ex; set=it.set;} else ex=o.ex;
-  const s=fillSet(ex,set);
-  if(st.ex&&st.ex.ex===ex&&st.ex.rid===(o.rid||null)&&st.ex.uid===(o.uid||null)) Object.assign(s,exCapture()); // the exercise you're playing starts from what Drill has now
-  st.cust={rid:o.rid||null,uid:o.uid||null,ex,draft:JSON.parse(JSON.stringify(s)),top:0};
-  renderCust(); const c=custEl.querySelector('[data-act="custclose"]'); if(c) c.focus();
+// ---- Customize: where an exercise starts and its goal, for one session item, as your default, or your own setup's.
+// In Drill the exercise's own rows switch to editing in place and the neck plays what you pick; Cancel puts Drill back.
+// In the Exercises tab a session's exercise opens the same rows right in the list.
+function editStart(){
+  if(!st.ex) return; const b=st.ex.base, E=exOf(st.ex.ex);
+  st.edit={snap:JSON.parse(JSON.stringify({D,F,R,bpm:saved.bpm,goal:st.ex.goal,fmode:saved.fmode,fsong:saved.fsong,fkey:saved.fkey,spart:saved.spart,mode:st.mode})),
+    key:b.key??null,pos:(b.where||'focus')==='focus'&&b.pos!=null?+b.pos:null,name:E.name};
+  st.pmenu=null; st.bnew=null; render();
 }
-function custAll(r,s){ // a row's choices; a home chord's boxes follow the key it's set to
-  if(r.k!=='pos') return rowAll(r);
-  return positions(s.key!=null?+s.key:cur.key).map(p=>[String(p.lo),p.shape?`${p.shape} shape`:`Frets ${p.lo}–${p.hi}`]);
+function editCancel(){
+  const e=st.edit; if(!e) return; st.edit=null; st.pmenu=null; const o=e.snap;
+  [[D,o.D],[F,o.F],[R,o.R]].forEach(([a,b])=>{Object.keys(a).forEach(k=>delete a[k]); Object.assign(a,b);});
+  Object.assign(saved,{bpm:o.bpm,fmode:o.fmode,fsong:o.fsong,fkey:o.fkey,spart:o.spart}); if(st.ex) st.ex.goal=o.goal;
+  refresh(); fillSelects(); save();
+  if(st.mode!==o.mode) setMode(o.mode); else regen();
 }
-function custHTML(){
-  const c=st.cust, E=exOf(c.ex), s=c.draft, r=c.rid&&LOG.routines[c.rid], drill=!isQuiz(E)&&E.id!=='songs';
-  const ck=(row,v,l)=>{const on=!s.chips[row.k]||s.chips[row.k].includes(v);
-    return `<button class="ck" data-act="custchip" data-row="${row.k}" data-v="${esc(v)}" aria-pressed="${on}" data-tip="${esc(`${on?'Hide':'Show'} ${esc(l)} as a chip in Drill.`)}">${esc(l)}</button>`;};
-  const left=E.rows.map(row=>{const all=custAll(row,s), n=s.chips[row.k]?all.filter(a=>s.chips[row.k].includes(a[0])).length:all.length;
-    const body=row.k==='rpat'?`<div class="ckgrp">${RPATS.map(([g,list])=>`<div><small>${g}</small>${list.map(p=>ck(row,p[0],p[1])).join('')}</div>`).join('')}</div>`
-      :all.length?`<div class="ckg">${all.map(([v,l])=>ck(row,v,l)).join('')}</div>`:`<p class="hint">${row.k==='song'?'No songs yet. Add them in the Songs tab.':'Nothing here yet.'}</p>`;
-    return `<h4>${row.name} chips · ${n} of ${all.length}</h4>${body}`;}).join('');
-  const line=(label,ctl)=>`<div class="set"><span>${label}</span>${ctl}</div>`;
-  const sel=(k,list,v,label,tip)=>`<select data-cset="${k}" aria-label="${label}" data-tip="${esc(tip)}">${opts(list,v??'')}</select>`;
-  const right=E.user?[line('Name',`<input class="cname" data-cname value="${esc(s.name??E.name)}" maxlength="60" aria-label="Name">`)]:[];
-  E.rows.forEach(row=>{
-    const all=custAll(row,s), first=row.k==='pos'?[['','The focus box, or the lowest']]:row.k==='song'?[['','The first song']]:[];
-    right.push(line(row.name,sel(row.k,[...first,...all],s[row.k],row.name,`The ${row.name.toLowerCase()} ${E.name} starts with.`)));});
-  // the builder's other rows, as what the exercise starts with
-  const has=k=>E.rows.some(r=>r.k===k), lp=s.plan==='tones'?TONE_PATS:LINE_PATS;
-  if(drill&&!has('prog')) right.push(line('Chords',sel('prog',[...PROGS.map(p=>[p[0],p[1]]),...(/^song:/.test(s.prog)&&LOG.skills[s.prog]?[[s.prog,esc(LOG.skills[s.prog].name)]]:[])],s.prog,'Chords','What the exercise plays over: one chord, a progression, or a song.')));
-  if(drill&&s.prog==='one') right.push(line('Over',sel('chord',overList().map((ch,i)=>[i,`${bareRoman(ch.roman)} ${ch.name}`]),s.chord,'Over','The chord One chord sits on, counted in your focus key.')));
-  if(!isQuiz(E)&&!has('plan')) right.push(line('Play each chord',sel('plan',PLAY_CH,s.plan,'Play each chord','How you play each chord.')));
-  if(drill&&isLinePlan(s.plan)&&!(has('pattern')&&exRowFor(E,s.plan==='tones'?'tpat':'lpat'))) right.push(line(s.plan==='tones'?'Chord tones':'Line',sel('pattern',lp.map(v=>[v,patLabel(v)]),lp.includes(s.pattern)?s.pattern:lp[0],'Pattern','The pattern each pass plays.')));
-  if(drill&&s.plan==='line'&&s.prog!=='one') right.push(line('Over the changes',sel('over',OVER_CH,s.over,'Over the changes','Run through the box once while the chords change, or start again from each chord’s root.')));
-  if(drill&&isLinePlan(s.plan)&&!has('tech')) right.push(line('Technique',sel('tech',TECH_CH,s.tech,'Technique','How you pick the line.')));
-  if(drill&&(s.plan==='strum'||s.plan==='both')&&!has('rpat')) right.push(line('Strum pattern',sel('rpat',RPAT_LIST,s.rpat,'Strum pattern','The strum pattern for the strummed bars.')));
-  if(drill&&!has('pos')) right.push(line('Where',sel('where',WHERE,s.where,'Where','Where on the neck the exercise plays.')));
-  if(drill&&isLinePlan(s.plan)) right.push(line('Notes per beat',sel('sub',SUBS,s.sub,'Notes per beat','How many notes to play per beat. A run counts toward a chip at this many or more.')));
-  if(drill) right.push(line('Add 7ths',`<button class="sw" data-act="custsev" aria-pressed="${!!s.sev}" aria-label="Add 7ths" data-tip="Play 4-note 7th chords instead of triads."></button>`));
-  if(drill){
-    right.push(line('Key',sel('key',[['','Follow the focus'],...KEY_OPTS.map((n,i)=>[i,n])],s.key,'Key','The key this exercise plays in. Follow the focus uses the key in the bar at the top.')));
-    if(!has('pos')&&(s.where||'focus')==='focus') right.push(line('Box',sel('pos',[['','Follow the focus'],['-1','Whole neck'],...positions(s.key!=null?+s.key:cur.key).map(p=>[String(p.lo),p.label])],s.pos,'Box','The box it plays in.')));
+function editSave(){
+  const e=st.edit; if(!e||!st.ex) return; const E=exOf(st.ex.ex), c=exCapture(), set={};
+  EX_KEYS.forEach(k=>{if(c[k]!==undefined&&c[k]!==null) set[k]=c[k];});
+  if(!isQuiz(E)&&E.id!=='songs'){ // the key and box it's pinned to; each shape in turn starts in the shape playing now
+    delete set.pos; if(e.key!=null) set.key=e.key;
+    const pos=D.where==='focus'?e.pos:D.where==='cycle'?F.pos:null; if(pos!=null) set.pos=pos;
   }
-  if(E.id!=='songs') right.push(line('Goal',`<span class="gstep"><button data-act="custgoal" data-v="-5" aria-label="Lower the goal" data-tip="Lower the goal by 5.">−</button><b>${s.goal}${isQuiz(E)?'% right':' bpm'}</b><button data-act="custgoal" data-v="5" aria-label="Raise the goal" data-tip="Raise the goal by 5.">+</button></span>`));
-  const where=r?`for ${esc(r.name)}, exercise ${r.items.findIndex(x=>x.uid===c.uid)+1}`:'your default';
-  return `<div class="sets-wrap cust-wrap"><div class="sets cust" role="dialog" aria-modal="true" aria-label="Customize ${E.name}">
-    <div class="sets-top"><span><b>Customize ${E.name}</b> <small>${where}</small></span><button class="icon" data-act="custclose" aria-label="Close without saving" data-tip="Close without saving. Esc does it too.">✕</button></div>
-    <div class="cust-cols"><div class="cust-l">${left}</div><div class="cust-r"><h4>Starts with</h4>${right.join('')}
-      <p class="hint">${r?`These settings belong to ${esc(E.name)} in ${esc(r.name)}.`:E.user?`${esc(E.name)} starts this way wherever you use it.`:`These become ${E.name}’s defaults when you try it, and when you add it to a session.`} Your ✓ progress belongs to you and shows in every session.</p></div></div>
-    <div class="actions"><button class="btn" data-act="custclose" data-tip="Close without saving.">Cancel</button><button class="btn primary" data-act="custsave" data-tip="${r?`Save these settings for this exercise in ${esc(r.name)}.`:E.user?`Save ${esc(E.name)}.`:`Save these as ${E.name}’s defaults.`}">${r?`Save to ${esc(r.name)}`:E.user?'Save':'Save as default'}</button></div></div></div>`;
+  st.edit=null; st.pmenu=null;
+  const r=st.ex.rid&&LOG.routines[st.ex.rid], it=r&&r.items.find(x=>x.uid===st.ex.uid);
+  if(it){it.set=set; touch(r);}
+  else if(E.user){const nm=String(e.name||'').replace(/[<>&"]/g,'').trim().slice(0,60); E.user.set=set; if(nm) E.user.name=nm; E.user.updated=now(); saveLog();}
+  else{LOG.exprefs[st.ex.ex]={set,updated:now()}; saveLog();}
+  st.ex.base=fillSet(st.ex.ex,it?set:null); save(); render();
 }
-function renderCust(){
-  const box=custEl.querySelector('.sets'); if(box&&st.cust) st.cust.top=box.scrollTop;
-  custEl.hidden=!st.cust; custEl.innerHTML=st.cust?custHTML():'';
-  const nb=custEl.querySelector('.sets'); if(nb&&st.cust) nb.scrollTop=st.cust.top||0;
+function editPick(k,v){ // the Key and Follow the focus menus in Drill's Customize
+  const e=st.edit;
+  if(k==='ekey'){e.key=v===''?null:+v; if(e.key!=null) F.key=e.key; refresh();
+    if(e.pos!=null&&!cur.pos.some(p=>p.lo===e.pos)) e.pos=null;} // the boxes move with the key
+  else{e.pos=v===''?null:+v; if(D.where!=='focus') setWhere('focus'); if(e.pos!=null) F.pos=e.pos;}
+  refresh(); fillSelects(); save(); regen();
 }
-function custClose(){st.cust=null; renderCust();}
-function custSave(){
-  const c=st.cust; if(!c) return; const d=c.draft, set={chips:d.chips};
-  [...EX_KEYS,'key'].forEach(k=>{if(d[k]!==undefined&&d[k]!==null&&d[k]!=='') set[k]=d[k];});
-  const u=!c.rid&&exOf(c.ex).user;
-  if(c.rid){const r=LOG.routines[c.rid], it=r&&r.items.find(x=>x.uid===c.uid); if(!it){custClose(); return;} it.set=set; touch(r);}
-  else if(u){delete set.chips; Object.assign(u,{set,updated:now()}); const nm=String(d.name||'').replace(/[<>&"]/g,'').trim().slice(0,60); if(nm) u.name=nm; saveLog();} // your own setup: its settings and name
-  else{LOG.exprefs[c.ex]={set,updated:now()}; saveLog();}
-  custClose();
-  if(st.ex&&st.ex.ex===c.ex&&st.ex.rid===c.rid&&st.ex.uid===c.uid) exStart({rid:c.rid,uid:c.uid,ex:c.ex,set:c.rid?set:null}); // play it as saved
-  else render();
+function ceditStart(r,it){
+  const d=fillSet(it.ex,it.set);
+  if((d.where||'focus')==='focus'&&d.pos!=null&&+d.pos<0){d.where='whole'; d.pos=null;}
+  st.cedit={rid:r.id,uid:it.uid,ex:it.ex,d}; st.pmenu=null; render();
 }
-custEl.addEventListener('click',e=>{
-  if(e.target.classList.contains('cust-wrap')){custClose(); return;}
-  const b=e.target.closest('button'); if(!b||!st.cust) return;
-  const c=st.cust, s=c.draft, E=exOf(c.ex);
-  switch(b.dataset.act){
-    case 'custclose': custClose(); return;
-    case 'custsave': custSave(); return;
-    case 'custsev': s.sev=!s.sev; break;
-    case 'custgoal':{const lo=isQuiz(E)?50:30, hi=isQuiz(E)?100:260; s.goal=Math.max(lo,Math.min(hi,s.goal+(+b.dataset.v))); break;}
-    case 'custchip':{const row=E.rows.find(x=>x.k===b.dataset.row), all=custAll(row,s).map(a=>a[0]), v=b.dataset.v;
-      let on=s.chips[row.k]?s.chips[row.k].filter(x=>all.includes(x)):[...all];
-      on=on.includes(v)?on.filter(x=>x!==v):all.filter(x=>x===v||on.includes(x));
-      if(!on.length) return; // a row keeps at least one chip
-      s.chips[row.k]=on; break;}
+function cchoose(k,v){
+  // a chip in an exercise opened for editing in the Exercises tab: it changes where that exercise starts
+  const c=st.cedit; if(!c) return; const d=c.d;
+  switch(k){
+    case 'prog': d.prog=v; if(v!=='one') d.chord=0; break;
+    case 'chord': d.chord=+v; break;
+    case 'plan': d.plan=v; {const lp=v==='tones'?TONE_PATS:LINE_PATS; if(isLinePlan(v)&&!lp.includes(d.pattern)) d.pattern=lp[0];} break;
+    case 'lpat': case 'tpat': d.pattern=v; break;
+    case 'tech': d.tech=v; break;
+    case 'over': d.over=v; break;
+    case 'rpat': if(v==='boom') d.sbg='boom'; else{d.sbg=''; if(RPAT[v]) d.rpat=v;} break;
+    case 'pick': d.pick=v; break;
+    case 'where': d.where=v; if(v!=='cycle') d.pos=null; break;
+    case 'wpos': d.where='focus'; d.pos=v===''?null:+v; break;
+    case 'pos': d.pos=+v; break;
+    case 'ekey': d.key=v===''?null:+v; if(d.pos!=null&&!positions(d.key??cur.key).some(p=>p.lo===+d.pos)) d.pos=null; break;
+    case 'sev': d.sev=!d.sev; break;
+    case 'song': d.song=v; break;
+    case 'quiz': d.quiz=v; break;
     default: return;
   }
-  const sel=`[data-act="${b.dataset.act}"]${b.dataset.v?`[data-v="${b.dataset.v}"]`:''}${b.dataset.row?`[data-row="${b.dataset.row}"]`:''}`;
-  renderCust(); const n=custEl.querySelector(sel); if(n) n.focus({preventScroll:true});
-});
-custEl.addEventListener('change',e=>{
-  if(e.target.dataset.cname!==undefined&&st.cust){st.cust.draft.name=e.target.value; return;}
-  const k=e.target.dataset.cset; if(!k||!st.cust) return; const s=st.cust.draft, v=e.target.value;
-  s[k]=v===''?null:['sub','chord','key'].includes(k)?+v:v;
-  if(k==='plan'){const lp=v==='tones'?TONE_PATS:LINE_PATS; if(isLinePlan(v)&&!lp.includes(s.pattern)) s.pattern=lp[0];}
-  if(k==='prog'&&v!=='one') s.chord=0;
-  if(k==='key'){const ps=custAll({k:'pos'},s).map(a=>a[0]); if(s.pos!=null&&+s.pos>=0&&!ps.includes(String(s.pos))) s.pos=null; if(s.chips.pos) s.chips.pos=null;} // boxes move with the key
-  renderCust(); const n=custEl.querySelector(`[data-cset="${k}"]`); if(n) n.focus({preventScroll:true});
-});
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&st.cust){custClose(); e.stopPropagation();} },true);
+  render();
+}
+function ceditSave(){
+  const c=st.cedit, r=c&&LOG.routines[c.rid], it=r&&r.items.find(x=>x.uid===c.uid); st.cedit=null; st.pmenu=null; if(!it){render(); return;}
+  const set={}; [...EX_KEYS,'key'].forEach(k=>{const v=c.d[k]; if(v!==undefined&&v!==null&&v!=='') set[k]=v;});
+  it.set=set; touch(r); if(st.ex&&st.ex.uid===c.uid) st.ex.base=fillSet(it.ex,set); render();
+}
+function ceditHTML(r,it,k){
+  const c=st.cedit, E=exOf(it.ex), d=c.d, ctx={V:{...d,rpat:d.rpat||R.pat},live:false,act:'echip',E,s:d,edit:true,pin:(d.where||'focus')==='focus'?d.pos:null};
+  if(isQuiz(E)) ctx.rows=[{k:'quiz',name:'Quiz'}];
+  else if(E.id==='songs') ctx.rows=[{k:'song',name:'Song'},...bRows(ctx.V,false).filter(x=>['plan','rpat','pick'].includes(x.k))];
+  return `<div class="exi open" data-i="${k}"><span class="mk">${k+1}</span><div class="tx ed"><div class="exh-title"><b>${esc(E.name)}</b><small>Customize · for ${esc(r.name)}</small></div>
+    ${rowsHTML(ctx)}${isQuiz(E)||E.id==='songs'?'':keyLine(ctx,d.key)}${goalLine(E,d.goal,'ecgoal','ecsave','eccancel','Save',`Keep these settings for ${esc(E.name)} in ${esc(r.name)}.`)}</div></div>`;
+}
+// what an exercise starts with, as the chips it shows in Drill
+function playBits(s,song){
+  const out=[listLabel(PLAY_CH,s.plan)];
+  if(s.plan==='line'){out.push(patLabel(s.pattern)); if(s.over==='restart'&&s.prog!=='one') out.push('From each chord');}
+  if(s.plan==='tones') out.push(patLabel(s.pattern));
+  if(isLinePlan(s.plan)&&TECH[s.tech]) out.push(listLabel(TECH_CH,s.tech));
+  if(strums(s)){if(s.sbg==='boom') out.push('Boom-chuck'); else if(!song&&RPAT[s.rpat]) out.push(rowName(RPAT[s.rpat].name));}
+  if(picks(s)&&s.pick!=='arp') out.push(listLabel(PICK_CH,s.pick));
+  return out;
+}
+function sumList(E,s){
+  if(E.id==='songs'){const sk=LOG.skills[s.song]; return [sk&&!sk.gone?sk.name:'Your songs, in order',...playBits(s,true)];}
+  if(isQuiz(E)) return [rowLabel(E.rows[0],s.quiz)];
+  const S=/^song:/.test(s.prog||'')&&LOG.skills[s.prog], ov=overList();
+  const out=[s.prog==='one'?`One chord, ${bareRoman((ov[+s.chord||0]||ov[0]).roman)}`:S?S.name:(PROG_BY[s.prog]||PROG_BY.pop).name,...playBits(s,!!S)];
+  if(s.where&&s.where!=='focus') out.push(listLabel(WHERE,s.where));
+  else if(s.pos!=null) out.push(+s.pos<0?'Whole neck':(positions(s.key??cur.key).find(p=>p.lo===+s.pos)||{label:`Frets ${s.pos}–${+s.pos+4}`}).label);
+  if(s.key!=null) out.push(`Key of ${keyName(+s.key)}`);
+  return out;
+}
+const sumChips=(E,s)=>`<span class="sumc">${sumList(E,s).map(x=>`<span class="chip sm">${esc(x)}</span>`).join('')}</span>`;
+const goalText=(E,s)=>E.id==='songs'?'each song’s own tempo':`goal ${s.goal}${isQuiz(E)?'% right':' bpm'}`;
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&st.pmenu){const m=st.pmenu; st.pmenu=null; if(st.mode==='practice') render(); else renderEx();
+  const n=document.querySelector(`[data-act="pmenu"][data-m="${m}"]`); if(n) n.focus(); e.stopPropagation();} },true);
+document.addEventListener('click',e=>{ if(st.pmenu&&!e.target.closest('.smenu,[data-act="pmenu"]')&&!e.target.closest('button')){st.pmenu=null; if(st.mode==='practice') render(); else renderEx();} });
+exHeadEl.addEventListener('input',e=>{ if(e.target.id==='edName'&&st.edit) st.edit.name=e.target.value; });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&st.songMenu){st.songMenu=false; renderEx(); const n=exHeadEl.querySelector('[data-act="bsong"]'); if(n) n.focus(); e.stopPropagation();} },true);
 document.addEventListener('click',e=>{ if(st.songMenu&&!e.target.closest('.smenu,[data-act="bsong"]')){st.songMenu=false; renderEx();} });
 exHeadEl.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='bName'){e.preventDefault(); const b=exHeadEl.querySelector('[data-act="bnewok"]'); if(b) b.click();} });
@@ -3157,7 +3276,9 @@ function renderSheet(){
   const part=p=>p.to-p.from<1?` <span class="bt">${beatsText(p.to-p.from)}</span>`:'';
   const tiles=cur.prog.map((p,i)=>`<button class="bar${p.voicing&&p.voicing.own?' own':''}${p.to-p.from<1?' split'+(p.from>0?' cont':''):''}" data-pci="${i}" aria-pressed="${i===cur.pci}"><span class="nm">${esc(p.ch.name)}</span><span class="rn">${p.ch.roman}${part(p)}</span><span class="fr">${p.voicing?fretText(p.voicing.frets):'picked'}</span></button>`).join('');
   const missing=[...new Set(cur.prog.filter(p=>!p.voicing).map(p=>p.ch.name))];
-  const notes=[missing.length&&D.plan!=='arp'&&!isLinePlan(D.plan)?`No voicing of ${missing.map(esc).join(', ')} fits this box, so ${missing.length===1?'it is':'they are'} picked instead.`:'',
+  const and=l=>l.length>1?l.slice(0,-1).join(', ')+' and '+l[l.length-1]:l[0]||'', nm=l=>and(l.map(iv=>noteName((cur.key+iv)%12)));
+  const B=cur.borrow, borrow=B?`Borrowed from ${B.name}: these chords use ${nm(B.out)} where ${keyName()} ${esc(modeName())} has ${nm(B.was)}, so the neck shows ${B.name}'s notes. Dashed dots are outside your focus.`:'';
+  const notes=[borrow,missing.length&&D.plan!=='arp'&&!isLinePlan(D.plan)?`No voicing of ${missing.map(esc).join(', ')} fits this box, so ${missing.length===1?'it is':'they are'} picked instead.`:'',
     cur.chords.length!==7&&!S?`${esc(modeName())} has too few notes to build these chords, so they come from ${keyName()} ${FAMS.major.modes[TO_DIATONIC[F.fam][F.mode]||0][0]}, the nearest 7-note mode${F.fam==='blues'?' (the blue note sits outside it)':''}.`:''].filter(Boolean).join(' ');
   const title=`<b class="sh-title sh-static">${S?esc(S.name):D.prog==='one'?`${esc(cur.prog[0].ch.name)}, one chord`:esc((PROG_BY[D.prog]||PROG_BY.pop).name)}</b>`;
   el.innerHTML=`${songNote()}
@@ -3179,17 +3300,19 @@ const BG_HOW={
   roll:`<b>Crosspicking.</b> Roll across the top three strings of each shape, low to high, in 8ths: two rolls of three and one of two fill the bar. Keep the pick strict: down on every beat, up on every and.`,
   thumb:`<b>Travis picking.</b> The thumb (p) alternates the root and the 5th on every beat. The index finger (i) picks the G string and the middle finger (m) the B string, on the ands.`};
 function strumCard(){
-  if(isBG(D.plan)) return `<div class="strum-card"><p class="hint">${BG_HOW[D.plan]} The tab shows the ${D.plan==='thumb'?'finger':'pick stroke'} for each note.</p></div>`;
+  const pk=picks(D)&&D.pick!=='arp'?BG_HOW[D.pick]:'', boom=strums(D)&&D.sbg==='boom';
+  const how=list=>`<div class="strum-card"><p class="hint">${list.filter(Boolean).join(' ')} The tab shows the ${D.pick==='thumb'&&pk?'finger':'pick stroke'} for each note.</p></div>`;
+  const bm=D.plan==='both'?BG_HOW.boom.replace(/ In the bar before.*$/,' The bass doesn’t walk here, since the next bar picks the same chord.'):BG_HOW.boom;
+  if(boom||D.plan==='arp'&&pk) return how([boom?bm:'',D.plan==='both'?(pk||`<b>Then pick.</b> The next bar ${term('arpeggio','picks')} the same shape one string at a time.`):pk]);
   if(D.plan==='arp') return `<div class="strum-card"><p class="hint">Each chord is ${term('arpeggio','picked')} one string at a time, so there is no strum pattern. Pick <b>Strum</b> in the Play each chord row to strum.</p></div>`;
   if(isLinePlan(D.plan)){const S=songProg(D.prog), what=S?esc(S.name)+'’s chords':`${cur.prog.map(p=>esc(p.ch.name)).join(' ')}`;
     return `<div class="strum-card"><p class="hint">${D.plan==='tones'?`${{arp:'Each bar plays the notes of its chord one at a time',enclose:'Each bar circles the notes of its chord, stepping in from the scale note above and the one below',walk:'Each bar makes up a line that lands on a note of its chord on every beat'}[D.pattern]||'Each bar plays the notes of its chord'}, over ${what}. After the first bar, each chord starts on its note closest to where you are. Solid dots are the chord playing now.`
       :D.over==='restart'?`Each chord starts ${patLabel(D.pattern).toLowerCase()} again from its own root, over ${what}. The last bar steps home to ${keyName()}.`
       :`One pass of ${patLabel(D.pattern).toLowerCase()}, ${keyName()} to ${keyName()}, while ${what} go round underneath. Each pass picks the chords up where the last one stopped.`}${TECH[D.tech]?` The tab shows ${D.tech==='altpick'?'each pick stroke':'each hammer-on (h) and pull-off (p)'}.`:''}</p></div>`;}
+  // the pattern is picked in the Strum row; the card shows its steps, and clicking a step makes it your own
   const P=curPat();
-  const groups=RPATS.map(([g,list])=>`<optgroup label="${g}">${list.map(p=>`<option value="${p[0]}"${p[0]===R.pat?' selected':''}>${p[1]}</option>`).join('')}</optgroup>`).join('')
-    +`<optgroup label="Edit the grid to make your own"><option value="custom"${R.pat==='custom'?' selected':''}>Your pattern</option></optgroup>`;
-  return `<div class="strum-card"><div class="row sc-top"><span class="seglab">Strum</span><select data-set="rpat" aria-label="Strum pattern">${groups}</select>${R.pat==='custom'?seg('Grid','rres',[['8','8ths'],['16','16ths']],String(P.res)):''}${strumOwnerHTML()}</div>
-    <div class="rgrid r${P.res}" id="rgrid" style="--n:${P.res}">${rgridHTML(P)}</div></div>`;
+  return `<div class="strum-card"><div class="row sc-top"><span class="seglab">Strum</span><b class="scname" id="scname">${R.pat==='custom'?'Your pattern':esc(P.name)}</b>${R.pat==='custom'?seg('Grid','rres',[['8','8ths'],['16','16ths']],String(P.res)):''}${strumOwnerHTML()}</div>
+    <div class="rgrid r${P.res}" id="rgrid" style="--n:${P.res}">${rgridHTML(P)}</div>${pk?`<p class="hint">${pk}</p>`:''}</div>`;
 }
 function pbarHTML(){
   // everything you touch while practicing, in one bar
@@ -3205,9 +3328,10 @@ function updateLive(){
   const n=st.playing&&st.idx>=0?st.seq[st.idx]:null;
   if(st.playing&&st.count){el.innerHTML=`Count-in <b class="on">${st.count}</b>`; return;}
   if(D.line!=='prog'||!cur.prog){el.innerHTML=''; return;}
-  if(n&&!n.chord&&!isBG(D.plan)){el.innerHTML=`${isLinePlan(D.plan)?'Over':'Pick'} <b>${esc(cur.chord.name)}</b>`; return;}
+  const bg=n?!!n.bg:strums(D)?D.sbg==='boom':D.plan==='arp'&&D.pick!=='arp'; // a bluegrass bar counts its beats
+  if(bg){const L=countLabels(n?n.n:4); el.innerHTML=L.map((l,k)=>n&&k===n.k?`<b class="on">${l}</b>`:l).join(' '); return;}
+  if(n&&!n.chord){el.innerHTML=`${isLinePlan(D.plan)?'Over':'Pick'} <b>${esc(cur.chord.name)}</b>`; return;}
   if(D.plan==='arp'||isLinePlan(D.plan)){el.innerHTML=''; return;}
-  if(isBG(D.plan)){const L=countLabels(n?n.n:4); el.innerHTML=L.map((l,k)=>n&&k===n.k?`<b class="on">${l}</b>`:l).join(' '); return;}
   const P=curPat(), L=countLabels(P.res);
   el.innerHTML=P.steps.split('').map((c,k)=>n&&k===n.k?`<b class="on">${L[k]}</b>`:c==='.'?`<span class="gh">(${L[k]})</span>`:k%(P.res/4)===0?`<b>${L[k]}</b>`:L[k]).join(' ');
 }
@@ -3217,10 +3341,9 @@ function setsHTML(){
   const prog=D.line==='prog'&&cur.prog;
   const line=(label,ctl)=>`<div class="set"><span>${label}</span>${ctl}</div>`;
   const sw=(act,k,on,label)=>line(label,`<button class="sw" data-act="${act}" data-k="${k}" aria-pressed="${on}" aria-label="${label}"></button>`);
-  const sev=cur.set.size===7||prog?line('Add 7ths',`<button class="sw" data-act="sev" aria-pressed="${D.sev}" aria-label="Add 7ths"></button>`):'';
-  const play=prog?[sev,
-      D.plan!=='strum'&&!isBG(D.plan)?line(isLinePlan(D.plan)?'Notes per beat':'Picked notes per beat',`<select data-set="sub" aria-label="${isLinePlan(D.plan)?'Notes per beat':'Picked notes per beat'}">${opts(SUBS,D.sub)}</select>`):'']
-    :[line('Notes per beat',`<select data-set="sub" aria-label="Notes per beat">${opts(SUBS,D.sub)}</select>`),sev,
+  const play=prog?[ // Add 7ths sits on the Chords row
+      isLinePlan(D.plan)||picks(D)&&D.pick==='arp'?line(isLinePlan(D.plan)?'Notes per beat':'Picked notes per beat',`<select data-set="sub" aria-label="${isLinePlan(D.plan)?'Notes per beat':'Picked notes per beat'}">${opts(SUBS,D.sub)}</select>`):'']
+    :[line('Notes per beat',`<select data-set="sub" aria-label="Notes per beat">${opts(SUBS,D.sub)}</select>`),
       sw('tog','pad',D.pad,'Strum the chord each bar'),line('Start and end on',seg('','resolve',[['key','Key root'],['chord','Chord root']],D.resolve))];
   const hear=[sw('tog','click',D.click,'Click'),sw('tog','notes',D.notes,'Play the notes'),prog?sw('rtog','swing',R.swing,'Shuffle feel'):''];
   const neck=[line('Dot labels',seg('','lbl',[['key','Key'],['chord','Chord'],['notes','Notes']],saved.labels==='notes'?'notes':D.ref)),
@@ -3371,6 +3494,7 @@ const onClick=e=>{
   const act=b.dataset.act, i=+b.dataset.i;
   if(st.songMenu&&act!=='bsong'&&act!=='bsongpick'){st.songMenu=false; if(act!=='songform') renderEx();} // a click anywhere else closes the song menu
   if(st.exDel&&act!=='exudel') st.exDel=null;
+  if(st.pmenu&&act!=='pmenu'){st.pmenu=null; if(act!=='bchip'&&act!=='echip'){if(st.mode==='practice') render(); else renderEx();}} // a click anywhere else closes a dropdown menu
   if(st.bmsg&&act!=='bnewok') st.bmsg='';
   if(b.closest('.sets')){ // keep the sheet where it was after it redraws
     st.setsTop=b.closest('.sets').scrollTop;
@@ -3402,16 +3526,25 @@ const onClick=e=>{
     case 'exgoal':{if(!st.ex) return; const q=isQuiz(exOf(st.ex.ex)); st.ex.goal=Math.max(q?50:30,Math.min(q?100:260,st.ex.goal+(+b.dataset.v))); render(); return;}
     case 'exsave': exSave(); render(); return;
     case 'exclose': exEnd(); render(); return;
-    case 'excust': if(st.ex) custOpen(st.ex.rid?{rid:st.ex.rid,uid:st.ex.uid}:{ex:st.ex.ex}); return;
+    case 'excust': editStart(); {const n=exHeadEl.querySelector('.chip.bc,.chip.exc'); if(n) n.focus({preventScroll:true});} return;
+    case 'edsave': editSave(); return;
+    case 'edcancel': editCancel(); return;
+    case 'pmenu':{const m=b.dataset.m; st.pmenu=st.pmenu===m?null:m; if(st.mode==='practice') render(); else renderEx();
+      const mm=st.pmenu&&document.querySelector('.smenu'); if(mm&&mm.scrollIntoView) mm.scrollIntoView({block:'nearest'});
+      const n=document.querySelector(st.pmenu?'.smenu .mi[aria-checked="true"],.smenu .mi':`[data-act="pmenu"][data-m="${m}"]`); if(n) n.focus({preventScroll:true}); return;}
+    case 'echip': cchoose(b.dataset.row,b.dataset.v); return;
+    case 'ecsave': ceditSave(); return;
+    case 'eccancel': st.cedit=null; render(); return;
+    case 'ecgoal':{const c=st.cedit; if(!c) return; const q=isQuiz(exOf(c.ex)); c.d.goal=Math.max(q?50:30,Math.min(q?100:260,c.d.goal+(+b.dataset.v))); render(); return;}
     case 'exgo': case 'exprev': case 'exnext':{const r=st.ex&&LOG.routines[st.ex.rid]; if(!r) return; const k=r.items.findIndex(x=>x.uid===st.ex.uid);
       exGo(r,act==='exgo'?i:act==='exprev'?k-1:k+1); return;}
     case 'exleave': exEnd(); setMode('practice'); return;
-    case 'exsel': saved.rid=b.dataset.id; st.exEdit=false; st.exConfirm=false; save(); render(); return;
+    case 'exsel': saved.rid=b.dataset.id; st.exEdit=false; st.exConfirm=false; st.cedit=null; save(); render(); return;
     case 'exnew':{exNewRoutine(`Session ${routines().length+1}`); st.exEdit=true; st.exConfirm=false; render(); const el=document.getElementById('exName'); if(el){el.focus(); el.select();} return;}
     case 'exedit': st.exEdit=true; st.exConfirm=false; render(); return;
-    case 'exdone': st.exEdit=false; st.exConfirm=false; render(); return;
+    case 'exdone': st.exEdit=false; st.exConfirm=false; st.cedit=null; render(); return;
     case 'exup': case 'exdown':{const r=openRoutine(); if(r) exMove(r,i,act==='exup'?i-1:i+2); render(); return;}
-    case 'excusti':{const r=openRoutine(), it=r&&r.items[i]; if(it) custOpen({rid:r.id,uid:it.uid}); return;}
+    case 'excusti':{const r=openRoutine(), it=r&&r.items[i]; if(it) ceditStart(r,it); return;}
     case 'exdel':{const r=openRoutine(); if(!r||!r.items[i]) return; r.items.splice(i,1); touch(r); render(); return;}
     case 'exdup':{const r=openRoutine(); if(!r) return; exNewRoutine(`${r.name} copy`,r.items.map(it=>({uid:newUid(),ex:it.ex,set:JSON.parse(JSON.stringify(it.set||{}))}))); render(); return;}
     case 'exrm': st.exConfirm=true; render(); return;
@@ -3872,7 +4005,7 @@ document.addEventListener('keydown',e=>{const t=e.target.closest&&e.target.close
 addEventListener('scroll',hideTip,true);
 addEventListener('resize',hideTip);
 
-window.__fretDebug={tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,EXS,EX_BY,exStart,exGo,routines,openRoutine,chipDone,exProgress,fillSet,custOpen,runOf,setupSkill,stepState,followKey,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule,setWhere,setPlan,passEnd,cycleShapes,techMarks,regen};
+window.__fretDebug={tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,EXS,EX_BY,exStart,exGo,routines,openRoutine,chipDone,exProgress,fillSet,editStart,ceditStart,runOf,setupSkill,stepState,followKey,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule,setWhere,setPlan,passEnd,cycleShapes,techMarks,regen};
 fillSelects();
 render();
 setTimeout(syncNow,300); // does nothing without a token

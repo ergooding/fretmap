@@ -28,6 +28,8 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
     const change=(sel,v)=>{const e=d.querySelector(sel); e.value=v; e.dispatchEvent(new w.Event('change',{bubbles:true}));};
     const L=wide?'wide':'phone';
     const bc=(row,v)=>{const e=d.querySelector(`#exhead [data-act=bchip][data-row=${row}][data-v="${v}"]`); if(!e) fail('ui',`${L} no ${row} chip ${v}`); else click(e);};
+    const strum=v=>{const c=d.querySelector(`#exhead [data-act=bchip][data-row=rpat][data-v="${v}"]`); if(c){click(c); return;} // a chip, or the All 21 patterns menu
+      click(d.querySelector('#exhead [data-act=pmenu][data-m=rpat]')); const m=d.querySelector(`#exhead .smenu [data-row=rpat][data-v="${v}"]`); if(!m) fail('ui',`${L} no strum ${v}`); else click(m);};
     click(d.querySelector('[data-mode=drill]'));
     {const sp=d.getElementById('selPos'); sp.value='5'; sp.dispatchEvent(new w.Event('change',{bubbles:true}));}
     bc('prog','pop'); bc('plan','both');
@@ -99,7 +101,7 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
     const sampleProgs=wide?X.PROGS.map(p=>p[0]):['pop','251','blues'];
     for(const pid of sampleProgs) for(const pat of ['faithful','funkchuck','shuffle','skank']) for(const swing of [false,true]) for(const sub of [2,3]){
       bc('prog',pid); bc('plan','both');
-      change('[data-set=rpat]',pat); X.R.swing=swing; X.D.sub=sub; change('[data-set=sub]',String(sub));
+      strum(pat); X.R.swing=swing; X.D.sub=sub; change('[data-set=sub]',String(sub));
       Object.assign(X.D,{click:true,notes:true,ramp:0}); X.saved.bpm=100;
       const tag=`${L} ${pid} ${pat} swing=${swing} sub=${sub}`; played++;
       const seq=X.st.seq, prog=X.cur.prog, beat=60/100;
@@ -146,7 +148,7 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
       click(d.querySelector('[data-act=play]'));
     }
     // editing the grid makes a custom pattern, rebuilds the strum bars, and cycles the step
-    change('[data-set=rpat]','quarters'); click(d.querySelector('.rstep[data-i="1"]'));
+    strum('quarters'); click(d.querySelector('.rstep[data-i="1"]'));
     if(X.R.pat!=='custom'||X.R.custom.steps!=='xxx.x.x.') fail('edit',X.R.pat+' '+X.R.custom.steps);
     if(X.st.seq.filter(e=>e.chord).slice(0,8).map(e=>e.strum).join('')!=='xxx.x.x.') fail('edit-seq','strum bar not rebuilt');
     click(d.querySelector('[data-act=rres][data-v="16"]'));
@@ -155,7 +157,7 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
     if(X.R.custom.steps!=='xxx.x.x.') fail('res8',X.R.custom.steps);
     // the strum pattern is hidden for arpeggio only
     bc('plan','arp');
-    if(d.getElementById('rgrid')||d.querySelector('[data-set=rpat]')) fail('arp-ui','strum grid shown for arpeggio only');
+    if(d.getElementById('rgrid')||d.querySelector('#exhead [data-row=rpat]')) fail('arp-ui','strum grid shown for arpeggio only');
     bc('plan','both');
     // previewing a chord shows its voicing
     bc('prog','pop');

@@ -44,6 +44,8 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   const A=await device(true); const {w,d,X,click,mode,advance}=A;
   // the builder's chips, and the song pill's menu for a song
   const bc=(row,v)=>click(d.querySelector(`#exhead [data-act=bchip][data-row=${row}][data-v="${v}"]`));
+  const strum=v=>{const c=d.querySelector(`#exhead [data-act=bchip][data-row=rpat][data-v="${v}"]`); if(c){click(c); return;} // a common pattern's chip, or the All 21 patterns menu
+    click(d.querySelector('#exhead [data-act=pmenu][data-m=rpat]')); click(d.querySelector(`#exhead .smenu [data-row=rpat][data-v="${v}"]`));};
   const pickProg=v=>{if(/^song:/.test(v)){click(d.querySelector('#exhead [data-act=bsong]')); click(d.querySelector(`#exhead [data-act=bsongpick][data-id="${v}"]`));} else bc('prog',v);};
   ok(!d.querySelector('[data-mode=practice]').hidden,'nav');
   // drill: a 60 s run on a box is logged with its passes
@@ -72,7 +74,8 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(re&&re.secs===40&&re.passes>=1&&re.prog==='pop'&&re.plan==='both'&&re.swing===false,'prog-run',JSON.stringify(re));
   ok(re&&/Pop: I V vi IV|Pop: Imaj7 V7 vi7 IVmaj7/.test(X.LOG.skills[re.skill].name)&&/frets 5–9/.test(X.LOG.skills[re.skill].name),'prog-skill',re&&JSON.stringify(X.LOG.skills[re.skill]));
   // a different strum pattern is a different skill
-  const sel=d.querySelector('[data-set=rpat]'); sel.value='gallop'; sel.dispatchEvent(new w.Event('change',{bubbles:true}));
+  ok(!d.querySelector('.strum-card [data-set=rpat]')&&d.querySelector('#exhead [data-act=pmenu][data-m=rpat]').textContent==='All 21 patterns ▾','strum-one-picker');
+  strum('gallop'); ok(X.R.pat==='gallop'&&!d.querySelector('#exhead .smenu')&&d.querySelector('#exhead [data-row=rpat][data-v=gallop]').getAttribute('aria-pressed')==='true','strum-menu-pick');
   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(20); click(d.querySelector('[data-act=play]'));
   const re2=entries(X).filter(e=>e.skill.startsWith('prog:')); ok(re2.length===2&&re2[0].skill!==re2[1].skill&&re2[1].skill.endsWith(':gallop'),'prog-pattern-skill',re2.map(e=>e.skill).join(' '));
   // a gap of more than 20 minutes starts a new session
@@ -102,16 +105,26 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   click(d.querySelector('[data-act=exnext]')); ok(X.st.ex.ex==='tech'&&X.D.tech==='altpick'&&X.D.plan==='line'&&X.D.prog==='one'&&d.querySelector('#exstrip .exstep.done[data-i="0"]'),'ex-next');
   click(d.querySelector('[data-act=exnext]'));
   ok(X.st.ex.ex==='prog'&&X.D.line==='prog'&&X.D.prog==='pop'&&X.D.plan==='both'&&X.R.pat==='backbeat'&&X.F.pos===5&&!X.D.sev,'ex-prog-setup',[X.D.line,X.D.prog,X.D.plan,X.R.pat,X.F.pos].join(' '));
-  ok(d.querySelectorAll('#exhead [data-row=prog]').length===4&&d.querySelectorAll('#exhead [data-row=plan]').length===8&&d.querySelectorAll('#exhead [data-row=rpat]').length===5,'ex-prog-rows');
-  ok(X.cur.prog.map(p=>p.ch.name).join(' ')==='Am Em F Dm'&&/Strum pattern/.test(d.getElementById('exhead').textContent),'ex-prog-chords',X.cur.prog.map(p=>p.ch.name).join(' '));
+  ok(d.querySelectorAll('#exhead [data-row=prog]').length===11&&d.querySelectorAll('#exhead [data-row=plan]').length===5&&d.querySelectorAll('#exhead [data-row=rpat]').length===6&&d.querySelectorAll('#exhead [data-row=pick]').length===3&&/0 of 25 clean/.test(d.getElementById('exhead').textContent),'ex-prog-rows');
+  {const labs=[...d.querySelectorAll('#exhead .brow .blab')].map(e=>e.textContent).join(', '); ok(X.cur.prog.map(p=>p.ch.name).join(' ')==='Am Em F Dm'&&labs==='Chords, Play each chord, Strum, Pick, Where','ex-prog-chords',X.cur.prog.map(p=>p.ch.name).join(' ')+' / '+labs);}
   click(d.querySelector('#exhead [data-row=prog][data-v="50s"]')); ok(X.D.prog==='50s'&&X.R.pat==='backbeat'&&X.cur.prog.map(p=>p.ch.name).join(' ')==='Am F Dm Em','ex-doowop',X.cur.prog.map(p=>p.ch.name).join(' '));
-  // boom-chuck moves Where to the open position and drops the strum row; strumming again goes back to the box
-  bc('plan','boom'); ok(X.D.plan==='boom'&&X.D.where==='open'&&X.F.pos===X.cur.pos[0].lo&&!d.querySelector('#exhead [data-row=rpat]')&&d.querySelector('#exhead [data-row=where][data-v=open]').getAttribute('aria-pressed')==='true','ex-boom',X.F.pos);
-  bc('plan','strum'); ok(X.D.plan==='strum'&&X.D.where==='focus'&&X.F.pos===5,'ex-boom-back',X.F.pos);
+  // boom-chuck is a strum and moves Where to the open position; a strum pattern again goes back to the box
+  bc('rpat','boom'); ok(X.D.plan==='both'&&X.D.sbg==='boom'&&X.D.where==='open'&&X.F.pos===X.cur.pos[0].lo&&d.querySelector('#exhead [data-row=rpat][data-v=boom]').getAttribute('aria-pressed')==='true'&&d.querySelector('#exhead [data-row=where][data-v=open]').getAttribute('aria-pressed')==='true','ex-boom',X.F.pos);
+  bc('plan','strum'); ok(X.D.plan==='strum'&&X.D.sbg==='boom'&&X.D.where==='open'&&!d.querySelector('#exhead [data-row=pick]'),'ex-boom-strum');
+  strum('gallop'); ok(X.D.sbg===''&&X.R.pat==='gallop'&&X.D.where==='focus'&&X.F.pos===5,'ex-boom-back',X.F.pos);
+  // Crosspick and Travis are picks: Pick or Strum, then pick with either one plays in the open position too
+  bc('plan','arp'); bc('pick','thumb'); ok(X.D.pick==='thumb'&&X.D.where==='open'&&!d.querySelector('#exhead [data-row=rpat]'),'ex-travis');
+  bc('plan','both'); strum('boom'); bc('pick','roll'); ok(X.skillNow().id.endsWith(':both:boom+roll')&&X.D.where==='open','ex-boom-roll',X.skillNow().id);
+  bc('pick','arp'); ok(X.D.where==='open','ex-boom-arp'); strum('gallop'); ok(X.D.where==='focus'&&X.F.pos===5,'ex-back-box');
+  bc('plan','strum');
   // a strum pattern, a progression and a way of playing each count as soon as any run with them is clean at the goal
-  click(d.querySelector('#exhead [data-row=rpat][data-v=gallop]')); runClean(80,20);
+  runClean(80,20);
   ok(['[data-row=rpat][data-v=gallop]','[data-row=prog][data-v="50s"]','[data-row=plan][data-v=strum]'].every(q=>d.querySelector('#exhead '+q).classList.contains('done'))&&!d.querySelector('#exhead [data-row=prog][data-v=pop]').classList.contains('done'),'ex-prog-chips-done');
   // leave, then resume where you stopped
+  // a run logged before Strum and Pick had rows of their own counts for the strum or pick it is now
+  {const E=X.EX_BY.prog, s=X.fillSet('prog'); X.LOG.sessions[X.LOG.sessions.length-1].entries.push({id:'old1',skill:'prog:9:pent:1:5:pop:thumb:-',t:w.__clock,secs:60,bpm:[90,90],sub:2,passes:4,clean:90},{id:'old2',skill:'prog:9:pent:1:5:pop:boom:-',t:w.__clock,secs:60,bpm:[90,90],sub:2,passes:4,clean:90});
+   ok(X.chipDone(E,'pick','thumb',80,s)&&X.chipDone(E,'plan','arp',80,s)&&X.chipDone(E,'rpat','boom',80,s)&&!X.chipDone(E,'pick','roll',80,s),'old-bluegrass-runs');
+   const o=X.fillSet('prog',{plan:'roll',goal:80}); ok(o.plan==='arp'&&o.pick==='roll'&&o.sbg==='','old-plan-set',JSON.stringify(o));}
   click(d.querySelector('[data-act=exleave]')); ok(X.st.mode==='practice'&&!X.st.ex&&/Resume at 3/.test(d.querySelector('.exopen').textContent)&&/stopped at 3/.test(d.querySelector('.exsess').textContent),'ex-resume-shown');
   click(d.querySelector('[data-act=exresume]')); ok(X.st.ex&&X.st.ex.ex==='prog'&&X.st.ex.uid==='w3'&&X.st.mode==='drill','ex-resume');
   // the Drill tab itself is free Drill, with the same rows and no name or goal
@@ -139,19 +152,29 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   click(d.querySelector('[data-act=exrmyes]')); const goneR=Object.values(X.LOG.routines).find(r=>r.gone);
   ok(X.routines().length===1&&goneR&&X.openRoutine().name==='Weeknights "short"','ex-rm');
   ok(X.mergeLogs(X.LOG,{v:1,sessions:[],skills:{},routines:{[goneR.id]:{...goneR,gone:false,updated:1}}}).routines[goneR.id].gone,'ex-rm-merge');
-  // Customize a session's exercise: its chips, what it starts with, its goal
-  click(d.querySelector('[data-act=exedit]')); click(d.querySelector('[data-act=excusti][data-i="2"]'));
-  ok(!d.getElementById('cust').hidden&&/Customize Progressions/.test(d.getElementById('cust').textContent),'cust-open');
-  const setC=(k,v)=>{const e=d.querySelector(`#cust [data-cset=${k}]`); e.value=v; e.dispatchEvent(new w.Event('change',{bubbles:true}));};
-  click(d.querySelector('#cust [data-act=custchip][data-row=prog][data-v=blues]')); setC('prog','blues'); setC('plan','thumb');
-  click(d.querySelector('#cust [data-act=custgoal][data-v="-5"]')); click(d.querySelector('#cust [data-act=custsave]'));
-  {const s=X.openRoutine().items[2].set; ok(s.prog==='blues'&&s.plan==='thumb'&&s.goal===75&&s.chips.prog.join(' ')==='two 145 pop 50s blues'&&d.getElementById('cust').hidden,'cust-save',JSON.stringify(s));}
+  // Customize a session's exercise right in the list: the same rows set where it starts, and its goal
+  click(d.querySelector('[data-act=exedit]')); ok(d.querySelectorAll('.exi .sumc .chip').length>8&&!/goal \d+ ·/.test(d.querySelector('.exopen').textContent),'ex-summary-chips');
+  click(d.querySelector('[data-act=excusti][data-i="2"]'));
+  ok(d.querySelector('.exi.open')&&/Progressions/.test(d.querySelector('.exi.open').textContent)&&!d.querySelector('.ck,[data-act=custchip]'),'cust-open');
+  const ec=(row,v)=>click(d.querySelector(`.exi.open [data-act=echip][data-row=${row}][data-v="${v}"]`));
+  ec('prog','blues'); ec('plan','arp'); ec('pick','thumb');
+  click(d.querySelector('.exi.open [data-act=ecgoal][data-v="-5"]')); click(d.querySelector('.exi.open [data-act=ecsave]'));
+  {const s=X.openRoutine().items[2].set; ok(s.prog==='blues'&&s.plan==='arp'&&s.pick==='thumb'&&s.goal===75&&!s.chips&&!d.querySelector('.exi.open'),'cust-save',JSON.stringify(s));}
+  ok([...d.querySelectorAll('.exi')][2].querySelector('.sumc').textContent==='12-bar bluesPickTravis','cust-summary',[...d.querySelectorAll('.exi')][2].querySelector('.sumc').textContent);
   click(d.querySelector('[data-act=exdone]')); click(d.querySelector('[data-act=exitem][data-i="2"]'));
-  ok(X.D.prog==='blues'&&X.D.plan==='thumb'&&X.D.where==='open'&&X.F.pos===X.cur.pos[0].lo&&d.querySelectorAll('#exhead [data-row=prog]').length===5&&/goal 75/.test(d.getElementById('exhead').textContent),'cust-applied',[X.D.prog,X.D.plan,X.D.where,X.F.pos,X.cur.pos[0].lo,d.querySelectorAll('#exhead [data-row=prog]').length,/goal 75/.test(d.getElementById('exhead').textContent)].join(' '));
-  // Customize as you play, from the panel; Cancel keeps things as they were
-  click(d.querySelector('#exhead [data-act=excust]')); click(d.querySelector('#cust [data-act=custgoal][data-v="5"]')); click(d.querySelector('#cust [data-act=custclose]'));
-  ok(X.openRoutine().items[2].set.goal===75&&d.getElementById('cust').hidden,'cust-cancel');
-  bc('plan','both'); ok(X.D.where==='focus'&&X.F.pos===5,'bg-where-back',X.D.where+' '+X.F.pos);
+  ok(X.D.prog==='blues'&&X.D.plan==='arp'&&X.D.pick==='thumb'&&X.D.where==='open'&&X.F.pos===X.cur.pos[0].lo&&d.querySelectorAll('#exhead [data-row=prog]').length===11&&/goal 75/.test(d.getElementById('exhead').textContent),'cust-applied',[X.D.prog,X.D.plan,X.D.where,X.F.pos,X.cur.pos[0].lo,d.querySelectorAll('#exhead [data-row=prog]').length,/goal 75/.test(d.getElementById('exhead').textContent)].join(' '));
+  // Customize as you play: the rows edit in place, and Cancel puts Drill back as it was
+  click(d.querySelector('#exhead [data-act=excust]')); ok(X.st.edit&&/Customize/.test(d.querySelector('#exhead .exh-top').textContent)&&d.querySelector('#exhead [data-act=edsave]').textContent==='Save to Weeknights "short"','edit-open');
+  bc('pick','roll'); click(d.querySelector('#exhead [data-act=exgoal][data-v="5"]')); ok(X.D.pick==='roll','edit-live');
+  click(d.querySelector('#exhead [data-act=edcancel]'));
+  ok(X.openRoutine().items[2].set.goal===75&&!X.st.edit&&X.D.pick==='thumb'&&X.st.ex.goal===75&&!!d.querySelector('#exhead [data-act=excust]'),'cust-cancel');
+  // Save keeps a key and a box picked from the Key pill and Follow the focus ▾
+  click(d.querySelector('#exhead [data-act=excust]')); bc('pick','arp'); ok(X.D.where==='focus'&&X.F.pos===5,'bg-where-back',X.D.where+' '+X.F.pos);
+  click(d.querySelector('#exhead [data-act=pmenu][data-m=key]')); click(d.querySelector('#exhead .smenu [data-row=ekey][data-v="7"]'));
+  click(d.querySelector('#exhead [data-act=pmenu][data-m=wpos]')); const box=d.querySelectorAll('#exhead .smenu [data-row=wpos]')[2]; const lo=+box.dataset.v; click(box);
+  ok(X.F.key===7&&X.F.pos===lo&&/frets/.test(d.querySelector('#exhead [data-act=pmenu][data-m=wpos]').textContent),'edit-pins',X.F.key+' '+X.F.pos);
+  click(d.querySelector('#exhead [data-act=edsave]'));
+  {const s=X.openRoutine().items[2].set; ok(!X.st.edit&&s.key===7&&s.pos===lo&&s.where==='focus'&&s.pick==='arp'&&s.goal===75,'edit-save',JSON.stringify(s));}
   // sessions sync: the newer copy of a session wins, and an import brings sessions in
   {const r=X.openRoutine(), old={...r,name:'Old name',updated:1}; ok(X.mergeLogs(X.LOG,{v:1,sessions:[],skills:{},routines:{[r.id]:old}}).routines[r.id].name==='Weeknights "short"','ex-merge-newer');
    const nw={id:'rX',name:'From phone',created:5,updated:5,items:[{uid:'a',ex:'quiz',set:{}}]}; ok(X.mergeLogs(X.LOG,{v:1,sessions:[],skills:{},routines:{rX:nw}}).routines.rX.name==='From phone','ex-merge-new');}
@@ -226,7 +249,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   X.addSong('Song B','','','-1','0','pop','G C D',{});
   mode('drill'); pickProg('pop'); click(d.querySelector('[data-act=rstep][data-i="2"]'));
   const general=X.R.custom.steps; ok(X.R.pat==='custom'&&!X.R.owner,'general-custom');
-  pickProg('song:here-pavement'); setF('[data-set=rpat]','custom');
+  pickProg('song:here-pavement'); strum('custom');
   const hereSteps=X.LOG.skills['song:here-pavement'].strum.custom.steps; ok(X.R.owner==='song:here-pavement'&&X.R.custom.steps===hereSteps&&hereSteps!==general,'song-own-custom',X.R.custom.steps+' '+hereSteps+' '+general);
   pickProg('song:song-b'); ok(X.R.pat==='faithful'&&X.R.custom.steps!==hereSteps,'song-b-default',X.R.pat+' '+X.R.custom.steps);
   click(d.querySelector('[data-act=rstep][data-i="0"]')); const bSteps=X.LOG.skills['song:song-b'].strum.custom.steps;
@@ -314,12 +337,15 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     X.D.pattern='updown';
     // bluegrass: boom-chuck walks G A B into C, and C alternates to the G on the low E string
     { const nm=n=>n.chord?'['+n.v.frets.map(f=>f===null?'-':f).join('')+']':'EADGBe'[n.s]+n.f;
-      Object.assign(X.F,{key:7,fam:'major',mode:0,pos:0}); Object.assign(X.D,{prog:'145',plan:'boom',sev:false}); X.refresh(); mode('drill');
+      Object.assign(X.F,{key:7,fam:'major',mode:0,pos:0}); Object.assign(X.D,{prog:'145',plan:'strum',sbg:'boom',sev:false}); X.refresh(); mode('drill');
       const bb=X.genSeq().map(nm).join(' ');
       ok(bb.startsWith('E3 [---003] A0 A2 A3 [--2010] E3 [--2010] D0 [---232] A2 A0 E3 [---003] D0 [---003]'),'bg-boom',bb);
-      X.D.plan='thumb'; X.refresh(); const tb=X.genSeq().slice(0,8).map(n=>nm(n)+n.pk).join(' '); ok(tb==='E3p B0m D0p G0i E3p B0m D0p G0i','bg-travis',tb);
-      X.D.plan='roll'; X.refresh(); const rb=X.genSeq().slice(0,8).map(n=>nm(n)+n.pk).join(' '); ok(rb==='G0↓ B0↑ e3↓ G0↑ B0↓ e3↑ G0↓ B0↑','bg-roll',rb);
-      Object.assign(X.D,{prog:'one',plan:'line',pattern:'updown',tech:'slurs'}); X.refresh(); const sl=X.genSeq().slice(0,6).map(n=>nm(n)+(n.sl||'')).join(' '); ok(sl==='E3 A0 A2h A3 D0 D2h','bg-slurs',sl);
+      // in Strum, then pick the next bar is the same chord, so the bass doesn't walk; a crosspick bar follows
+      X.D.plan='both'; X.D.pick='roll'; X.refresh(); const br=X.genSeq().slice(0,14).map(n=>nm(n)+(n.pk||'')).join(' ');
+      ok(br==='E3↓ [---003] D0↓ [---003] G0↓ B0↑ e3↓ G0↑ B0↓ e3↑ G0↓ B0↑ A3↓ [--2010]','bg-boom-roll',br);
+      X.D.plan='arp'; X.D.pick='thumb'; X.refresh(); const tb=X.genSeq().slice(0,8).map(n=>nm(n)+n.pk).join(' '); ok(tb==='E3p B0m D0p G0i E3p B0m D0p G0i','bg-travis',tb);
+      X.D.pick='roll'; X.refresh(); const rb=X.genSeq().slice(0,8).map(n=>nm(n)+n.pk).join(' '); ok(rb==='G0↓ B0↑ e3↓ G0↑ B0↓ e3↑ G0↓ B0↑','bg-roll',rb);
+      Object.assign(X.D,{prog:'one',plan:'line',sbg:'',pick:'arp',pattern:'updown',tech:'slurs'}); X.refresh(); const sl=X.genSeq().slice(0,6).map(n=>nm(n)+(n.sl||'')).join(' '); ok(sl==='E3 A0 A2h A3 D0 D2h','bg-slurs',sl);
       X.D.tech='altpick'; X.refresh(); ok(X.genSeq().slice(0,4).map(n=>n.pk).join('')==='↓↑↓↑'&&/alternate picking/.test(X.skillNow().name),'bg-altpick',X.skillNow().name);
       X.D.tech='any'; }
     Object.assign(X.F,f0); Object.assign(X.D,{sev,plan,prog}); X.saved.fmode=fm; X.refresh(); mode('drill'); mode('explore'); }

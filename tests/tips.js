@@ -29,8 +29,12 @@ async function run(wide){
      X.F.pos=-1; X.refresh(); click(d.querySelector('[data-mode=explore]')); click(d.querySelector('[data-mode=drill]')); check('drill pick');}
    if(m==='practice'){d.querySelector('.psync').open=true; check('exercises sync open');
      click(d.querySelector('[data-act=exedit]')); check('exercises edit'); click(d.querySelector('[data-act=exrm]')); check('exercises delete confirm'); click(d.querySelector('[data-act=exrmno]'));
-     click(d.querySelector('[data-act=excusti][data-i="2"]')); check('customize progressions'); click(d.querySelector('#cust [data-act=custclose]'));
-     click(d.querySelector('[data-act=excusti][data-i="0"]')); check('customize box'); click(d.querySelector('#cust [data-act=custclose]'));
+     click(d.querySelector('[data-act=excusti][data-i="2"]')); check('customize progressions');
+     click(d.querySelector('.exi.open [data-act=pmenu][data-m=e-rpat]')); check('customize strum menu');
+     click(d.querySelector('.exi.open [data-act=pmenu][data-m=e-wpos]')); check('customize box menu');
+     click(d.querySelector('.exi.open [data-act=pmenu][data-m=e-key]')); check('customize key menu'); click(d.querySelector('.exi.open [data-act=eccancel]'));
+     click(d.querySelector('[data-act=excusti][data-i="0"]')); check('customize box'); click(d.querySelector('.exi.open [data-act=eccancel]'));
+     click(d.querySelector('[data-act=excusti][data-i="3"]')); check('customize songs'); click(d.querySelector('.exi.open [data-act=eccancel]'));
      click(d.querySelector('[data-act=exdone]')); check('exercises done editing');
      goMode(d,click,'songs'); click(d.querySelector('[data-act=songform]')); check('song form');
      d.getElementById('sgName').value='Wish You Were Here'; d.getElementById('sgLink').value='https://www.songsterr.com/x'; d.getElementById('sgChords').value='C D Am G'; click(d.querySelector('[data-act=songadd]')); check('song added');
@@ -53,20 +57,26 @@ async function run(wide){
      click(d.querySelector('[data-act=exitem][data-i="0"]')); check('drill from exercises');
      click(d.querySelector('[data-act=exnext]')); check('exercise next');
      click(d.querySelector('[data-act=exnext]')); check('exercise progressions');
-     for(const v of ['boom','roll','thumb','arp','strum']){click(d.querySelector(`#exhead [data-row=plan][data-v=${v}]`)); check('exercise plan '+v);}
-     click(d.querySelector('#exhead [data-act=excust]')); check('customize from drill'); click(d.querySelector('#cust [data-act=custclose]'));
+     for(const v of ['arp','strum','both']){click(d.querySelector(`#exhead [data-row=plan][data-v=${v}]`)); check('exercise plan '+v);}
+     for(const v of ['roll','thumb']){click(d.querySelector(`#exhead [data-row=pick][data-v=${v}]`)); check('exercise pick '+v);}
+     click(d.querySelector('#exhead [data-row=rpat][data-v=boom]')); check('exercise boom');
+     click(d.querySelector('#exhead [data-act=excust]')); check('customize from drill');
+     click(d.querySelector('#exhead [data-act=pmenu][data-m=wpos]')); check('customize from drill box menu');
+     click(d.querySelector('#exhead [data-act=pmenu][data-m=key]')); check('customize from drill key menu'); click(d.querySelector('#exhead [data-act=edcancel]'));
      click(d.querySelector('[data-act=exnext]')); check('exercise songs');
      click(d.querySelector('[data-act=exleave]')); check('left session');
-     for(const x of ['home','tones','quiz']){goMode(d,click,'practice'); click(d.querySelector(`[data-act=extry][data-ex=${x}]`)); check('try '+x); if(x!=='quiz') {click(d.querySelector('#exhead [data-act=excust]')); check('customize '+x); click(d.querySelector('#cust [data-act=custclose]'));}}
+     for(const x of ['home','tones','quiz']){goMode(d,click,'practice'); click(d.querySelector(`[data-act=extry][data-ex=${x}]`)); check('try '+x); click(d.querySelector('#exhead [data-act=excust]')); check('customize '+x); click(d.querySelector('#exhead [data-act=edcancel]'));}
      goMode(d,click,'songs'); click(d.querySelector('[data-act=songplay]')); check('song changes in drill');}
    if(m==='drill'){(()=>{const sp=d.getElementById('selPos'); sp.value='5'; sp.dispatchEvent(new w.Event('change',{bubbles:true}));})();
      bc('prog','pop'); bc('plan','both'); check('drill prog');
      click(d.querySelector('.rstep[data-i="1"]')); check('prog custom');
      click(d.querySelector('[data-act=rres][data-v="16"]')); check('prog custom 16');
-     const sel=d.querySelector('[data-set=rpat]'); sel.value='shuffle'; sel.dispatchEvent(new w.Event('change',{bubbles:true})); check('prog shuffle');
+     click(d.querySelector('#exhead [data-act=pmenu][data-m=rpat]')); check('strum menu'); click(d.querySelector('#exhead .smenu [data-v=shuffle]')); check('prog shuffle');
      for(const id of X.PROGS.map(p=>p[0])){bc('prog',id); check('prog '+id);}
      bc('prog','pop'); click(d.querySelector('[data-act=sheet]')); check('prog settings'); click(d.querySelector('[data-act=sheetclose]'));
-     for(const v of ['strum','arp','boom','roll','thumb','line','tones','both']){bc('plan',v); check('plan '+v);
+     for(const v of ['strum','arp','line','tones','both']){bc('plan',v); check('plan '+v);
+       if(v==='strum'){bc('rpat','boom'); check('strum boom'); bc('rpat','eighths');}
+       if(v==='arp') for(const p of ['roll','thumb','arp']){bc('pick',p); check('pick '+p);}
        if(v==='line'){for(const p of ['updown','thirds','g3','g4','strings']){bc('lpat',p); check('line '+p);} for(const o of ['restart','through']){bc('over',o); check('over '+o);} for(const t of ['altpick','slurs','any']){bc('tech',t); check('tech '+t);}}
        if(v==='tones') for(const p of ['enclose','walk','arp']){bc('tpat',p); check('tones '+p);}}
      for(const v of ['open','cycle','whole','focus']){bc('where',v); check('where '+v);}
