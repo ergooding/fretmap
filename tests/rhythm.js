@@ -27,13 +27,14 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
     const X=w.__fretDebug, click=el=>el.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
     const change=(sel,v)=>{const e=d.querySelector(sel); e.value=v; e.dispatchEvent(new w.Event('change',{bubbles:true}));};
     const L=wide?'wide':'phone';
+    const bc=(row,v)=>{const e=d.querySelector(`#exhead [data-act=bchip][data-row=${row}][data-v="${v}"]`); if(!e) fail('ui',`${L} no ${row} chip ${v}`); else click(e);};
     click(d.querySelector('[data-mode=drill]'));
     {const sp=d.getElementById('selPos'); sp.value='5'; sp.dispatchEvent(new w.Event('change',{bubbles:true}));}
-    click(d.querySelector('[data-act=line][data-v=prog]'));
+    bc('prog','pop'); bc('plan','both');
     click(d.querySelector('[data-act=sheet]')); // Each chord and notes per beat live in Settings
     if(!d.querySelector('.sets')) fail('ui',L+' settings did not open');
-    if(X.D.line!=='prog'||!d.querySelector('[data-set=prog]')) fail('ui',L+' no progression controls');
-    if(d.querySelector('[data-k=pad]')||d.querySelector('[data-set=pattern]')) fail('ui',L+' scale-line controls still shown');
+    if(X.D.line!=='prog'||!d.querySelector('#exhead [data-row=prog]')) fail('ui',L+' no progression controls');
+    if(d.querySelector('[data-k=pad]')||d.querySelector('#exhead [data-row=lpat]')) fail('ui',L+' scale-line controls still shown');
 
     // ---- structure across keys, modes, boxes, progressions, plans
     const modes=[['major',0],['major',1],['major',4],['major',5],['harm',0],['mel',0]];
@@ -46,7 +47,7 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
       for(const lo of boxes){
         d.getElementById('selPos').value=lo; d.getElementById('selPos').dispatchEvent(new w.Event('change',{bubbles:true}));
         for(const [pid,,degs] of X.PROGS) for(const plan of ['both','strum','arp']){
-          change('[data-set=prog]',pid); click(d.querySelector(`[data-act=plan][data-v=${plan}]`));
+          bc('prog',pid); bc('plan',plan);
           const tag=`${L} key=${key} ${fam}/${mode} box=${lo} ${pid} ${plan}`; checked++;
           const C=X.cur, prog=C.prog;
           if(!prog||prog.length!==degs.length){fail('prog-len',tag); continue;}
@@ -97,7 +98,7 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
     const opens=X.cur.pos.find(p=>p.lo===0); d.getElementById('selPos').value=opens?0:X.cur.pos[0].lo; d.getElementById('selPos').dispatchEvent(new w.Event('change',{bubbles:true}));
     const sampleProgs=wide?X.PROGS.map(p=>p[0]):['pop','251','blues'];
     for(const pid of sampleProgs) for(const pat of ['faithful','funkchuck','shuffle','skank']) for(const swing of [false,true]) for(const sub of [2,3]){
-      change('[data-set=prog]',pid); click(d.querySelector('[data-act=plan][data-v=both]'));
+      bc('prog',pid); bc('plan','both');
       change('[data-set=rpat]',pat); X.R.swing=swing; X.D.sub=sub; change('[data-set=sub]',String(sub));
       Object.assign(X.D,{click:true,notes:true,ramp:0}); X.saved.bpm=100;
       const tag=`${L} ${pid} ${pat} swing=${swing} sub=${sub}`; played++;
@@ -137,7 +138,7 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
     }
     // a pass is counted when the progression comes round again
     {
-      change('[data-set=prog]','two'); click(d.querySelector('[data-act=plan][data-v=strum]')); X.saved.bpm=200; log.length=0; w.__now=0;
+      bc('prog','two'); bc('plan','strum'); X.saved.bpm=200; log.length=0; w.__now=0;
       click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer);
       const len=X.st.seq.reduce((a,e)=>a+0.3*4/e.n,0);
       const stop=X.met.next+4*0.3+len*2.5; while(w.__now<stop){w.__now+=0.01; X.pschedule();}
@@ -153,11 +154,11 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
     click(d.querySelector('[data-act=rres][data-v="8"]'));
     if(X.R.custom.steps!=='xxx.x.x.') fail('res8',X.R.custom.steps);
     // the strum pattern is hidden for arpeggio only
-    click(d.querySelector('[data-act=plan][data-v=arp]'));
+    bc('plan','arp');
     if(d.getElementById('rgrid')||d.querySelector('[data-set=rpat]')) fail('arp-ui','strum grid shown for arpeggio only');
-    click(d.querySelector('[data-act=plan][data-v=both]'));
+    bc('plan','both');
     // previewing a chord shows its voicing
-    change('[data-set=prog]','pop');
+    bc('prog','pop');
     if(wide){ for(let i=0;i<3&&!d.querySelector('.app').classList.contains('wide');i++) click(d.getElementById('layoutBtn')); // jsdom matches every media query, so force the desktop layout
       const b=d.querySelector('[data-pci="2"]'); if(!b) fail('preview','no chord strip'); else {click(b); if(X.cur.pci!==2||X.cur.voicing!==X.cur.prog[2].voicing) fail('preview','chord not shown');} }
     // five-note scales borrow the chords of the 7-note mode they sit in, and say so
@@ -175,8 +176,8 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
     d.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true}));
     if(X.st.playing) fail('space','did not pause');
     // back to scale lines brings the old controls back
-    click(d.querySelector('[data-act=line][data-v=scale]'));
-    if(!d.querySelector('[data-set=pattern]')||X.cur.prog) fail('scale','scale lines not restored');
+    bc('prog','one'); bc('plan','line');
+    if(!d.querySelector('#exhead [data-row=lpat]')||X.D.line!=='scale'||X.cur.prog) fail('scale','scale lines not restored');
   }
   console.log('progression combos checked',checked,'played',played,'bad',bad);
   process.exit(bad?1:0);
