@@ -192,6 +192,15 @@ html.wide{font-size:19px}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:600}
 .voice-card{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 14px}
 .voice-card[hidden]{display:none}
+.howto .fold>summary{font-size:.9rem;color:var(--ink);margin-top:0}
+.howto .hint{margin:4px 0 6px}
+.voice-card.howto p,.panel .howto p{text-align:left}
+.hrow{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;border-top:1px solid var(--line);padding:6px 0}
+.hrow b{font-size:.85rem;display:block}
+.hrow small{display:block;font-size:.8rem;line-height:1.4}
+.hdeg{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.8rem;color:#14110d;background:var(--c)}
+.hgb{font-size:.8rem;border-left:3px solid var(--gold);padding-left:10px;margin:6px 0 0;line-height:1.4}
+.panel .howto{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 12px}
 .vc-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .vc-head b{font-size:1.25rem}
 .vc-head span{color:var(--muted);font-size:.85rem}
@@ -609,6 +618,7 @@ html.wide #cust .cust-r{border-left:1px solid var(--line);padding-left:20px}
   <div class="prompt" id="prompt" aria-live="polite"></div>
   <div class="song-sheet" id="sheet" hidden></div>
   <div class="voice-card" id="voiceCard" hidden></div>
+  <div class="voice-card howto" id="howto" hidden></div>
   </aside>
   <div class="neck-wrap"><div class="neck" id="neck"></div></div>
   <div class="panel" id="panel"></div>
@@ -1785,7 +1795,7 @@ function render(){
   document.querySelectorAll('#modes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===st.mode||(b.dataset.mode==='quiz'&&(st.mode==='name'||st.mode==='find'))));
   appEl.classList.toggle('m-practice',st.mode==='practice'||st.mode==='songs'); appEl.classList.toggle('m-songs',st.mode==='songs'); appEl.classList.toggle('m-drill',st.mode==='drill');
   if(saved.fmode==='song'&&!focusSong()) saved.fmode='key'; // the song was removed
-  fillSongSel(); renderStats(); focusText(); renderBoard(); renderPrompt(); renderPanel(); renderSheet(); renderVoice(); renderEx(); updateLive(); navSync();
+  fillSongSel(); renderStats(); focusText(); renderBoard(); renderPrompt(); renderPanel(); renderSheet(); renderVoice(); renderHowto(); renderEx(); updateLive(); navSync();
 }
 const picking=()=>st.mode==='drill'&&st.picking;
 function drillLabel(p){
@@ -1889,6 +1899,32 @@ function renderPrompt(){
     const res=q.answered?(q.picked&&ivOf(q.picked,q.key)===q.iv?'Right. ':'Faded dots show where it was. '):'';
     promptEl.innerHTML=`<span class="big" style="color:${COL[q.iv]}">${L[0]}</span><span>${res}Find the ${term(IVKEY[q.iv],L[1])}${ctx(q.key)}${cur.whole?' anywhere':' in the lit frets'}.</span>`;
   }
+}
+// How to find it: the shapes that put each degree a few frets from the root, read off standard tuning, where
+// neighbouring strings are a 4th apart (5 half steps) except G to B, a major 3rd (4)
+function shapeText(k,d){
+  const fr=d===0?'same fret':`${Math.abs(d)} fret${Math.abs(d)===1?'':'s'} ${d>0?'up':'down'}`;
+  if(!k) return `Same string, ${d<0?`${Math.abs(d)} fret${d===-1?'':'s'} below R`:fr}`;
+  return `${Math.abs(k)} string${Math.abs(k)===1?'':'s'} ${k>0?'higher':'lower'}, ${fr}`;
+}
+function ivShapes(n){
+  const out=[], same=n%12; // same string: up to 5 frets above R, or a 7th just below it
+  if(same>=1&&same<=5) out.push([0,same]); else if(same>=10) out.push([0,same-12]);
+  const more=[];
+  for(const k of [1,-1,2,-2]){let d=((n-5*k)%12+12)%12; if(d>5) d-=12; if(Math.abs(d)<=3) more.push([k,d]);}
+  more.sort((a,b)=>Math.abs(a[1])-Math.abs(b[1]));
+  return [...out,...more].slice(0,3).map(([k,d])=>shapeText(k,d));
+}
+function howtoHTML(){
+  const find=st.mode==='find';
+  const rows=[...cur.allowed,12].map(i=>{const L=i===12?['8','Octave']:lab(i), c=COL[i%12];
+    return `<div class="hrow"><span class="hdeg" style="--c:${c}">${L[0]}</span><div><b>${L[1][0].toUpperCase()+L[1].slice(1)}</b>${ivShapes(i).map(t=>`<small>${t}</small>`).join('')}</div></div>`;}).join('');
+  return fold('howto','How to find it',`<p class="hint">Find R first, then ${find?'pick the shape for the degree you\u2019re asked for':'match the ? to a shape'}. Higher means the next thinner string.</p>${rows}
+    <p class="hgb"><b>G and B strings:</b> any shape that crosses between them moves one fret. Going up to the B string, add a fret (1 string higher, 1 fret down becomes the same fret). Coming down from B to G, take one away.</p>`);
+}
+function renderHowto(){
+  const el=document.getElementById('howto'), show=wide&&(st.mode==='name'||st.mode==='find')&&!!st.q;
+  el.hidden=!show; el.innerHTML=show?howtoHTML():'';
 }
 function finger(n){
   const lo=n.lo??cur.lo; // a whole-neck run fingers each note in its own box
@@ -2804,10 +2840,10 @@ function renderPanel(){
       if(q.answered){if(i===q.iv)cls+=' right';else if(i===q.picked)cls+=' wrong';}
       return `<button class="${cls}" data-act="answer" data-i="${i}" ${q.answered?'disabled':''} aria-label="${lab(i)[1]}">${lab(i)[0]}</button>`;}).join('');
     panel.innerHTML=`${quizSeg()}<div class="answers" style="grid-template-columns:repeat(${cols},1fr)">${btns}<button class="ans" data-act="hear" aria-label="Hear it again">🔁</button></div>
-      <div class="actions"><button class="btn" data-act="reset">Reset score</button><button class="btn primary" data-act="next">${q.answered?'Next':'Skip'}</button></div>`;
+      <div class="actions"><button class="btn" data-act="reset">Reset score</button><button class="btn primary" data-act="next">${q.answered?'Next':'Skip'}</button></div>${wide?'':`<div class="howto">${howtoHTML()}</div>`}`;
   }else{
     panel.innerHTML=`${quizSeg()}<p class="hint">Tap the fretboard. Any octave counts${cur.whole?'':', as long as it’s inside the lit frets'}.</p>
-      <div class="actions"><button class="btn" data-act="reset">Reset score</button><button class="btn primary" data-act="next">${q.answered?'Next':'Skip'}</button></div>`;
+      <div class="actions"><button class="btn" data-act="reset">Reset score</button><button class="btn primary" data-act="next">${q.answered?'Next':'Skip'}</button></div>${wide?'':`<div class="howto">${howtoHTML()}</div>`}`;
   }
 }
 
