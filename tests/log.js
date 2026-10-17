@@ -105,7 +105,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   click(d.querySelector('[data-act=exnext]')); ok(X.st.ex.ex==='tech'&&X.D.tech==='altpick'&&X.D.plan==='line'&&X.D.prog==='one'&&d.querySelector('#exstrip .exstep.done[data-i="0"]'),'ex-next');
   click(d.querySelector('[data-act=exnext]'));
   ok(X.st.ex.ex==='prog'&&X.D.line==='prog'&&X.D.prog==='pop'&&X.D.plan==='both'&&X.R.pat==='backbeat'&&X.F.pos===5&&!X.D.sev,'ex-prog-setup',[X.D.line,X.D.prog,X.D.plan,X.R.pat,X.F.pos].join(' '));
-  ok(d.querySelectorAll('#exhead [data-row=prog]').length===11&&d.querySelectorAll('#exhead [data-row=plan]').length===5&&d.querySelectorAll('#exhead [data-row=rpat]').length===6&&d.querySelectorAll('#exhead [data-row=pick]').length===3&&/0 of 25 clean/.test(d.getElementById('exhead').textContent),'ex-prog-rows');
+  ok(d.querySelectorAll('#exhead [data-row=prog]').length===11&&d.querySelectorAll('#exhead [data-row=plan]').length===6&&d.querySelectorAll('#exhead [data-row=rpat]').length===6&&d.querySelectorAll('#exhead [data-row=pick]').length===3&&/0 of 26 clean/.test(d.getElementById('exhead').textContent),'ex-prog-rows',d.getElementById('exhead').textContent.match(/\d+ of \d+ clean/)[0]);
   {const labs=[...d.querySelectorAll('#exhead .brow .blab')].map(e=>e.textContent).join(', '); ok(X.cur.prog.map(p=>p.ch.name).join(' ')==='Am Em F Dm'&&labs==='Chords, Play each chord, Strum, Pick, Where','ex-prog-chords',X.cur.prog.map(p=>p.ch.name).join(' ')+' / '+labs);}
   click(d.querySelector('#exhead [data-row=prog][data-v="50s"]')); ok(X.D.prog==='50s'&&X.R.pat==='backbeat'&&X.cur.prog.map(p=>p.ch.name).join(' ')==='Am F Dm Em','ex-doowop',X.cur.prog.map(p=>p.ch.name).join(' '));
   // boom-chuck is a strum and moves Where to the open position; a strum pattern again goes back to the box
@@ -492,9 +492,30 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     qc(qd.querySelector('[data-act=sheet]')); qc(qd.querySelector('[data-act=lbl][data-v=key]'));
     ok(QX.saved.fing===false&&!qd.querySelector('.dot.fing')&&qd.getElementById('fhint').hidden&&br.style.display==='none','fing-off');
     qc(qd.querySelector('[data-act=lbl][data-v=fing]')); ok(QX.saved.fing===true&&qd.querySelector('.dot.fing'),'fing-on');
+    qc(qd.querySelector('[data-act=sheetclose]'));
+    // Strum, then scale: a strum bar, then a scale run from the chord's root, one scale step at a time, to a note of the next chord
+    qc(qd.querySelector('#exhead [data-act=bchip][data-row=plan][data-v="mix"]'));
+    const runCheck=()=>{const seq=QX.genSeq(), P=QX.boxNotes(), bars={}; let bad='';
+      seq.forEach(n=>(bars[n.bar]=bars[n.bar]||[]).push(n));
+      const B=Object.values(bars); if(B.length!==2*QX.cur.prog.length) bad+='bars '+B.length;
+      B.forEach((b,i)=>{ if(i%2===0){if(!b.every(n=>n.chord||n.bg)) bad+=' strum'+i; return;}
+        const ci=b[0].ci, nx=QX.cur.prog[(ci+1)%QX.cur.prog.length], pcOf=n=>((n.m-QX.capo())%12+12)%12;
+        if(b.length!==4*QX.D.sub||!b.every(n=>n.run)) bad+=' len'+i;
+        if(pcOf(b[0])!==QX.cur.prog[ci].ch.root) bad+=' start'+i;
+        if(!nx.pcs.has(pcOf(b[b.length-1]))) bad+=' end'+i;
+        for(let k=1;k<b.length;k++) if(Math.abs(P.findIndex(p=>p.m===b[k].m)-P.findIndex(p=>p.m===b[k-1].m))!==1) bad+=' step'+i+':'+k; });
+      return bad;};
+    for(const [key,pos,prog] of [[0,0,'pop'],[7,0,'145'],[9,2,'pop'],[2,1,'50s'],[4,0,'blues']]){
+      Object.assign(QX.F,{key,fam:'major',mode:0,pos}); QX.refresh(); qc(qd.querySelector(`#exhead [data-act=bchip][data-row=prog][data-v="${prog}"]`));
+      const r=runCheck(); ok(!r,'mix-run-'+key+'-'+prog,r); }
+    ok(QX.skillNow().id.split(':')[6]==='mix'&&/then a scale run/.test(QX.skillNow().name),'mix-skill',QX.skillNow().id+' '+QX.skillNow().name);
+    ok(/Then a scale run/.test(qd.querySelector('.strum-card').textContent),'mix-card');
+    { const seq=QX.genSeq(), j=seq.findIndex(n=>n.run), tc=qd.querySelector(`.tcol[data-j="${j}"]`);
+      ok(tc&&!/undefined/.test(tc.textContent),'mix-tab'); }
     // a scale line keeps degree labels
-    qc(qd.querySelector('[data-act=sheetclose]')); qc(qd.querySelector('#exhead [data-act=bchip][data-row=plan][data-v="line"]'));
+    qc(qd.querySelector('#exhead [data-act=bchip][data-row=plan][data-v="line"]'));
     ok(!qd.querySelector('.dot.fing')&&qd.getElementById('fhint').hidden&&br.style.display==='none','fing-not-on-lines',[QX.D.plan,!!qd.querySelector('.dot.fing'),br.style.display].join()); }
+
   // phone layout text
   B.mode('practice'); ok(!/undefined|NaN|\[object/.test(B.d.querySelector('.app').textContent),'phone-text-path');
   console.log('log checks done, bad',bad); process.exit(bad?1:0);

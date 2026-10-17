@@ -218,6 +218,7 @@ html.wide{font-size:19px}
 .dot.mute{background:transparent;box-shadow:none;color:var(--ink);font-size:calc(var(--dot,30px)*.62);font-weight:400;opacity:.8}
 .dot.nextf{background:rgba(255,255,255,.1);box-shadow:none;border:3px dashed var(--pearl);color:var(--pearl);transform:scale(.9)}
 .cell.out .dot.nextf{border-color:var(--ink);color:var(--ink)}
+.dot.nextshape{outline:3px dashed var(--pearl);outline-offset:2px}
 .dot.stay{box-shadow:0 0 0 3px var(--bg),0 0 0 6px var(--good)}
 .barre{z-index:2;pointer-events:none;display:grid;place-items:center}
 .barre i{display:block;border-radius:999px;background:#2a1d12;box-shadow:0 0 0 2px var(--pearl);opacity:.9}
@@ -942,7 +943,7 @@ function planFix(x){ // an old setup or Drill's own settings, brought up to date
   return x;
 }
 planFix(D);
-const strums=x=>x.plan==='strum'||x.plan==='both', picks=x=>x.plan==='arp'||x.plan==='both';
+const strums=x=>x.plan==='strum'||x.plan==='both'||x.plan==='mix', picks=x=>x.plan==='arp'||x.plan==='both';
 const isBG=x=>strums(x)&&x.sbg==='boom'||picks(x)&&x.pick!=='arp'; // a bluegrass style is playing, so the open position
 function fixLine(){ // the engine follows the builder; a pattern always fits the way you play
   if(D.plan==='line'&&!LINE_PATS.includes(D.pattern)) D.pattern=LINE_PATS.includes(D.lpat)?D.lpat:'updown';
@@ -1590,8 +1591,42 @@ function genProg(){
       for(let k=0;k<L;k++){const ci=at(k/L); if(ci!==prev) s0=k; const a=A[ci];
         seq.push(a.length?{...a[(k-s0)%a.length],ci,bar,k,n:L,sw:P.swing,head:ci!==prev}:{rest:true,ci,bar,k,n:L,head:ci!==prev}); prev=ci;}
       bar++; }
+    if(D.plan==='mix'&&voiced){ // then a bar of scale run over the same chord, leading into the next one
+      const nci=cur.prog.findIndex(q=>q.bar===(b+1)%cur.nbars), L=4*D.sub, R=runBar(i,nci<0?i:nci,L);
+      let prev=-1; for(let k=0;k<L;k++){const ci=at(k/L); seq.push(R[k]?{...R[k],run:true,ci,bar,k,n:L,sw:P.swing,head:ci!==prev}:{rest:true,ci,bar,k,n:L,head:ci!==prev}); prev=ci;}
+      bar++; }
   }
   return seq;
+}
+function runBar(ci,nci,L){
+  // a scale run of L notes, one scale step at a time through the box: it starts on the chord's root (the bass note you
+  // just strummed when the box has it) and ends on a note of the next chord, its bass note when the steps allow, so the
+  // run leads into the change. Spare steps go away from the target first, or past it and back.
+  const P=boxNotes(), n=P.length, here=cur.prog[ci], next=cur.prog[nci];
+  if(n<2) return [];
+  const iOf=m=>P.findIndex(p=>p.m===m), bassM=v=>{if(!v) return null; const s=v.frets.findIndex(f=>f!==null); return s<0?null:MIDI[s]+capo()+v.frets[s];};
+  const roots=P.map((p,i)=>pc(p.s,p.f)===here.ch.root?i:-1).filter(i=>i>=0);
+  let a=iOf(bassM(here.voicing));
+  if(a<0){const bm=bassM(here.voicing)??P[0].m; a=roots.length?roots.reduce((x,y)=>Math.abs(P[y].m-bm)<Math.abs(P[x].m-bm)?y:x):0;}
+  const want=bassM(next.voicing)??P[a].m, tb=iOf(want);
+  const tones=P.map((p,i)=>next.pcs.has(pc(p.s,p.f))?i:-1).filter(i=>i>=0);
+  const tiers=[tb>=0?[tb]:[],tones.filter(i=>pc(P[i].s,P[i].f)===next.ch.root),tones].map(T=>T.slice().sort((x,y)=>Math.abs(P[x].m-want)-Math.abs(P[y].m-want)));
+  const path=t=>{
+    const d=Math.abs(t-a), extra=L-1-d; if(extra<0||extra%2) return null;
+    const e=extra/2, dir=t>a?1:t<a?-1:(a+e<n?1:-1);
+    for(let x=e;x>=0;x--){ // x steps away from the target first, the rest past it and back
+      const lo=a-dir*x, over=t+dir*(e-x);
+      if(lo<0||lo>=n||over<0||over>=n) continue;
+      const out=[]; let i=a; out.push(i);
+      for(let k=0;k<x;k++){i-=dir; out.push(i);}
+      while(i!==over){i+=dir; out.push(i);}
+      while(i!==t){i-=dir; out.push(i);}
+      if(out.length===L) return out.map(j=>P[j]);
+    }
+    return null;
+  };
+  for(const T of tiers) for(const t of T){const r=path(t); if(r) return r;}
+  return [];
 }
 function genSeq(){
   if(D.line==='prog') return genProg();
@@ -1862,13 +1897,13 @@ function sessionFor(t){
 }
 function playId(x,pat){ // how each chord is played, as the log names it: the strum pattern or boom, then any pick style but the arpeggio
   const sp=x.sbg==='boom'?'boom':pat, pk=x.pick&&x.pick!=='arp'?x.pick:'';
-  return x.plan==='strum'?sp:x.plan==='arp'?pk||'-':sp+(pk?'+'+pk:'');
+  return x.plan==='strum'||x.plan==='mix'?sp:x.plan==='arp'?pk||'-':sp+(pk?'+'+pk:'');
 }
 function skillPlay(p){ // a logged progression's plan, strum and pick, reading the old bluegrass plans as the strum or pick they are now
   const o=PLAN_OLD[p[6]]; if(o) return {plan:o[0],strum:o[1]||null,pick:o[2]};
   const [a,b]=(p[7]||'').split('+');
   return p[6]==='strum'?{plan:'strum',strum:a,pick:null}:p[6]==='arp'?{plan:'arp',strum:null,pick:a==='-'?'arp':a}
-    :p[6]==='both'?{plan:'both',strum:a,pick:b||'arp'}:{plan:p[6],strum:null,pick:null};
+    :p[6]==='both'?{plan:'both',strum:a,pick:b||'arp'}:p[6]==='mix'?{plan:'mix',strum:a,pick:null}:{plan:p[6],strum:null,pick:null};
 }
 function lineId(s){ // a scale line or chord tones over the changes, as the log names it: the pattern, how it meets the changes, the technique
   return `${s.pattern}${s.plan==='line'&&s.over==='restart'&&s.prog!=='one'?'-restart':''}${TECH[s.tech]?'-'+s.tech:''}`;
@@ -1881,7 +1916,7 @@ function skillNow(){
     const sn=D.sbg==='boom'?'boom-chuck':P.id==='custom'?'your pattern':P.name.toLowerCase(), pn=D.pick!=='arp'?listLabel(PICK_CH,D.pick).toLowerCase():'';
     const plan=D.plan==='arp'?(pn?`, ${pn}`:'')
       :D.plan==='line'?`, ${patLabel(D.pattern).toLowerCase()}${D.over==='restart'&&D.prog!=='one'?' from each chord':''}${tech}`:D.plan==='tones'?`, ${patLabel(D.pattern).toLowerCase()}${tech}`
-      :`, ${sn}${D.plan==='both'&&pn?`, then ${pn}`:''}`;
+      :`, ${sn}${D.plan==='both'&&pn?`, then ${pn}`:D.plan==='mix'?', then a scale run':''}`;
     const pid=D.prog==='one'&&D.chord?`one-${D.chord}`:D.prog;
     return {id:`prog:${k}:${F.fam}:${F.mode}:${wh}:${pid}:${D.plan}:${isLinePlan(D.plan)?lineId(D):playId(D,pat)}`,kind:'prog',
       name:`${keyName(k)} ${modeName()}: ${progLabel(D.prog)}, ${where}${plan}`};
@@ -2054,7 +2089,9 @@ function renderBoard(){
   const same=(a,s,f)=>a&&a.s===s&&a.f===f;
   const E=exSong(), EV=E&&E.c?exVoicing(E,E.sel):null, ERel=E&&E.c?exOverRel(E):null;
   // Fingers: the voicing's dots show which finger frets them, the rest of the chord fades, and the next chord's fingers show as dashed rings
-  const FA=st.mode==='drill'&&fingOn()?fingering(cur.voicing.frets):null;
+  // in Strum, then scale the run bar shows degrees, since a run moves through every finger; the next chord's fingers ring the neck
+  const nowRun=!!(nowN&&nowN.run), FA=st.mode==='drill'&&fingOn()&&!nowRun?fingering(cur.voicing.frets):null;
+  const rx=st.mode==='drill'&&nowRun&&fingOn()&&ringsNow()?nextProg():null, RM=rx&&rx.voicing?fingerMoves(cur.voicing,rx.voicing):null;
   const hideAll=FA&&st.playing&&st.idx>=0&&D.guide==='blind';
   const nx=FA&&!hideAll&&ringsNow()?nextProg():null, NM=nx&&nx.voicing?fingerMoves(cur.voicing,nx.voicing):null;
   barreEl.style.display=FA&&FA.barre&&!hideAll?'':'none';
@@ -2100,6 +2137,8 @@ function renderBoard(){
         dot(c,{t,c:COL[ref],cls:'dimx'+(ref===0?' root':'')+ok});
         continue;
       }
+      const rf=RM&&rx.voicing.frets[s]===f&&f>0?RM.B.fing[s]:null;
+      if(rf!=null&&!isNow&&!isNext){dot(c,{t:rf,cls:'nextf'});continue;}
       if(!isNow&&!isNext&&(out||!inS||(played&&!(inV&&D.pad)&&!played.has(s+':'+f)))){dot(c,null);continue;}
       const {ref,t}=drillLabel({s,f});
       let show=true;
@@ -2110,6 +2149,7 @@ function renderBoard(){
       if(!show){dot(c,null);continue;}
       let cls=(isC?(ref===0?'root':''):'pass')+(D.line!=='prog'&&pc(s,f)===home?' home':'')+(F.fam!=='chrom'&&!cur.set.has(ivK)?' outk':''); // solid: chord tone; pearl: passing tone; gold ring: where each pass starts and ends; dashed: outside the focus
       if(isNow) cls+=' now'; else if(isNext&&D.guide!=='full') cls+=' nextup';
+      if(rf!=null) cls+=' nextshape';
       if(st.flashUntil>Date.now()&&cur.voicing&&cur.voicing.frets[s]===f) cls+=' vc';
       dot(c,{t,c:COL[ref],cls});
     }else if(st.mode==='name'){
@@ -2187,7 +2227,7 @@ function renderHowto(){
 }
 function finger(n){
   // a note of the chord shape you're holding takes that shape's finger, as the Fingers labels on the neck show it
-  const v=chordPlay()&&(n.v||cur.voicing);
+  const v=chordPlay()&&!n.run&&(n.v||cur.voicing);
   if(v&&v.frets[n.s]===n.f){const F=fingering(v.frets); if(F) return n.f===0?'o':String(F.fing[n.s]);}
   const lo=n.lo??cur.lo; // a whole-neck run fingers each note in its own box
   if(lo===0) return n.f===0?'o':String(Math.min(4,n.f));
@@ -2236,7 +2276,7 @@ function fingerMoves(v1,v2){
   }
   return {keep,move,lift,put,A,B};
 }
-const chordPlay=()=>st.mode==='drill'&&D.line==='prog'&&!!cur.prog&&['strum','arp','both'].includes(D.plan);
+const chordPlay=()=>st.mode==='drill'&&D.line==='prog'&&!!cur.prog&&['strum','arp','both','mix'].includes(D.plan);
 const fingOn=()=>chordPlay()&&saved.fing!==false&&!!cur.voicing&&!picking();
 const nextProg=()=>cur.prog&&cur.prog.length>1?cur.prog[(cur.pci+1)%cur.prog.length]:null;
 function fingHint(){
@@ -2266,7 +2306,7 @@ function ringsNow(){
   const k0=st.seq.findIndex(x=>x.bar===n.bar), len=st.seq.filter(x=>x.bar===n.bar).length;
   const after=st.seq.find((x,i)=>i>st.idx&&x.bar!==n.bar)||st.seq[0];
   if(after&&after.ci===n.ci) return false; // another bar of this chord comes first
-  return D.plan==='both'||st.idx-k0>=len/2;
+  return D.plan==='both'||D.plan==='mix'||st.idx-k0>=len/2;
 }
 function voiceSVG(v,root=cur.chord.root,ch=cur.chord){
   const fr=v.frets, fretted=fr.filter(f=>f!==null&&f>0);
@@ -2447,7 +2487,7 @@ function songNote(){
   const step=songSetup(song.s,song.id), {best:b,done}=stepState(step);
   return `<div class="pathnote" data-tip="${done?'Done: a run is marked clean at the song’s tempo.':'Play a run at the song’s tempo, then tap Mark last run clean if it was clean.'}"><span><b>${done?'✓ ':''}${esc(song.s.name)}: play the changes</b> · goal ${step.goal} bpm${b?`, best ${b.bpm}`:''}</span></div>`;
 }
-const PLAY_CH=[['strum','Strum'],['arp','Pick'],['both','Strum, then pick'],['line','Scale line'],['tones','Chord tones']];
+const PLAY_CH=[['strum','Strum'],['arp','Pick'],['both','Strum, then pick'],['mix','Strum, then scale'],['line','Scale line'],['tones','Chord tones']];
 const WHERE=[['focus','Follow the focus'],['open','Open position'],['cycle','Each shape in turn'],['whole','Whole neck']];
 function setWhere(v){
   // where on the neck: the focus position, the open position, a new CAGED shape each pass, or the whole neck;
@@ -2788,6 +2828,7 @@ const PROG_TIP={one:'Stay on a single chord the whole time, picked in the Over r
  andalusian:'i ♭VII ♭VI V, four chords stepping down, heard in flamenco and many rock songs.',
  blues:'Twelve bars of I, IV and V: the form behind most blues and early rock and roll.'};
 const PLAN_TIP={strum:'Strum each chord, in the pattern picked in the Strum row.',both:'A bar of strumming, then a bar picking the same shape. The Strum and Pick rows choose each one, so any strum pairs with any pick.',
+ mix:'A bar of strumming, then a bar running up or down the scale from the chord’s root to a note of the next chord, so the run leads into the change.',
  arp:'Hold the chord shape and pick it, in the style picked in the Pick row.'};
 const PICK_TIP={arp:'Pick the chord’s notes one string at a time, low to high.',roll:'Bluegrass crosspicking. Roll across three strings with strict alternate picking, in groups of 3, 3 and 2, so it sounds like a banjo roll.',
  thumb:'Travis picking. Your thumb swaps between two bass notes on every beat while your fingers pick the high strings in between.'};
@@ -3412,9 +3453,11 @@ const BG_HOW={
   thumb:`<b>Travis picking.</b> The thumb (p) alternates the root and the 5th on every beat. The index finger (i) picks the G string and the middle finger (m) the B string, on the ands.`};
 function strumCard(){
   const pk=picks(D)&&D.pick!=='arp'?BG_HOW[D.pick]:'', boom=strums(D)&&D.sbg==='boom';
-  const how=list=>`<div class="strum-card"><p class="hint">${list.filter(Boolean).join(' ')} The tab shows the ${D.pick==='thumb'&&pk?'finger':'pick stroke'} for each note.</p></div>`;
-  const bm=D.plan==='both'?BG_HOW.boom.replace(/ In the bar before.*$/,' The bass doesn’t walk here, since the next bar picks the same chord.'):BG_HOW.boom;
-  if(boom||D.plan==='arp'&&pk) return how([boom?bm:'',D.plan==='both'?(pk||`<b>Then pick.</b> The next bar ${term('arpeggio','picks')} the same shape one string at a time.`):pk]);
+  const how=list=>`<div class="strum-card"><p class="hint">${list.filter(Boolean).join(' ')} The tab shows the ${D.pick==='thumb'&&pk?'finger':'pick stroke'} for each ${D.plan==='mix'?'boom-chuck ':''}note.</p></div>`;
+  const run=D.plan==='mix'?'<b>Then a scale run.</b> The next bar steps through the scale from the chord’s root to a note of the next chord, so the run leads into the change.':'';
+  const bm=D.plan==='both'?BG_HOW.boom.replace(/ In the bar before.*$/,' The bass doesn’t walk here, since the next bar picks the same chord.')
+    :D.plan==='mix'?BG_HOW.boom.replace(/ In the bar before.*$/,' The bass doesn’t walk here, since a scale run leads into the next chord instead.'):BG_HOW.boom;
+  if(boom||D.plan==='arp'&&pk) return how([boom?bm:'',D.plan==='both'?(pk||`<b>Then pick.</b> The next bar ${term('arpeggio','picks')} the same shape one string at a time.`):D.plan==='mix'?run:pk]);
   if(D.plan==='arp') return `<div class="strum-card"><p class="hint">Each chord is ${term('arpeggio','picked')} one string at a time, so there is no strum pattern. Pick <b>Strum</b> in the Play each chord row to strum.</p></div>`;
   if(isLinePlan(D.plan)){const S=songProg(D.prog), what=S?esc(S.name)+'’s chords':`${cur.prog.map(p=>esc(p.ch.name)).join(' ')}`;
     return `<div class="strum-card"><p class="hint">${D.plan==='tones'?`${{arp:'Each bar plays the notes of its chord one at a time',enclose:'Each bar circles the notes of its chord, stepping in from the scale note above and the one below',walk:'Each bar makes up a line that lands on a note of its chord on every beat'}[D.pattern]||'Each bar plays the notes of its chord'}, over ${what}. After the first bar, each chord starts on its note closest to where you are. Solid dots are the chord playing now.`
@@ -3423,7 +3466,7 @@ function strumCard(){
   // the pattern is picked in the Strum row; the card shows its steps, and clicking a step makes it your own
   const P=curPat();
   return `<div class="strum-card"><div class="row sc-top"><span class="seglab">Strum</span><b class="scname" id="scname">${R.pat==='custom'?'Your pattern':esc(P.name)}</b>${R.pat==='custom'?seg('Grid','rres',[['8','8ths'],['16','16ths']],String(P.res)):''}${strumOwnerHTML()}</div>
-    <div class="rgrid r${P.res}" id="rgrid" style="--n:${P.res}">${rgridHTML(P)}</div>${pk?`<p class="hint">${pk}</p>`:''}</div>`;
+    <div class="rgrid r${P.res}" id="rgrid" style="--n:${P.res}">${rgridHTML(P)}</div>${pk||run?`<p class="hint">${pk||run}</p>`:''}</div>`;
 }
 function pbarHTML(){
   // everything you touch while practicing, in one bar
@@ -3441,7 +3484,7 @@ function updateLive(){
   if(D.line!=='prog'||!cur.prog){el.innerHTML=''; return;}
   const bg=n?!!n.bg:strums(D)?D.sbg==='boom':D.plan==='arp'&&D.pick!=='arp'; // a bluegrass bar counts its beats
   if(bg){const L=countLabels(n?n.n:4); el.innerHTML=L.map((l,k)=>n&&k===n.k?`<b class="on">${l}</b>`:l).join(' '); return;}
-  if(n&&!n.chord){el.innerHTML=`${isLinePlan(D.plan)?'Over':'Pick'} <b>${esc(cur.chord.name)}</b>`; return;}
+  if(n&&!n.chord){el.innerHTML=`${isLinePlan(D.plan)?'Over':n.run?'Scale over':'Pick'} <b>${esc(cur.chord.name)}</b>`; return;}
   if(D.plan==='arp'||isLinePlan(D.plan)){el.innerHTML=''; return;}
   const P=curPat(), L=countLabels(P.res);
   el.innerHTML=P.steps.split('').map((c,k)=>n&&k===n.k?`<b class="on">${L[k]}</b>`:c==='.'?`<span class="gh">(${L[k]})</span>`:k%(P.res/4)===0?`<b>${L[k]}</b>`:L[k]).join(' ');
@@ -3453,7 +3496,7 @@ function setsHTML(){
   const line=(label,ctl)=>`<div class="set"><span>${label}</span>${ctl}</div>`;
   const sw=(act,k,on,label)=>line(label,`<button class="sw" data-act="${act}" data-k="${k}" aria-pressed="${on}" aria-label="${label}"></button>`);
   const play=prog?[ // Add 7ths sits on the Chords row
-      isLinePlan(D.plan)||picks(D)&&D.pick==='arp'?line(isLinePlan(D.plan)?'Notes per beat':'Picked notes per beat',`<select data-set="sub" aria-label="${isLinePlan(D.plan)?'Notes per beat':'Picked notes per beat'}">${opts(SUBS,D.sub)}</select>`):'']
+      isLinePlan(D.plan)||D.plan==='mix'||picks(D)&&D.pick==='arp'?line(picks(D)?'Picked notes per beat':'Notes per beat',`<select data-set="sub" aria-label="${picks(D)?'Picked notes per beat':'Notes per beat'}">${opts(SUBS,D.sub)}</select>`):'']
     :[line('Notes per beat',`<select data-set="sub" aria-label="Notes per beat">${opts(SUBS,D.sub)}</select>`),
       sw('tog','pad',D.pad,'Strum the chord each bar'),line('Start and end on',seg('','resolve',[['key','Key root'],['chord','Chord root']],D.resolve))];
   const hear=[sw('tog','click',D.click,'Click'),sw('tog','notes',D.notes,'Play the notes'),prog?sw('rtog','swing',R.swing,'Shuffle feel'):''];
