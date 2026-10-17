@@ -467,6 +467,34 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     ok(M2.X.D.prog==='50s'&&M2.X.D.plan==='arp'&&M2.X.D.line==='prog','migrate-prog',JSON.stringify(M2.X.D));
     const M3=await device(true,{drill:{line:'scale',prog:'one',plan:'both',pattern:'enclose'}});
     ok(M3.X.D.plan==='tones'&&M3.X.D.pattern==='enclose','migrate-tones',JSON.stringify(M3.X.D)); }
+  // Fingers: a strummed chord numbers its shape by finger, fades the rest of the chord, and shows the next chord's fingers
+  { const Q=await device(true), {d:qd,X:QX}=Q, qc=Q.click, cell=(s,f)=>qd.querySelector(`.cell[data-s="${s}"][data-f="${f}"] .dot`);
+    const fs=t=>{const r=QX.fingering([...t].map(c=>c==='x'?null:+c)); return r?r.fing.map(x=>x===null?'x':x).join('')+(r.barre?' b'+r.barre.f:''):'none';};
+    const want={x32010:'x32010','320003':'210003',xx0232:'xx0132',x02210:'x02310',x32310:'x32410','133211':'134211 b1',x24432:'x13421 b2',x24232:'x13121 b2',x32000:'x32000','123456':'none'};
+    const got=Object.keys(want).map(k=>fs(k)); ok(got.join()===Object.values(want).join(),'fing-shapes',got.join(' '));
+    Q.mode('drill'); QX.D.sev=false; Object.assign(QX.F,{key:0,fam:'major',mode:0,pos:0}); QX.refresh();
+    qc(qd.querySelector('#exhead [data-act=bchip][data-row=prog][data-v="pop"]')); qc(qd.querySelector('#exhead [data-act=bchip][data-row=plan][data-v="strum"]'));
+    qc(qd.querySelector('[data-pci="0"]'));
+    const fr=QX.cur.voicing.frets.map(f=>f===null?'x':f).join('');
+    ok(fr==='x32010'&&cell(1,3).textContent==='3'&&cell(2,2).textContent==='2'&&cell(4,1).textContent==='1'&&cell(0,0).classList.contains('mute')&&cell(3,0).classList.contains('openv'),'fing-neck-C',fr);
+    ok(cell(1,2)&&cell(1,2).classList.contains('nextf')&&cell(1,2).textContent==='1'&&qd.querySelectorAll('.dot.nextf').length===3,'fing-next-rings');
+    const hint=()=>qd.getElementById('fhint').textContent;
+    ok(/C → G: Move 1 to the A string, fret 2\./.test(hint()),'fing-hint',hint());
+    ok(!qd.querySelector('.dot.fing.root')||[...qd.querySelectorAll('.dot.fing')].length===3,'fing-count');
+    qc(qd.querySelector('[data-pci="2"]')); ok(/Lay 1 flat across fret 1 for the barre/.test(hint())&&cell(4,1).classList.contains('stay'),'fing-hint-barre',hint());
+    qc(qd.querySelector('[data-pci="3"]')); const br=qd.querySelector('.barre');
+    ok(br.style.display!=='none'&&cell(0,1).textContent==='1'&&cell(5,1).textContent==='1'&&cell(2,3).textContent==='4','fing-barre-F');
+    // the tab's finger numbers agree with the neck
+    qc(qd.querySelector('#exhead [data-act=bchip][data-row=plan][data-v="arp"]')); qc(qd.querySelector('[data-pci="3"]'));
+    const tc=[...qd.querySelectorAll('.tcol')].find(e=>/\b3\b/.test(e.querySelector('.ln:nth-child(4)')?.textContent||'')&&QX.st.seq[+e.dataset.j]&&QX.st.seq[+e.dataset.j].s===2);
+    ok(tc&&tc.querySelector('.fg').textContent==='4','fing-tab-agrees',tc&&tc.querySelector('.fg').textContent);
+    // Dot labels: picking Key turns Fingers off for chords, Fingers turns it back on
+    qc(qd.querySelector('[data-act=sheet]')); qc(qd.querySelector('[data-act=lbl][data-v=key]'));
+    ok(QX.saved.fing===false&&!qd.querySelector('.dot.fing')&&qd.getElementById('fhint').hidden&&br.style.display==='none','fing-off');
+    qc(qd.querySelector('[data-act=lbl][data-v=fing]')); ok(QX.saved.fing===true&&qd.querySelector('.dot.fing'),'fing-on');
+    // a scale line keeps degree labels
+    qc(qd.querySelector('[data-act=sheetclose]')); qc(qd.querySelector('#exhead [data-act=bchip][data-row=plan][data-v="line"]'));
+    ok(!qd.querySelector('.dot.fing')&&qd.getElementById('fhint').hidden&&br.style.display==='none','fing-not-on-lines',[QX.D.plan,!!qd.querySelector('.dot.fing'),br.style.display].join()); }
   // phone layout text
   B.mode('practice'); ok(!/undefined|NaN|\[object/.test(B.d.querySelector('.app').textContent),'phone-text-path');
   console.log('log checks done, bad',bad); process.exit(bad?1:0);

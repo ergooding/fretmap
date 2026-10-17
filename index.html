@@ -211,6 +211,21 @@ html.wide{font-size:19px}
 .voice-card code{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--ink);font-size:.9rem;letter-spacing:.08em}
 .dot.vc{outline:3px solid var(--gold);outline-offset:3px}
 .dot.outk{border:2px dashed #14110d}
+.dot.fing{font-size:calc(var(--dot,30px)*.5);font-weight:800}
+.dot.dimx{opacity:.32;transform:scale(.62)}
+.dot.openv{background:transparent;box-shadow:inset 0 0 0 3px var(--c);color:var(--ink)}
+.dot.openv.now{box-shadow:inset 0 0 0 3px var(--c),0 0 16px 2px var(--c)}
+.dot.mute{background:transparent;box-shadow:none;color:var(--ink);font-size:calc(var(--dot,30px)*.62);font-weight:400;opacity:.8}
+.dot.nextf{background:rgba(255,255,255,.1);box-shadow:none;border:3px dashed var(--pearl);color:var(--pearl);transform:scale(.9)}
+.cell.out .dot.nextf{border-color:var(--ink);color:var(--ink)}
+.dot.stay{box-shadow:0 0 0 3px var(--bg),0 0 0 6px var(--good)}
+.barre{z-index:2;pointer-events:none;display:grid;place-items:center}
+.barre i{display:block;border-radius:999px;background:#2a1d12;box-shadow:0 0 0 2px var(--pearl);opacity:.9}
+.neck.h .barre i{width:calc(var(--dot,30px)*.62);height:calc(100% - var(--dot,30px)*.3)}
+.neck:not(.h) .barre i{height:calc(var(--dot,30px)*.62);width:calc(100% - var(--dot,30px)*.3)}
+.fhint{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:6px 12px;font-size:.86rem;line-height:1.45;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.fhint .seglab{flex:none}
+.fhint b.k{color:var(--good)}
 .ex-song{display:flex;flex-direction:column;gap:10px}
 .ex-song p{margin:0;font-size:.86rem;line-height:1.45}
 .ex-sum{color:var(--muted)}.ex-sum b{color:var(--ink)}
@@ -1146,9 +1161,10 @@ function strum(t,vol=0.16){const v=cur.voicing; if(!v) return; let j=0; v.frets.
 // ---------- build neck ----------
 const neck=document.getElementById('neck');
 const cells=[], fnums=[], frets=[], inlays=[];
-let zoom=[0,12], wide=false, land=false, horiz=false, woodEl, strsEl;
+let zoom=[0,12], wide=false, land=false, horiz=false, woodEl, strsEl, barreEl;
 (function build(){
   woodEl=document.createElement('div'); woodEl.className='wood'; neck.appendChild(woodEl);
+  barreEl=document.createElement('div'); barreEl.className='barre'; barreEl.style.display='none'; barreEl.innerHTML='<i></i>'; neck.appendChild(barreEl);
   for(let f=0;f<=12;f++){
     const n=document.createElement('div');
     n.className='fnum'+([3,5,7,9,12].includes(f)?' mark':'');
@@ -1764,7 +1780,7 @@ function draw(){
   }
   if(newShape){fillSelects(); render(); updateTab(); met.raf=requestAnimationFrame(draw); return;} // the next shape: everything that names the box
   if(changed){ if(newTab) renderTab(); renderBoard(); renderPrompt(); updateTab(); updateRGrid();
-    if(newChord){renderVoice(); markProgChord();} }
+    if(newChord){renderVoice(); markProgChord(); updFHint();} }
   met.raf=requestAnimationFrame(draw);
 }
 
@@ -2037,6 +2053,12 @@ function renderBoard(){
   const nextN=nowN?st.seq[(st.idx+1)%st.seq.length]:null;
   const same=(a,s,f)=>a&&a.s===s&&a.f===f;
   const E=exSong(), EV=E&&E.c?exVoicing(E,E.sel):null, ERel=E&&E.c?exOverRel(E):null;
+  // Fingers: the voicing's dots show which finger frets them, the rest of the chord fades, and the next chord's fingers show as dashed rings
+  const FA=st.mode==='drill'&&fingOn()?fingering(cur.voicing.frets):null;
+  const hideAll=FA&&st.playing&&st.idx>=0&&D.guide==='blind';
+  const nx=FA&&!hideAll&&ringsNow()?nextProg():null, NM=nx&&nx.voicing?fingerMoves(cur.voicing,nx.voicing):null;
+  barreEl.style.display=FA&&FA.barre&&!hideAll?'':'none';
+  if(FA&&FA.barre){const B=FA.barre; if(horiz) place(barreEl,String(B.f+1),`${6-B.b}/${7-B.a}`); else place(barreEl,`${B.a+2}/${B.b+3}`,String(B.f+1));}
   for(let s=0;s<6;s++)for(let f=0;f<=12;f++){
     const c=cells[s][f];
     if(E){ // a song: the chosen chord's notes, the rest of the key, and the shape you play
@@ -2063,6 +2085,21 @@ function renderBoard(){
       const inV=cur.voicing&&cur.voicing.frets[s]===f;
       const isNow=same(nowN,s,f)||(nowN&&nowN.chord&&inV), isNext=same(nextN,s,f)||(nextN&&nextN.chord&&inV);
       const ivK=ivOf({s,f},cur.key), isC=cur.chordPcs.has(pc(s,f)), inS=dset().has(ivK)||(D.line==='prog'&&isC);
+      if(FA){
+        if(hideAll){dot(c,null);continue;}
+        const {ref,t}=drillLabel({s,f}), ok=F.fam!=='chrom'&&!cur.set.has(ivK)?' outk':'';
+        const nf=NM&&nx.voicing.frets[s]===f&&f>0?NM.B.fing[s]:null;
+        if(inV){
+          const more=(isNow?' now':'')+(nf!=null&&FA.fing[s]===nf?' stay':'')+(st.flashUntil>Date.now()?' vc':'')+ok;
+          dot(c,f===0?{t:'',c:COL[ref],cls:'openv'+more}:{t:FA.fing[s],c:COL[ref],cls:'fing'+(ref===0?' root':'')+more});
+          continue;
+        }
+        if(nf!=null){dot(c,{t:nf,cls:'nextf'});continue;}
+        if(f===zoom[0]&&cur.voicing.frets[s]===null){dot(c,{t:'×',cls:'mute'});continue;}
+        if(out||!isC||(st.playing&&st.idx>=0&&D.guide==='next')){dot(c,null);continue;}
+        dot(c,{t,c:COL[ref],cls:'dimx'+(ref===0?' root':'')+ok});
+        continue;
+      }
       if(!isNow&&!isNext&&(out||!inS||(played&&!(inV&&D.pad)&&!played.has(s+':'+f)))){dot(c,null);continue;}
       const {ref,t}=drillLabel({s,f});
       let show=true;
@@ -2149,6 +2186,9 @@ function renderHowto(){
   el.hidden=!show; el.innerHTML=show?howtoHTML():'';
 }
 function finger(n){
+  // a note of the chord shape you're holding takes that shape's finger, as the Fingers labels on the neck show it
+  const v=chordPlay()&&(n.v||cur.voicing);
+  if(v&&v.frets[n.s]===n.f){const F=fingering(v.frets); if(F) return n.f===0?'o':String(F.fing[n.s]);}
   const lo=n.lo??cur.lo; // a whole-neck run fingers each note in its own box
   if(lo===0) return n.f===0?'o':String(Math.min(4,n.f));
   const o=n.f-lo; return o<0?'1':o>=4?'4+':String(o+1);
@@ -2156,6 +2196,77 @@ function finger(n){
 function chordTones(){
   const pick=o=>o.find(x=>cur.set.has(x));
   return [pick([4,3]),pick([7,6,8]),pick([10,11,9])].filter(x=>x!==undefined);
+}
+// which finger frets each note of a voicing (1 index to 4 pinky): 1 takes the lowest fret and lies flat as a barre when it
+// must hold several strings there; the others follow fret by fret, skipping a finger over a two-fret stretch when one is spare
+const FTAB={'x32000':[null,3,2,0,0,0],'022000':[0,2,3,0,0,0],'x02000':[null,0,2,0,0,0]}; // open shapes books finger differently
+function fingering(frets){
+  const key=frets.map(f=>f===null?'x':f).join('');
+  if(FTAB[key]) return {fing:FTAB[key].slice(),barre:null};
+  const fing=frets.map(f=>f===null?null:f===0?0:undefined);
+  const fr=frets.map((f,s)=>({s,f})).filter(n=>n.f!==null&&n.f>0);
+  if(!fr.length) return {fing,barre:null};
+  const mn=Math.min(...fr.map(n=>n.f)), atMin=fr.filter(n=>n.f===mn), top=Math.max(...fr.map(n=>n.s));
+  let barre=null, rest=fr, next=1;
+  if(atMin.length>=2){
+    const a=atMin[0].s, b=atMin[atMin.length-1].s;
+    const flat=frets.slice(a,b+1).every(f=>f!==null&&f>=mn); // nothing open or muted under the barre
+    if(flat&&(fr.length>4||(fr.length===4&&b===top))){barre={f:mn,a,b}; rest=fr.filter(n=>n.f!==mn); atMin.forEach(n=>fing[n.s]=1); next=2;}
+  }
+  rest=rest.slice().sort((x,y)=>x.f-y.f||x.s-y.s);
+  if(rest.length>5-next) return null; // more than four fingers: no fingering to show
+  let spare=5-next-rest.length;
+  rest.forEach((n,i)=>{
+    if(i||barre){const df=n.f-(i?rest[i-1].f:mn); if(df>=2&&spare>0){next++; spare--;}}
+    fing[n.s]=next++;
+  });
+  return {fing,barre};
+}
+// what each finger does going from one voicing to the next
+function fingerMoves(v1,v2){
+  const A=fingering(v1.frets),B=fingering(v2.frets); if(!A||!B) return null;
+  const at=(F,v,k)=>F.fing.map((x,s)=>x===k?{s,f:v.frets[s]}:null).filter(Boolean);
+  const keep=[],move=[],lift=[],put=[];
+  for(let k=1;k<=4;k++){
+    const p=at(A,v1,k), q=at(B,v2,k);
+    if(!p.length&&!q.length) continue;
+    if(!q.length){lift.push(k);continue;}
+    if(!p.length){put.push([k,q]);continue;}
+    if(p.length===q.length&&p.every((x,i)=>x.s===q[i].s&&x.f===q[i].f)) keep.push(k); else move.push([k,p,q]);
+  }
+  return {keep,move,lift,put,A,B};
+}
+const chordPlay=()=>st.mode==='drill'&&D.line==='prog'&&!!cur.prog&&['strum','arp','both'].includes(D.plan);
+const fingOn=()=>chordPlay()&&saved.fing!==false&&!!cur.voicing&&!picking();
+const nextProg=()=>cur.prog&&cur.prog.length>1?cur.prog[(cur.pci+1)%cur.prog.length]:null;
+function fingHint(){
+  const str=s=>STR_NAME[s].replace('high E','high e');
+  const where=q=>q.length>1?`a barre at fret ${q[0].f}`:`the ${str(q[0].s)} string, fret ${q[0].f}`;
+  const list=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+  const nx=nextProg(), m=nx&&nx.voicing?fingerMoves(cur.voicing,nx.voicing):null;
+  let change='';
+  if(m){
+    const parts=[];
+    if(m.keep.length) parts.push(`<b class="k">Keep ${list(m.keep)} down.</b>`);
+    m.move.forEach(([k,p,q])=>parts.push(q.length>1&&p.every(x=>q.some(y=>y.s===x.s&&y.f===x.f))?`Lay ${k} flat across fret ${q[0].f} for the barre.`
+      :p.length===1&&q.length===1&&p[0].s===q[0].s?`Slide ${k} along the ${str(q[0].s)} string to fret ${q[0].f}.`:`Move ${k} to ${where(q)}.`));
+    m.put.forEach(([k,q])=>parts.push(`Put ${k} on ${where(q)}.`));
+    if(m.lift.length) parts.push(`Lift ${list(m.lift)}.`);
+    change=` <b>${esc(cur.chord.name)} → ${esc(nx.ch.name)}</b>: ${parts.join(' ')} Dashed rings show where fingers go next${m.keep.length?', and a green ring marks a finger that stays':''}.`;
+  }
+  const key='1 index, 2 middle, 3 ring, 4 pinky. × means don’t play that string.';
+  return `<span class="seglab" data-tip="<b>Fingers</b>: ${key}">Fingers</span><span>${change.trim()||key}</span>`;
+}
+function updFHint(){const el=document.getElementById('fhint'); if(!el) return; const on=fingOn()&&!!fingering(cur.voicing.frets); el.hidden=!on; el.innerHTML=on?fingHint():'';}
+// while playing, the next chord's fingers show in the last bar before the change: the whole pick bar, or the second half of a strummed bar
+function ringsNow(){
+  if(!nextProg()) return false;
+  if(!(st.playing||st.paused)||st.idx<0) return true;
+  const n=st.seq[st.idx]; if(!n) return true;
+  const k0=st.seq.findIndex(x=>x.bar===n.bar), len=st.seq.filter(x=>x.bar===n.bar).length;
+  const after=st.seq.find((x,i)=>i>st.idx&&x.bar!==n.bar)||st.seq[0];
+  if(after&&after.ci===n.ci) return false; // another bar of this chord comes first
+  return D.plan==='both'||st.idx-k0>=len/2;
 }
 function voiceSVG(v,root=cur.chord.root,ch=cur.chord){
   const fr=v.frets, fretted=fr.filter(f=>f!==null&&f>0);
@@ -3346,7 +3457,7 @@ function setsHTML(){
     :[line('Notes per beat',`<select data-set="sub" aria-label="Notes per beat">${opts(SUBS,D.sub)}</select>`),
       sw('tog','pad',D.pad,'Strum the chord each bar'),line('Start and end on',seg('','resolve',[['key','Key root'],['chord','Chord root']],D.resolve))];
   const hear=[sw('tog','click',D.click,'Click'),sw('tog','notes',D.notes,'Play the notes'),prog?sw('rtog','swing',R.swing,'Shuffle feel'):''];
-  const neck=[line('Dot labels',seg('','lbl',[['key','Key'],['chord','Chord'],['notes','Notes']],saved.labels==='notes'?'notes':D.ref)),
+  const neck=[line('Dot labels',seg('','lbl',[['key','Key'],['chord','Chord'],['notes','Notes']].concat(chordPlay()?[['fing','Fingers']]:[]),chordPlay()&&saved.fing!==false?'fing':saved.labels==='notes'?'notes':D.ref)),
     line('While playing',`<select data-set="guide" aria-label="While playing">${opts(GUIDES,D.guide)}</select>`)];
   const fast=[line('Tempo ramp',`<select data-set="ramp" aria-label="Tempo ramp">${opts(RAMPS,D.ramp)}</select>`)];
   const grp=(h,list)=>`<section><h4>${h}</h4>${list.join('')}</section>`;
@@ -3364,7 +3475,7 @@ function renderPanel(){
         ${!cur.whole?'<div class="actions"><button class="btn" data-act="keepbox">Keep '+cur.posLabel.split(',')[0]+'</button></div>':''}`;
       return;
     }
-    if(D.line==='prog'&&cur.prog){panel.innerHTML=`${strumCard()}<div class="tab" id="tab"></div>${pbarHTML()}${setsHTML()}`; renderTab(); updateRGrid(); return;}
+    if(D.line==='prog'&&cur.prog){panel.innerHTML=`<div class="fhint" id="fhint" hidden></div>${strumCard()}<div class="tab" id="tab"></div>${pbarHTML()}${setsHTML()}`; updFHint(); renderTab(); updateRGrid(); return;}
     panel.innerHTML=`${D.line==='prog'?'':'<div class="tab" id="tab"></div>'}${pbarHTML()}${setsHTML()}`;
     renderTab();
     return;
@@ -3509,7 +3620,9 @@ const onClick=e=>{
     case 'sev': D.sev=!D.sev; refresh(); save(); regen(); return;
     case 'tog': D[b.dataset.k]=!D[b.dataset.k]; save(); if(b.dataset.k==='pad') regen(); else render(); return;
     case 'resolve': D.resolve=b.dataset.v; save(); regen(); return;
-    case 'lbl': if(b.dataset.v==='notes') saved.labels='notes'; else {saved.labels='iv'; D.ref=b.dataset.v;} save(); render(); return;
+    case 'lbl': if(b.dataset.v==='fing'){saved.fing=true; save(); render(); return;}
+      if(chordPlay()) saved.fing=false;
+      if(b.dataset.v==='notes') saved.labels='notes'; else {saved.labels='iv'; D.ref=b.dataset.v;} save(); render(); return;
     case 'play': togglePlay(); return;
     case 'clean': toggleClean(); return;
     case 'exchip': if(st.ex) bchoose(b.dataset.row,b.dataset.v); return;
@@ -3961,6 +4074,7 @@ const TIPS=[
  ['[data-act="lbl"][data-v="key"]',()=>`Label degrees from the key root, ${keyName()}.`],
  ['[data-act="lbl"][data-v="chord"]',()=>`Label degrees from the chord root, ${rootName(cur.chord)}, so the same notes read as chord tones and extensions.`],
  ['[data-act="lbl"][data-v="notes"]',()=>'Label each note by name.'],
+ ['[data-act="lbl"][data-v="fing"]',()=>'<b>Fingers</b>: number the notes of the chord shape by the finger that frets them (1 index to 4 pinky), fade the rest of the chord, and show where each finger goes for the next chord.'],
  ['[data-set="ramp"]',()=>'Raise the tempo automatically after every full pass.'],
  ['[data-act="strum"]',()=>'Hear the chord voicing and see it on the neck.'],
  ['[data-act="move"]',()=>'Pick a new box by clicking the neck.'],
@@ -4005,7 +4119,7 @@ document.addEventListener('keydown',e=>{const t=e.target.closest&&e.target.close
 addEventListener('scroll',hideTip,true);
 addEventListener('resize',hideTip);
 
-window.__fretDebug={tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,EXS,EX_BY,exStart,exGo,routines,openRoutine,chipDone,exProgress,fillSet,editStart,ceditStart,runOf,setupSkill,stepState,followKey,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule,setWhere,setPlan,passEnd,cycleShapes,techMarks,regen};
+window.__fretDebug={fingering,fingerMoves,tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,EXS,EX_BY,exStart,exGo,routines,openRoutine,chipDone,exProgress,fillSet,editStart,ceditStart,runOf,setupSkill,stepState,followKey,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule,setWhere,setPlan,passEnd,cycleShapes,techMarks,regen};
 fillSelects();
 render();
 setTimeout(syncNow,300); // does nothing without a token
