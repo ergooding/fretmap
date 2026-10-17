@@ -130,7 +130,7 @@ h1{font-size:1.05rem;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
 .dot.nextup{outline:2px dashed var(--ink);outline-offset:2px;animation:none}
 .drow{display:flex;gap:6px;align-items:center}
 .drow select,.transport select{font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:6px 4px;min-width:0;flex:1}
-.tab{overflow-x:auto;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:5px 0;scrollbar-width:none;flex:none}
+.tab{overflow-x:auto;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:5px 0;scrollbar-width:thin;flex:none}
 .tab::-webkit-scrollbar{display:none}
 .tabin{display:inline-flex;padding:0 8px}
 .tcol{display:flex;flex-direction:column;width:21px;flex:none;text-align:center;border-radius:5px}
@@ -178,6 +178,8 @@ html.wide{font-size:19px}
 .app.wide .prompt .big{font-size:2.1rem}
 .app.wide .neck-wrap{grid-area:neck;flex:none;height:clamp(240px,42vh,620px)}
 .app.wide .neck{max-width:none;height:100%}
+.neck-wrap.roll{overflow-x:auto;overflow-y:hidden;display:block;scrollbar-width:thin;overscroll-behavior-x:contain}
+.neck-wrap.roll .neck{max-width:none}
 .app.wide .panel{grid-area:panel;min-height:0;overflow:auto;gap:12px;align-content:start}
 .app.wide .row{flex-wrap:wrap;overflow:visible}
 .app.wide .answers,.app.wide .actions,.app.wide .drow,.app.wide .transport{max-width:900px}
@@ -945,7 +947,7 @@ try{const raw=localStorage.getItem(KEY); if(raw){const o=JSON.parse(raw); saved=
   if(!o.focus) saved.focus={key:0,fam:'major',mode:0,pos:-1}; saved.drill=Object.assign({...DRILL_DEF,b2:0},o.drill||{}); if(!saved.bpm) saved.bpm=80;}}catch(e){}
 saved.rhythm=Object.assign({...RHY_DEF},saved.rhythm||{});
 saved.fold=saved.fold||{}; // explanation blocks you collapsed
-if(saved.fold.bshut===undefined) saved.fold.bshut=true; // on a phone the builder starts folded, so the neck shows on the first screen
+['bshut','vdots','vbuilt'].forEach(k=>{if(saved.fold[k]===undefined) saved.fold[k]=true;}); // the phone builder and the chord card's explainers start folded
 const fold=(k,sum,body)=>`<details class="fold" data-fold="${k}"${saved.fold[k]?'':' open'}><summary>${sum}</summary>${body}</details>`;
 if(!FAMS[saved.focus.fam]) saved.focus={key:0,fam:'major',mode:0,pos:-1};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
@@ -1246,9 +1248,15 @@ function setZoom(a,b,force){
   const hide=(el,f)=>el.classList.toggle('hid',f<a||f>b);
   for(let f=0;f<=12;f++){hide(fnums[f],f);hide(frets[f],f);for(let s=0;s<6;s++)hide(cells[s][f],f);}
   inlays.forEach(i=>hide(i.el,i.f));
-  // a phone held upright keeps frets wide enough to read: more than 7 frets scroll sideways instead of shrinking
-  const n=b-a+1; neck.style.minWidth=!wide&&!land&&n>7?n*58+'px':'';
   sizeDots();
+}
+function rollNeck(){
+  // more frets than fit at a readable size scroll sideways instead of shrinking: always on an upright phone, and in a
+  // whole-neck drill on any screen, which shows about 7 frets (one hand position's reach) and follows the drill along
+  const n=zoom[1]-zoom[0]+1, port=!wide&&!land, run=st.mode==='drill'&&cur.whole&&!picking(), w=neck.parentElement;
+  const mw=n>7&&(port||run)?n*(port?58:Math.max(64,Math.round(w.clientWidth/7)))+'px':'';
+  w.classList.toggle('roll',!!mw);
+  if(mw!==neck.style.minWidth){neck.style.minWidth=mw; sizeDots();}
 }
 // ---------- layout detection ----------
 const appEl=document.querySelector('.app'), layoutBtn=document.getElementById('layoutBtn');
@@ -2108,11 +2116,16 @@ function drillLabel(p){
 function renderBoard(){drawBoard(); keepInView();}
 let viewKey='';
 function keepInView(){
-  // when the neck scrolls sideways: follow the note being played, and show the focus box when the view changes
+  // when the neck scrolls sideways: keep the hand's reach in view while the drill plays (the note now and the next few),
+  // and show the focus box, or the start of a whole-neck run, when the view changes
   const w=neck.parentElement; if(w.scrollWidth<=w.clientWidth+1) return;
-  const R=w.getBoundingClientRect(), d=neck.querySelector('.dot.now'), key=`${st.mode}:${zoom}:${cur.lo}`;
+  const R=w.getBoundingClientRect(), key=`${st.mode}:${zoom}:${cur.lo}`;
   const to=x=>{try{w.scrollTo({left:x,behavior:'smooth'});}catch(e){w.scrollLeft=x;}};
-  if(d){const r=d.parentElement.getBoundingClientRect(); if(r.left<R.left+8||r.right>R.right-8) to(w.scrollLeft+r.left-R.left-(R.width-r.width)/2); viewKey=key; return;}
+  if((st.playing||st.paused)&&st.idx>=0&&st.seq&&st.seq.length){
+    const fs=[]; for(let k=-1;k<=6;k++){const n=st.seq[st.idx+k]; if(n&&!n.rest&&!n.chord&&n.f!=null) fs.push(n.f);}
+    if(fs.length){const a=cells[0][Math.min(...fs)].getBoundingClientRect(), b=cells[0][Math.max(...fs)].getBoundingClientRect();
+      if(a.left<R.left+4||b.right>R.right-4) to(w.scrollLeft+(a.left+b.right)/2-R.left-R.width/2);}
+    viewKey=key; return;}
   if(key===viewKey) return; viewKey=key;
   const c=cells[0][Math.max(zoom[0],cur.whole?0:cur.lo-1)]; if(c) to(w.scrollLeft+c.getBoundingClientRect().left-R.left);
 }
@@ -2121,6 +2134,7 @@ function drawBoard(){
   fnums[0].textContent=cp?`capo ${cp}`:'open';
   if(st.mode==='practice'||st.mode==='songs') return; // the neck is hidden
   if(st.mode==='drill'&&!picking()&&!wide) setZoom(Math.max(0,cur.lo-1),Math.min(12,cur.hi+1)); else setZoom(0,12);
+  rollNeck();
   const nowN=(st.playing||st.paused)&&st.idx>=0?st.seq[st.idx]:null;
   // a scale line plays each pitch once, so a note it skips (the same pitch on the next string) isn't drawn
   const played=st.mode==='drill'&&D.line!=='prog'?new Set(boxNotes().map(n=>n.s+':'+n.f)):null;
@@ -2396,9 +2410,9 @@ function renderVoice(){
   const ctxt=`${F.fam==='chrom'?'':' in '+keyName()+' '+modeName()}`;
   const head=`<div class="vc-head"><b>${cur.chord.name}</b><b class="rn term" data-term="roman" tabindex="0">${cur.chord.roman}</b><span>${ctxt.trim()}</span></div>`;
   const built=`How ${cur.chord.name} is built`;
-  if(!v){el.innerHTML=`${head}${fold('formula',built,chordFormula(null))}<p>No playable voicing with the root in the bass fits ${cur.whole?'anywhere on the neck':`frets ${cur.lo}–${cur.hi}. Try the next position`}.</p>`;return;}
+  if(!v){el.innerHTML=`${head}${dotsFold()}${fold('vbuilt',built,chordFormula(null))}<p>No playable voicing with the root in the bass fits ${cur.whole?'anywhere on the neck':`frets ${cur.lo}–${cur.hi}. Try the next position`}.</p>`;return;}
   const tabTxt=v.frets.some(f=>f!==null&&f>9)?v.frets.map(f=>f===null?'x':f).join(' '):v.frets.map(f=>f===null?'x':f).join('');
-  el.innerHTML=`${head}${fold('formula',built,`<p class="vc-shape">${v.own?esc(v.name):`${v.name.startsWith('Drop')?term('drop3',v.name):v.name.startsWith('Found')?v.name:term('shape',v.name)}, frets ${vFrets(v)}`}</p>
+  el.innerHTML=`${head}${dotsFold()}${fold('vbuilt',built,`<p class="vc-shape">${v.own?esc(v.name):`${v.name.startsWith('Drop')?term('drop3',v.name):v.name.startsWith('Found')?v.name:term('shape',v.name)}, frets ${vFrets(v)}`}</p>
     ${chordFormula(v)}`)}
     <button class="vc-diag" aria-label="Play ${cur.chord.name} and show it on the neck">${voiceSVG(v)}</button>
     <p><code>${tabTxt}</code><br>Tap the diagram to hear it and see it on the neck.</p>`;
@@ -2458,7 +2472,9 @@ function updateTab(){
   el.querySelectorAll('.tcol.now').forEach(c=>c.classList.remove('now'));
   if((!st.playing&&!st.paused)||st.idx<0){el.scrollLeft=0;return;}
   const c=el.querySelector(`[data-j="${st.idx}"]`);
-  if(c){c.classList.add('now'); el.scrollLeft=c.offsetLeft-el.clientWidth/2+c.offsetWidth/2;}
+  // follow along: when the note now nears an edge, slide so it sits a third of the way in, with what's next in view
+  if(c){c.classList.add('now'); const R=el.getBoundingClientRect(), r=c.getBoundingClientRect();
+    if(r.left<R.left+8||r.right>R.left+R.width*.8){const x=Math.max(0,el.scrollLeft+r.left-R.left-R.width/3); try{el.scrollTo({left:x,behavior:'smooth'});}catch(e){el.scrollLeft=x;}}}
 }
 const quizSeg=()=>`<div class="row">${seg('Quiz','quiz',[['name','Name it'],['find','Find it']],st.mode)}</div>`;
 function seg(label,act,list,v){return `<div class="segw" role="group" aria-label="${label}"><span class="seglab">${label}</span><div class="seg">`+list.map(([k,l])=>`<button data-act="${act}" data-v="${k}" aria-pressed="${k===v}">${l}</button>`).join('')+'</div></div>';}
@@ -2518,6 +2534,10 @@ function applySetup(s,nav){ // a song's setup: its key, open position, its chord
   if(s.tempo) saved.bpm=s.tempo; // a song starts at its own tempo
   st.visible=new Set(cur.allowed); fillSelects(); save();
   if(nav!==false) document.querySelector('#modes [data-mode="drill"]').click();
+}
+function dotsFold(){ // how to read the scale-line dots, folded until you open it
+  const per=[0,0,0,0,0,0]; boxNotes().forEach(n=>per[n.s]++);
+  return fold('vdots','Reading the dots',`<p class="hint">Solid dots are ${term('chordtone','chord tones')} of ${cur.chord.name}, pearl dots ${term('passing','passing tones')}, and a gold ring marks ${D.resolve==='chord'?rootName(cur.chord):keyName()}, where each pass starts and ends. Notes per string, low to high: ${per.join(' ')}.${D.pad&&!cur.voicing?' No voicing fits this box, so the chord step is skipped.':''} Click the chord in the Over row again to hear it.</p>`);
 }
 function songNote(){
   // in free Drill, a song you're playing says its goal tempo and how close you are
@@ -3464,10 +3484,10 @@ function renderSheet(){
   el.hidden=!show; if(!show){el.innerHTML=''; return;}
   // the builder above picks the chords, how to play each and the pattern; this says what's playing
   if(D.line!=='prog'){
-    const per=[0,0,0,0,0,0]; boxNotes().forEach(n=>per[n.s]++);
+    if(wide){const sn=songNote(); el.hidden=!sn; el.innerHTML=sn; return;} // the chord card below says the rest
     el.innerHTML=`${songNote()}
       <div class="sh-head"><b class="sh-name">${cur.chord.name}</b><span>${cur.chord.roman?cur.chord.roman+' in ':'Over '}${keyName()} ${F.fam==='chrom'?'':esc(modeName())}</span></div>
-      ${fold('dots','Reading the dots',`<p class="hint">Solid dots are ${term('chordtone','chord tones')} of ${cur.chord.name}, pearl dots ${term('passing','passing tones')}, and a gold ring marks ${D.resolve==='chord'?rootName(cur.chord):keyName()}, where each pass starts and ends. Notes per string, low to high: ${per.join(' ')}.${D.pad&&!cur.voicing?' No voicing fits this box, so the chord step is skipped.':''} Click the chord in the Over row again to hear it.</p>`)}`;
+      ${dotsFold()}`;
     return;
   }
   if(!cur.prog){el.innerHTML=`<p class="hint">Progressions are built from the chords of a 7-note scale. Pick a mode of Major, Harmonic minor, or Melodic minor in the focus settings.</p>`; return;}

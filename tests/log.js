@@ -314,7 +314,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     ok(['Bdim','Bm7b5','Gdim7','Caug'].map(n=>X.chordIn(n,0).roman).join(' ')==='vii° viiø7 v°7 I+','audit-romans',['Bdim','Bm7b5','Gdim7','Caug'].map(n=>X.chordIn(n,0).roman).join(' '));
     // the Drill neck matches its text: no dot the scale line skips, chord tones solid, the start and end note ringed
     Object.assign(X.F,{key:0,fam:'major',mode:0,pos:0}); Object.assign(X.D,{prog:'one',plan:'line',chord:1,resolve:'key',pattern:'updown',tech:'any',sev:false}); X.saved.fmode='key'; X.refresh(); mode('drill');
-    const dt=(s,f)=>d.querySelector(`.cell[data-s="${s}"][data-f="${f}"] .dot`), per=(/Notes per string, low to high: ([\d ]+)\./.exec(d.getElementById('sheet').textContent)||[])[1];
+    const dt=(s,f)=>d.querySelector(`.cell[data-s="${s}"][data-f="${f}"] .dot`), per=(/Notes per string, low to high: ([\d ]+)\./.exec(d.getElementById('sheet').textContent+d.getElementById('voiceCard').textContent)||[])[1]; // on desktop the chord card holds Reading the dots
     ok(!dt(3,4)&&dt(4,0)&&per==='3 3 3 2 3 3','audit-neck-unison',per);
     ok(/\bpass\b/.test(dt(4,1).className)&&/\bhome\b/.test(dt(4,1).className)&&!/\bpass\b/.test(dt(2,3).className),'audit-neck-chord-tones',dt(4,1).className+' / '+dt(2,3).className);
     // positions are the CAGED shapes of the home chord, and the whole neck runs up through all of them
@@ -554,7 +554,13 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     kc(dd('plan')); ok(!!menu()&&dd('plan').getAttribute('aria-expanded')==='true'&&[...menu().querySelectorAll('.mi')].every(b=>b.dataset.tip&&b.dataset.tip.length>20),'menu-open-tips');
     kc(menu().querySelector('[data-v=strum]')); ok(KX.D.plan==='strum'&&!menu()&&/^Strum/.test(dd('plan').textContent)&&/Strum each chord/.test(dd('plan').dataset.tip),'menu-pick',dd('plan').dataset.tip);
     kc(dd('rpat')); kc(menu().querySelector('[data-v=tresillo]')); ok(KX.R.pat==='tresillo'&&/3-3-2|tresillo/i.test(dd('rpat').textContent),'menu-strum',dd('rpat').textContent);
-    kc(dd('prog')); K.w.document.dispatchEvent(new K.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true})); ok(!menu(),'menu-escape'); }
+    kc(dd('prog')); K.w.document.dispatchEvent(new K.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true})); ok(!menu(),'menu-escape');
+    // one chord card on desktop, its explainers folded; a whole-neck scale line shows about 7 frets and scrolls
+    Object.assign(KX.F,{key:0,fam:'major',mode:0,pos:-1}); Object.assign(KX.D,{prog:'one',plan:'line',chord:0,pattern:'updown'}); KX.refresh(); K.mode('explore'); K.mode('drill');
+    const vc=kd.getElementById('voiceCard'), fd=[...vc.querySelectorAll('details.fold')];
+    ok(!vc.hidden&&fd.length===2&&fd.every(x=>!x.open)&&/Reading the dots/.test(vc.textContent)&&/How C\w* is built/.test(vc.textContent)&&kd.getElementById('sheet').hidden,'one-chord-card',fd.map(x=>x.open).join());
+    ok(kd.querySelector('.neck-wrap').classList.contains('roll')&&/px$/.test(kd.getElementById('neck').style.minWidth),'whole-neck-rolls');
+    KX.F.pos=KX.cur.pos[1].lo; KX.refresh(); K.mode('explore'); K.mode('drill'); ok(!kd.querySelector('.neck-wrap').classList.contains('roll'),'box-no-roll'); }
 
   // phone layout text
   B.mode('practice'); ok(!/undefined|NaN|\[object/.test(B.d.querySelector('.app').textContent),'phone-text-path');
