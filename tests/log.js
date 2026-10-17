@@ -314,7 +314,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     ok(['Bdim','Bm7b5','Gdim7','Caug'].map(n=>X.chordIn(n,0).roman).join(' ')==='vii° viiø7 v°7 I+','audit-romans',['Bdim','Bm7b5','Gdim7','Caug'].map(n=>X.chordIn(n,0).roman).join(' '));
     // the Drill neck matches its text: no dot the scale line skips, chord tones solid, the start and end note ringed
     Object.assign(X.F,{key:0,fam:'major',mode:0,pos:0}); Object.assign(X.D,{prog:'one',plan:'line',chord:1,resolve:'key',pattern:'updown',tech:'any',sev:false}); X.saved.fmode='key'; X.refresh(); mode('drill');
-    const dt=(s,f)=>d.querySelector(`.cell[data-s="${s}"][data-f="${f}"] .dot`), per=(/Notes per string, low to high: ([\d ]+)\./.exec(d.getElementById('sheet').textContent+d.getElementById('voiceCard').textContent)||[])[1]; // on desktop the chord card holds Reading the dots
+    const dt=(s,f)=>d.querySelector(`.cell[data-s="${s}"][data-f="${f}"] .dot`), per=(/Notes on each string, low E to high e: ([\d ]+)\./.exec(d.getElementById('sheet').textContent+d.getElementById('voiceCard').textContent)||[])[1]; // on desktop the chord card holds the neck key
     ok(!dt(3,4)&&dt(4,0)&&per==='3 3 3 2 3 3','audit-neck-unison',per);
     ok(/\bpass\b/.test(dt(4,1).className)&&/\bhome\b/.test(dt(4,1).className)&&!/\bpass\b/.test(dt(2,3).className),'audit-neck-chord-tones',dt(4,1).className+' / '+dt(2,3).className);
     // positions are the CAGED shapes of the home chord, and the whole neck runs up through all of them
@@ -558,7 +558,11 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     // one chord card on desktop, its explainers folded; a whole-neck scale line shows about 7 frets and scrolls
     Object.assign(KX.F,{key:0,fam:'major',mode:0,pos:-1}); Object.assign(KX.D,{prog:'one',plan:'line',chord:0,pattern:'updown'}); KX.refresh(); K.mode('explore'); K.mode('drill');
     const vc=kd.getElementById('voiceCard'), fd=[...vc.querySelectorAll('details.fold')];
-    ok(!vc.hidden&&fd.length===2&&fd.every(x=>!x.open)&&/Reading the dots/.test(vc.textContent)&&/How C\w* is built/.test(vc.textContent)&&kd.getElementById('sheet').hidden,'one-chord-card',fd.map(x=>x.open).join());
+    ok(!vc.hidden&&fd.length===2&&fd.every(x=>!x.open)&&/What the neck shows/.test(vc.textContent)&&/How C\w* is built/.test(vc.textContent)&&kd.getElementById('sheet').hidden,'one-chord-card',fd.map(x=>x.open).join());
+    // the neck key draws the neck's own dots, and the chord diagram is a little sideways neck in the same colors
+    const nlook=new Set([...kd.querySelectorAll('#neck .dot')].map(x=>x.className.replace(/\s*\bnow\b/,'').trim()+'|'+x.textContent+'|'+x.style.getPropertyValue('--c')));
+    const klook=[...vc.querySelectorAll('.nk .dot')].map(x=>x.className.trim()+'|'+x.textContent+'|'+x.style.getPropertyValue('--c'));
+    ok(klook.length>=4&&klook.every(k=>nlook.has(k))&&/high e on top/.test(vc.querySelector('.vc-diag svg').getAttribute('aria-label')),'neck-key-matches',klook.filter(k=>!nlook.has(k)).join(', '));
     ok(kd.querySelector('.neck-wrap').classList.contains('roll')&&/px$/.test(kd.getElementById('neck').style.minWidth),'whole-neck-rolls');
     KX.F.pos=KX.cur.pos[1].lo; KX.refresh(); K.mode('explore'); K.mode('drill'); ok(!kd.querySelector('.neck-wrap').classList.contains('roll'),'box-no-roll'); }
 

@@ -215,6 +215,11 @@ html.wide{font-size:19px}
 .voice-card p{margin:4px 0 0;font-size:.8rem;color:var(--muted);text-align:center}
 .voice-card code{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--ink);font-size:.9rem;letter-spacing:.08em}
 .dot.vc{outline:3px solid var(--gold);outline-offset:3px}
+.nkey{display:flex;flex-direction:column;gap:6px;margin:6px 0 4px}
+.nk{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;font-size:.8rem;line-height:1.35;text-align:left}
+.nk-d{display:flex;gap:5px;align-items:center;min-width:28px}
+.nk .dot{--dot:28px;animation:none;flex:none}
+.voice-card .nkey+p.hint,.nkey+p.hint{text-align:left;margin-top:2px}
 .dot.outk{border:2px dashed #14110d}
 .dot.fing{font-size:calc(var(--dot,30px)*.5);font-weight:800}
 .dot.dimx{opacity:.32;transform:scale(.62)}
@@ -473,9 +478,9 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 .cchip[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
 .vpop{border:1px solid var(--gold);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
 .vp-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.shapes{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.shapes{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
 .shape{display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 4px;cursor:pointer;color:var(--ink);font-size:.72rem;text-align:center}
-.shape svg{width:100%;max-width:92px;height:auto}
+.shape svg{width:100%;max-width:150px;height:auto}
 .shape code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;letter-spacing:.04em}
 .shape span{color:var(--muted)}
 .shape[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);background:color-mix(in srgb,var(--gold) 14%,var(--surface))}
@@ -2113,6 +2118,13 @@ function drillLabel(p){
   const t=saved.labels==='notes'?noteName(pc(p.s,p.f)):(D.ref==='chord'?chordIv(cur.chord,ivC)[0]:F.fam==='chrom'?IV[ivK][0]:labIn(ivK,dset())[0]);
   return {ref,t};
 }
+function lineDot(s,f){
+  // how Drill draws a note: a solid dot in its degree's color for a chord tone (the root gold with a pearl ring), a smaller pearl dot
+  // for a passing tone, a gold ring on the note each pass starts and ends on (the root's own pearl ring already says it), a dashed edge outside the key
+  const {ref,t}=drillLabel({s,f}), p=pc(s,f), isC=cur.chordPcs.has(p), root=isC&&ref===0, home=D.resolve==='chord'?cur.chord.root:cur.key;
+  const cls=(isC?(root?'root':''):'pass')+(D.line!=='prog'&&p===home&&!root?' home':'')+(F.fam!=='chrom'&&!cur.set.has(ivOf({s,f},cur.key))?' outk':'');
+  return {t,c:COL[ref],cls};
+}
 function renderBoard(){drawBoard(); keepInView();}
 let viewKey='';
 function keepInView(){
@@ -2138,7 +2150,6 @@ function drawBoard(){
   const nowN=(st.playing||st.paused)&&st.idx>=0?st.seq[st.idx]:null;
   // a scale line plays each pitch once, so a note it skips (the same pitch on the next string) isn't drawn
   const played=st.mode==='drill'&&D.line!=='prog'?new Set(boxNotes().map(n=>n.s+':'+n.f)):null;
-  const home=D.resolve==='chord'?cur.chord.root:cur.key;
   const nextN=nowN?st.seq[(st.idx+1)%st.seq.length]:null;
   const same=(a,s,f)=>a&&a.s===s&&a.f===f;
   const E=exSong(), EV=E&&E.c?exVoicing(E,E.sel):null, ERel=E&&E.c?exOverRel(E):null;
@@ -2194,18 +2205,18 @@ function drawBoard(){
       const rf=RM&&rx.voicing.frets[s]===f&&f>0?RM.B.fing[s]:null;
       if(rf!=null&&!isNow&&!isNext){dot(c,{t:rf,cls:'nextf'});continue;}
       if(!isNow&&!isNext&&(out||!inS||(played&&!(inV&&D.pad)&&!played.has(s+':'+f)))){dot(c,null);continue;}
-      const {ref,t}=drillLabel({s,f});
+      const {t,c:col,cls:look}=lineDot(s,f);
       let show=true;
       if(st.playing&&st.idx>=0){
         if(D.guide==='next') show=isNow||isNext;
         if(D.guide==='blind') show=false;
       }
       if(!show){dot(c,null);continue;}
-      let cls=(isC?(ref===0?'root':''):'pass')+(D.line!=='prog'&&pc(s,f)===home?' home':'')+(F.fam!=='chrom'&&!cur.set.has(ivK)?' outk':''); // solid: chord tone; pearl: passing tone; gold ring: where each pass starts and ends; dashed: outside the focus
+      let cls=look;
       if(isNow) cls+=' now'; else if(isNext&&D.guide!=='full') cls+=' nextup';
       if(rf!=null) cls+=' nextshape';
       if(st.flashUntil>Date.now()&&cur.voicing&&cur.voicing.frets[s]===f) cls+=' vc';
-      dot(c,{t,c:COL[ref],cls});
+      dot(c,{t,c:col,cls});
     }else if(st.mode==='name'){
       c.classList.remove('out');
       if(s===q.root.s&&f===q.root.f) dot(c,{t:'R',cls:'root'});
@@ -2362,26 +2373,37 @@ function ringsNow(){
   if(after&&after.ci===n.ci) return false; // another bar of this chord comes first
   return D.plan==='both'||D.plan==='mix'||st.idx-k0>=len/2;
 }
-function voiceSVG(v,root=cur.chord.root,ch=cur.chord){
+function voiceSVG(v,root=cur.chord.root,ch=cur.chord,lab=null){ // lab(s,f) gives {ref,t} so the diagram can label and color its dots like the neck
+  // a small sideways neck drawn like the big one: high e on top, the open column left of the nut, × for a string you don't play,
+  // a hollow ring for an open string, and solid dots in the same degree colors (the root gold with a pearl ring)
   const fr=v.frets, fretted=fr.filter(f=>f!==null&&f>0);
   const maxF=fretted.length?Math.max(...fretted):1, minF=fretted.length?Math.min(...fretted):1;
-  const base=maxF<=5?1:minF, L=38, G=30, T=40, RH=36, N=5, W=L+G*5+30, H=T+RH*N+38;
-  let o=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Chord diagram">`;
-  for(let s=0;s<6;s++) o+=`<line x1="${L+s*G}" y1="${T}" x2="${L+s*G}" y2="${T+RH*N}" stroke="currentColor" stroke-opacity=".55" stroke-width="${1.6-s*0.15}"/>`;
-  for(let r=0;r<=N;r++) o+=`<line x1="${L}" y1="${T+r*RH}" x2="${L+G*5}" y2="${T+r*RH}" stroke="currentColor" stroke-opacity="${r===0&&base===1?1:.35}" stroke-width="${r===0&&base===1?5:1.5}"/>`;
-  if(base>1) o+=`<text x="${L-12}" y="${T+RH*0.5+5}" text-anchor="end" font-size="13" fill="currentColor" opacity=".7">${base}fr</text>`;
-  // barre: two or more notes on the lowest fret with nothing lower between them
-  const atMin=fr.map((f,s)=>f===minF&&minF>0?s:-1).filter(s=>s>=0);
-  if(atMin.length>=2){const a=atMin[0],b=atMin[atMin.length-1];
-    if(fr.slice(a,b+1).every(f=>f!==null&&f>=minF)){const y=T+(minF-base+0.5)*RH;
-      o+=`<rect x="${L+a*G-12}" y="${y-12}" width="${(b-a)*G+24}" height="24" rx="12" fill="currentColor" opacity=".18"/>`;}}
+  const base=maxF<=5?1:minF, N=Math.max(5,maxF-base+1), O=30, G=40, RH=24, P=14, R=10;
+  const W=O+G*N+4, H=P+RH*5+RH/2+20, sy=s=>P+(5-s)*RH, fx=f=>O+(f-base+0.5)*G;
+  let o=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Chord diagram, high e on top">`;
+  o+=`<rect x="${O}" y="${P-RH/2}" width="${G*N}" height="${RH*6}" rx="5" style="fill:var(--wood)"/>`;
+  for(let k=1;k<=N;k++) o+=`<line x1="${O+k*G}" y1="${P-RH/2}" x2="${O+k*G}" y2="${P+RH*5.5}" style="stroke:var(--fret)" stroke-width="2"/>`;
+  o+=`<line x1="${O}" y1="${P-RH/2}" x2="${O}" y2="${P+RH*5.5}" style="stroke:var(${base===1?'--pearl':'--fret'})" stroke-width="${base===1?7:2}"/>`;
+  for(let f=base;f<base+N;f++){
+    const ys=[3,5,7,9].includes(f)?[P+2.5*RH]:f===12?[P+1.5*RH,P+3.5*RH]:[];
+    ys.forEach(y=>o+=`<circle cx="${fx(f)}" cy="${y}" r="5" style="fill:var(--pearl)" opacity=".55"/>`);
+  }
+  for(let s=0;s<6;s++) o+=`<line x1="0" y1="${sy(s)}" x2="${O+G*N}" y2="${sy(s)}" stroke="#cfc8b8" stroke-width="${STR_W[s]}"/>`;
+  const ly=P+RH*5.5+14, mark=f=>[3,5,7,9,12].includes(f);
+  o+=`<text x="${O/2}" y="${ly}" text-anchor="middle" font-size="9" style="fill:var(--muted)">${base===1?'open':''}</text>`;
+  for(let f=base;f<base+N;f++) o+=`<text x="${fx(f)}" y="${ly}" text-anchor="middle" font-size="11" style="fill:var(${mark(f)?'--ink':'--muted'})"${mark(f)?' font-weight="600"':''}>${f}</text>`;
+  const FA=fingering(fr), B=FA&&FA.barre;
+  if(B) o+=`<rect x="${fx(B.f)-R*.62}" y="${sy(B.b)-R*.7}" width="${R*1.24}" height="${sy(B.a)-sy(B.b)+R*1.4}" rx="${R*.62}" fill="#2a1d12" style="stroke:var(--pearl)" stroke-width="2" opacity=".9"/>`;
+  const txt=(x,y,t,fill)=>`<text x="${x}" y="${y+4}" text-anchor="middle" font-size="11" font-weight="700" style="fill:${fill}">${t}</text>`;
   fr.forEach((f,s)=>{
-    const x=L+s*G;
-    if(f===null){o+=`<text x="${x}" y="${T-12}" text-anchor="middle" font-size="15" fill="currentColor" opacity=".6">×</text>`;return;}
-    const iv=(pc(s,f)-root+12)%12, t=ch&&ch.root===root?chordIv(ch,iv)[0]:IV[iv][0];
-    if(f===0) o+=`<circle cx="${x}" cy="${T-16}" r="7" fill="none" stroke="${COL[iv]}" stroke-width="2.5"/>`;
-    else{const y=T+(f-base+0.5)*RH; o+=`<circle cx="${x}" cy="${y}" r="13" fill="${COL[iv]}"/><text x="${x}" y="${y+4.5}" text-anchor="middle" font-size="12" font-weight="700" fill="#14110d">${t}</text>`;}
-    o+=`<text x="${x}" y="${T+RH*N+24}" text-anchor="middle" font-size="12" font-weight="700" fill="${COL[iv]}">${t}</text>`;
+    const y=sy(s);
+    if(f===null){o+=`<text x="${O/2}" y="${y+5.5}" text-anchor="middle" font-size="16" style="fill:var(--ink)" opacity=".8">×</text>`;return;}
+    let iv=(pc(s,f)-root+12)%12, t=ch&&ch.root===root?chordIv(ch,iv)[0]:IV[iv][0];
+    if(lab){const L=lab(s,f); iv=L.ref; t=L.t;}
+    if(f===0){o+=`<circle cx="${O/2}" cy="${y}" r="${R-1.5}" fill="none" stroke="${COL[iv]}" stroke-width="3"/>${txt(O/2,y,t,'var(--ink)')}`;return;}
+    const x=fx(f);
+    if(iv===0) o+=`<circle cx="${x}" cy="${y}" r="${R+3}" style="fill:var(--pearl)"/>`;
+    o+=`<circle cx="${x}" cy="${y}" r="${R}" fill="${COL[iv]}"/>${txt(x,y,t,'#14110d')}`;
   });
   return o+'</svg>';
 }
@@ -2414,7 +2436,7 @@ function renderVoice(){
   const tabTxt=v.frets.some(f=>f!==null&&f>9)?v.frets.map(f=>f===null?'x':f).join(' '):v.frets.map(f=>f===null?'x':f).join('');
   el.innerHTML=`${head}${dotsFold()}${fold('vbuilt',built,`<p class="vc-shape">${v.own?esc(v.name):`${v.name.startsWith('Drop')?term('drop3',v.name):v.name.startsWith('Found')?v.name:term('shape',v.name)}, frets ${vFrets(v)}`}</p>
     ${chordFormula(v)}`)}
-    <button class="vc-diag" aria-label="Play ${cur.chord.name} and show it on the neck">${voiceSVG(v)}</button>
+    <button class="vc-diag" aria-label="Play ${cur.chord.name} and show it on the neck">${voiceSVG(v,undefined,undefined,(s,f)=>drillLabel({s,f}))}</button>
     <p><code>${tabTxt}</code><br>Tap the diagram to hear it and see it on the neck.</p>`;
 }
 document.getElementById('voiceCard').addEventListener('click',e=>{
@@ -2535,9 +2557,23 @@ function applySetup(s,nav){ // a song's setup: its key, open position, its chord
   st.visible=new Set(cur.allowed); fillSelects(); save();
   if(nav!==false) document.querySelector('#modes [data-mode="drill"]').click();
 }
-function dotsFold(){ // how to read the scale-line dots, folded until you open it
-  const per=[0,0,0,0,0,0]; boxNotes().forEach(n=>per[n.s]++);
-  return fold('vdots','Reading the dots',`<p class="hint">Solid dots are ${term('chordtone','chord tones')} of ${cur.chord.name}, pearl dots ${term('passing','passing tones')}, and a gold ring marks ${D.resolve==='chord'?rootName(cur.chord):keyName()}, where each pass starts and ends. Notes per string, low to high: ${per.join(' ')}.${D.pad&&!cur.voicing?' No voicing fits this box, so the chord step is skipped.':''} Click the chord in the Over row again to hear it.</p>`);
+function dotsFold(){ // a key to the neck in a scale line, drawn with the neck's own dots, folded until you open it
+  const notes=boxNotes(), per=[0,0,0,0,0,0], seen=new Map(), home=D.resolve==='chord'?cur.chord.root:cur.key;
+  notes.forEach(n=>{per[n.s]++; const p=pc(n.s,n.f); if(!seen.has(p)) seen.set(p,{p,...lineDot(n.s,n.f),ord:(p-cur.chord.root+12)%12});});
+  const all=[...seen.values()].sort((a,b)=>a.ord-b.ord), has=(d,k)=>new RegExp('\\b'+k+'\\b').test(d.cls);
+  const dots=list=>`<span class="nk-d">${list.map(d=>`<span class="dot ${d.cls}" style="--c:${d.c}">${d.t}</span>`).join('')}</span>`;
+  const row=(list,txt)=>list.length?`<div class="nk">${dots(list)}<span>${txt}</span></div>`:'';
+  const root=all.filter(d=>has(d,'root')), tones=all.filter(d=>!has(d,'root')&&!has(d,'pass')), pass=all.filter(d=>has(d,'pass'));
+  const ring=all.filter(d=>has(d,'home')), out=all.filter(d=>has(d,'outk')), hn=noteName(home);
+  const ends=root.some(d=>d.p===home)?`, where each pass starts and ends`:'';
+  const scale=F.fam==='chrom'?'the chromatic scale':cur.pset?'the scale':`${keyName()} ${modeName()}`;
+  return fold('vdots','What the neck shows',`<div class="nkey">
+    ${row(root,`${noteName(root[0]?root[0].p:home)}, ${D.ref==='chord'?'the root of '+cur.chord.name:'the root of the key'}${ends}.`)}
+    ${row(tones,`${root.length?'The other':'The'} ${term('chordtone','chord tones')} of ${cur.chord.name}, each degree in its own color.`)}
+    ${row(pass,`${term('passing','Passing tones')}: the rest of ${scale}, in pearl.`)}
+    ${row(ring.slice(0,1),`The gold ring marks ${hn}, where each pass starts and ends.`)}
+    ${row(out.slice(0,1),`A dashed edge marks a note from outside ${scale}.`)}
+    </div><p class="hint">${saved.labels==='notes'?'The dots show note names.':`The labels count from ${D.ref==='chord'?`${rootName(cur.chord)}, the root of ${cur.chord.name}`:`${keyName()}, the key`}.`}${cur.whole?'':` Notes on each string, low E to high e: ${per.join(' ')}.`}${D.pad&&!cur.voicing?' No voicing fits this box, so the chord step is skipped.':''}${wide?'':' Tap the chord in the Over row again to hear it.'}</p>`);
 }
 function songNote(){
   // in free Drill, a song you're playing says its goal tempo and how close you are
