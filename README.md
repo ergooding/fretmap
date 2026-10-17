@@ -20,7 +20,7 @@ A guitar fretboard trainer that runs as a single page: intervals, scales and mod
 
 Progress is kept in the browser; add a GitHub token with only the gist permission to sync it between devices through a private gist (under Sync and backup on the Exercises tab), or export and import it as a file. The focus bar has two modes: **Key** (key, scale, mode and position) and **Song**, which focuses every tab on one of your songs: its key everywhere, and its chords, strum pattern and tempo in Drill. Switching back to Key puts back the key you had. The ? button opens a glossary, along with the keyboard shortcuts. It all stays one page, but the browser's Back button steps back through the tabs, songs, settings and glossary you opened.
 
-The layout switches between phone and desktop based on the window shape. The ◐ button in the header overrides it.
+The layout switches between phone and desktop based on the window shape. The ◐ button in the header overrides it. On a phone each builder row is a dropdown instead of a row of chips (its options include your songs, every strum pattern and a box to pin, with ✓ on the ones played clean), and the builder starts folded so the neck shows on the first screen. The neck lies sideways in every layout, high e on top like the tab; on an upright phone a box fits the screen and the whole neck scrolls left and right, following the note being played.
 
 ## Project layout
 

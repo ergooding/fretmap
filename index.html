@@ -54,8 +54,11 @@ h1{font-size:1.05rem;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
 
 .neck-wrap{flex:1;min-height:0;display:flex;justify-content:center}
 /* phone portrait: the neck keeps a usable height and a long panel scrolls instead of squashing it */
-.app:not(.wide):not(.land) .neck-wrap{min-height:min(230px,32vh)}
-.app.m-drill:not(.wide):not(.land) .neck-wrap{flex:0 0 min(260px,34vh)}
+.app:not(.wide):not(.land) .neck-wrap{flex:0 0 auto;display:block;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;overscroll-behavior-x:contain}
+.app:not(.wide):not(.land) .neck{max-width:none;height:clamp(210px,32vh,280px)}
+/* a phone's dots are small: the faded chord tones and the next chord's rings stay readable */
+.app:not(.wide) .dot.dimx{opacity:.55;transform:scale(.74)}
+.app:not(.wide) .dot.nextf{border-width:2.5px;background:rgba(0,0,0,.38)}
 .app:not(.wide):not(.land):not(.m-practice) .panel{flex:0 1 auto;min-height:0;overflow:auto}
 .app:not(.wide):not(.land):not(.m-practice) .panel>*{flex-shrink:0}
 .neck{position:relative;height:100%;width:100%;max-width:380px;display:grid;
@@ -524,6 +527,18 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 .brow.rel{position:relative}
 .brow .row{flex-wrap:wrap;gap:5px}
 .app:not(.wide) .brow .row{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.brow.drop{gap:3px}
+.brow.drop .dl{display:grid;grid-template-columns:6.4rem minmax(0,1fr);align-items:center;gap:8px}
+.brow.drop.sub .dl{grid-template-columns:calc(6.4rem - 14px) minmax(0,1fr)}
+.brow.drop .blab{align-self:center;padding:0}
+.brow.drop .blab::before{content:none}
+.bsel{font:inherit;font-size:16px;color:var(--ink);background-color:var(--bg);border:1px solid var(--line);border-radius:10px;padding:7px 30px 7px 10px;min-width:0;width:100%;
+  appearance:none;-webkit-appearance:none;text-overflow:ellipsis;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 16px) 52%,calc(100% - 11px) 52%;background-size:5px 5px;background-repeat:no-repeat}
+.bsel:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.brow.drop .dx{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding-left:calc(6.4rem + 8px)}
+.brow.drop.sub .dx{padding-left:calc(6.4rem - 6px)}
+.brow.drop .swl{margin:0}
 .blab{display:flex;align-items:baseline;border:0;background:none;padding:2px 0;cursor:pointer;text-align:left;font:inherit;font-size:.68rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;min-width:0;align-self:flex-start;max-width:100%}
 .blab::before{content:"▾";margin-right:6px;font-size:.85em}
 .brow.shut .blab::before{content:"▸"}
@@ -570,6 +585,7 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 .app.land.has-ex{grid-template-rows:auto auto auto auto auto minmax(0,1fr);grid-template-areas:"modes head" "neck goal" "neck strip" "neck exh" "neck prompt" "neck panel"}
 .app.land .exstrip{grid-area:strip;padding:3px 6px}
 .app.land .exhead{grid-area:exh;padding:6px 8px;gap:5px}
+.app.land .exhead{max-height:52vh;overflow-y:auto;overscroll-behavior:contain} /* an open builder scrolls on its own, so the neck keeps its height */
 .sh-static{border:0;cursor:default}
 .expage{display:flex;flex-direction:column;gap:16px}
 .exsess,.exopen,.exlib{display:flex;flex-direction:column;gap:8px;min-width:0}
@@ -919,6 +935,7 @@ try{const raw=localStorage.getItem(KEY); if(raw){const o=JSON.parse(raw); saved=
   if(!o.focus) saved.focus={key:0,fam:'major',mode:0,pos:-1}; saved.drill=Object.assign({...DRILL_DEF,b2:0},o.drill||{}); if(!saved.bpm) saved.bpm=80;}}catch(e){}
 saved.rhythm=Object.assign({...RHY_DEF},saved.rhythm||{});
 saved.fold=saved.fold||{}; // explanation blocks you collapsed
+if(saved.fold.bshut===undefined) saved.fold.bshut=true; // on a phone the builder starts folded, so the neck shows on the first screen
 const fold=(k,sum,body)=>`<details class="fold" data-fold="${k}"${saved.fold[k]?'':' open'}><summary>${sum}</summary>${body}</details>`;
 if(!FAMS[saved.focus.fam]) saved.focus={key:0,fam:'major',mode:0,pos:-1};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
@@ -1219,6 +1236,8 @@ function setZoom(a,b,force){
   const hide=(el,f)=>el.classList.toggle('hid',f<a||f>b);
   for(let f=0;f<=12;f++){hide(fnums[f],f);hide(frets[f],f);for(let s=0;s<6;s++)hide(cells[s][f],f);}
   inlays.forEach(i=>hide(i.el,i.f));
+  // a phone held upright keeps frets wide enough to read: more than 7 frets scroll sideways instead of shrinking
+  const n=b-a+1; neck.style.minWidth=!wide&&!land&&n>7?n*58+'px':'';
   sizeDots();
 }
 // ---------- layout detection ----------
@@ -1228,7 +1247,7 @@ const mqLand=matchMedia('(orientation: landscape) and (max-height: 540px)'); // 
 if(!saved.layout) saved.layout='auto';
 function applyLayout(){
   wide=saved.layout==='wide'||(saved.layout==='auto'&&mq.matches&&!mqLand.matches);
-  land=!wide&&mqLand.matches; horiz=wide||land;
+  land=!wide&&mqLand.matches; horiz=true; // the neck lies sideways in every layout, high e on top like the tab
   appEl.classList.toggle('wide',wide); document.documentElement.classList.toggle('wide',wide);
   appEl.classList.toggle('land',land); document.documentElement.classList.toggle('land',land);
   const nav=document.getElementById('modes'), hd=appEl.querySelector('header');
@@ -2076,7 +2095,18 @@ function drillLabel(p){
   const t=saved.labels==='notes'?noteName(pc(p.s,p.f)):(D.ref==='chord'?chordIv(cur.chord,ivC)[0]:F.fam==='chrom'?IV[ivK][0]:labIn(ivK,dset())[0]);
   return {ref,t};
 }
-function renderBoard(){
+function renderBoard(){drawBoard(); keepInView();}
+let viewKey='';
+function keepInView(){
+  // when the neck scrolls sideways: follow the note being played, and show the focus box when the view changes
+  const w=neck.parentElement; if(w.scrollWidth<=w.clientWidth+1) return;
+  const R=w.getBoundingClientRect(), d=neck.querySelector('.dot.now'), key=`${st.mode}:${zoom}:${cur.lo}`;
+  const to=x=>{try{w.scrollTo({left:x,behavior:'smooth'});}catch(e){w.scrollLeft=x;}};
+  if(d){const r=d.parentElement.getBoundingClientRect(); if(r.left<R.left+8||r.right>R.right-8) to(w.scrollLeft+r.left-R.left-(R.width-r.width)/2); viewKey=key; return;}
+  if(key===viewKey) return; viewKey=key;
+  const c=cells[0][Math.max(zoom[0],cur.whole?0:cur.lo-1)]; if(c) to(w.scrollLeft+c.getBoundingClientRect().left-R.left);
+}
+function drawBoard(){
   const q=st.q, cp=capo();
   fnums[0].textContent=cp?`capo ${cp}`:'open';
   if(st.mode==='practice'||st.mode==='songs') return; // the neck is hidden
@@ -2910,12 +2940,40 @@ function rowsHTML(c){
       first=pill(c,'wpos',boxLabel(c,c.pin),V.where==='focus',[['',[['','Follow the focus','wpos',on(''),'Use whatever box is picked in the bar at the top.'],
         ...boxes.map(p=>[String(p.lo),p.label,'wpos',on(String(p.lo)),`Always start ${esc(E?E.name:'it')} in this box.`])]]],
         '<b>Follow the focus</b>: play in the box picked in the bar at the top, or pick one box for this exercise to always start in.');}
-    let body=`<div class="row">${first}${list.map(chip).join('')}${extra}</div>`;
-    if(r.k==='lpat'&&V.prog!=='one') body+=`<div class="swrow"><span class="lab">Over the changes</span><div class="seg" role="group" aria-label="Over the changes">${OVER_CH.map(([v,l])=>`<button data-act="${act}" data-row="over" data-v="${v}" aria-pressed="${V.over===v}" data-tip="${esc(bTip('over',v,l))}">${l}</button>`).join('')}</div></div>`;
-    const lab=c.fold?`<button class="blab" data-act="bfold" data-k="${r.k}" aria-expanded="${!shut}" data-tip="${shut?'Open':'Fold'} the ${r.name} row${shut?'':'. A folded row shows only what’s picked'}.">${r.name}${shut?`<span class="pk"> · ${esc(picked)}</span>`:''}</button>`:`<span class="blab">${r.name}</span>`;
+    const seg=r.k==='lpat'&&V.prog!=='one'?`<div class="swrow"><span class="lab">Over the changes</span><div class="seg" role="group" aria-label="Over the changes">${OVER_CH.map(([v,l])=>`<button data-act="${act}" data-row="over" data-v="${v}" aria-pressed="${V.over===v}" data-tip="${esc(bTip('over',v,l))}">${l}</button>`).join('')}</div></div>`:'';
     const sev=r.k==='prog'&&(!live||cur.set.size===7||D.line==='prog'&&cur.prog)?`<span class="swl">Add 7ths<button class="sw sm" data-act="${live?'sev':act}" data-row="sev" aria-pressed="${!!V.sev}" aria-label="Add 7ths" data-tip="<b>Add 7ths</b>: play 4-note 7th chords, like Am7 and Gmaj7, instead of 3-note triads."></button></span>`:'';
+    if(!wide) return dropRow(c,r,now,list,sev,seg,xr);
+    const body=`<div class="row">${first}${list.map(chip).join('')}${extra}</div>${seg}`;
+    const lab=c.fold?`<button class="blab" data-act="bfold" data-k="${r.k}" aria-expanded="${!shut}" data-tip="${shut?'Open':'Fold'} the ${r.name} row${shut?'':'. A folded row shows only what’s picked'}.">${r.name}${shut?`<span class="pk"> · ${esc(picked)}</span>`:''}</button>`:`<span class="blab">${r.name}</span>`;
     return `<div class="brow${r.sub?' sub':''}${shut?' shut':''} rel" role="group" aria-label="${r.name}">${sev?`<div class="bh">${lab}${sev}</div>`:lab}${shut?'':body}</div>`;
   }).join('');
+}
+function dropRow(c,r,now,list,sev,seg,xr){
+  // on a narrow screen each row is one dropdown: it shows the pick and takes far less room than a row of chips.
+  // Its options are the row's chips plus what the row's pill menus hold (your songs, every strum pattern, a box to pin)
+  const {V,live,act,E,s}=c;
+  const o=(v,l,on,tip,a=act,row=r.k,id='')=>({v,l,on,tip,a,row,id});
+  const mk=(v,l)=>{const done=!!xr&&!!s&&chipDone(E,xr.k,v,s.goal,s); return o(v,l+(done?' ✓':''),v===now,bTip(r.k,v,esc(l),done,s&&s.goal));};
+  const mine=list.map(([v,l])=>mk(v,l));
+  let groups=[['',mine]];
+  if(r.k==='prog'&&live) groups=[['Progressions',mine],['Your songs',[...songSteps().map(({id,s:k})=>o('',k.name+(k.artist?` · ${k.artist}`:''),id===D.prog,`<b>${esc(k.name)}</b>: its chords, in its key.`,'bsongpick',r.k,id)),
+    o('','+ Add a song in the Songs tab',false,'Add a song you’re learning, with its chords, in the Songs tab.','songform')]]];
+  if(r.k==='rpat'){
+    groups=[...RPATS.map(([g,L])=>[g,L.map(p=>mk(p[0],p[1]))]),['Bluegrass',[mk('boom','Boom-chuck')]],...(live?[['Your own',[mk('custom','Your pattern')]]]:[])];
+    const seen=new Set(groups.flatMap(g=>g[1].map(x=>x.v))), miss=mine.filter(x=>!seen.has(x.v)); if(miss.length) groups.unshift(['',miss]);}
+  if(r.k==='where'&&c.edit){const on=x=>V.where==='focus'&&String(c.pin??'')===x;
+    groups=[['Follow the focus',[o('','Follow the focus',on(''),'Use whatever box is picked in the bar at the top.',act,'wpos'),
+      ...boxesOf(V,live).map(p=>o(String(p.lo),p.label,on(String(p.lo)),`Always start ${esc(E?E.name:'it')} in this box.`,act,'wpos'))]],['Somewhere else',mine]];}
+  const every=groups.flatMap(g=>g[1]), pick=every.find(x=>x.on)||every[0];
+  const opt=x=>`<option data-act="${x.a}" data-row="${x.row}" data-v="${esc(x.v)}"${x.id?` data-id="${esc(x.id)}"`:''}${x===pick?' selected':''}>${esc(x.l)}</option>`;
+  const opts=groups.map(([g,L])=>g?`<optgroup label="${esc(g)}">${L.map(opt).join('')}</optgroup>`:L.map(opt).join('')).join('');
+  return `<div class="brow drop${r.sub?' sub':''}" role="group" aria-label="${r.name}"><label class="dl"><span class="blab">${r.name}</span><select class="bsel" data-row="${r.k}" aria-label="${r.name}" data-tip="${esc(pick?pick.tip:r.name)}">${opts}</select></label>${sev||seg?`<div class="dx">${sev}${seg}</div>`:''}</div>`;
+}
+function dropPick(sel){ // a dropdown's option does what its chip would: hand it to the click handler, then keep focus on the dropdown
+  const o=sel.selectedOptions[0]; if(!o) return;
+  const b=document.createElement('button'), row=sel.dataset.row, inEx=!!sel.closest('#exhead'); Object.assign(b.dataset,o.dataset);
+  onClick({target:b});
+  const n=(inEx?exHeadEl:document).querySelector(`select.bsel[data-row="${row}"]`); if(n) n.focus({preventScroll:true});
 }
 function keyLine(c,key){
   const on=x=>String(key??'')===x;
@@ -2948,7 +3006,7 @@ function builderHTML(){
     :`<button class="chip" data-act="bnew" data-tip="Keep this setup as an exercise of your own, under Yours in the Exercises tab, to start it again or add it to a session.">Save as a new exercise</button>`;
   const msg=st.bmsg?`<span class="bmsg">${st.bmsg}</span>`:'';
   if(!E) return wide?`${rows}<div class="bfoot">${nw}${msg}</div>` // on a phone the whole builder folds away above the neck
-    :`<details class="bwrap" data-fold="bwrap"${saved.fold.bwrap?'':' open'}><summary>What to play <span class="hint">· ${buildText(captureBuild())}</span></summary>${rows}<div class="bfoot">${nw}${msg}</div></details>`;
+    :`<details class="bwrap" data-fold="bshut"${saved.fold.bshut?'':' open'}><summary>What to play <span class="hint">· ${buildText(captureBuild())}</span></summary>${rows}<div class="bfoot">${nw}${msg}</div></details>`;
   const pr=exProgress(E,s), ch=exChange(), r=st.ex.rid&&LOG.routines[st.ex.rid];
   const goal=E.id==='songs'?`<span class="hint">Goal: each song’s own tempo</span>`
     :`<span class="gstep"><button data-act="exgoal" data-v="-5" aria-label="Lower the goal" data-tip="Lower the goal by 5 bpm.">−</button><b>goal ${s.goal}</b><button data-act="exgoal" data-v="5" aria-label="Raise the goal" data-tip="Raise the goal by 5 bpm.">+</button></span>`;
@@ -3609,6 +3667,7 @@ function songChange(e){
   return false;
 }
 const onChange=e=>{
+  if(e.target.classList&&e.target.classList.contains('bsel')){dropPick(e.target); return;}
   if(e.target.id==='lgFile'){const f=e.target.files[0]; if(!f) return;
     f.text().then(t=>{const err=importLog(t); st.importMsg=err||`Imported ${f.name}.`; render();}); return;}
   if(st.mode==='songs'&&songChange(e)) return;
@@ -3624,7 +3683,7 @@ const onChange=e=>{
   if(k==='pattern'||k==='sub') regen(); else render();
   if(e.target.closest('.sets')) keepSets(`[data-set="${k}"]`);
 };
-[panel,sheetEl].forEach(el=>el.addEventListener('change',onChange));
+[panel,sheetEl,exHeadEl].forEach(el=>el.addEventListener('change',onChange));
 function keepSets(sel){ // the settings sheet redraws with every change; keep its scroll and focus
   const box=document.querySelector('.sets'), top=st.setsTop||0;
   if(box) box.scrollTop=top;

@@ -27,14 +27,15 @@ function fakeFetch(w){
 async function device(wide=true,store){
   const dom=new JSDOM(html,{url:'https://ergooding.github.io/fretmap/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){
     if(store) w.localStorage.setItem('fret-iv-v1',JSON.stringify(store));
-    w.matchMedia=()=>({matches:wide,addEventListener(){}}); w.__now=0; w.__clock=Date.UTC(2026,9,13,15,0,0);
+    w.matchMedia=q=>({matches:wide&&!/max-height/.test(q),addEventListener(){}}); w.__now=0; w.__clock=Date.UTC(2026,9,13,15,0,0);
     w.Date.now=()=>w.__clock; w.fetch=fakeFetch(w);
     const node=()=>({type:'',connect(){},start(){},stop(){},frequency:{value:0,setValueAtTime(){},exponentialRampToValueAtTime(){}},gain:{value:0,setValueAtTime(){},exponentialRampToValueAtTime(){}}});
     w.AudioContext=function(){return {get currentTime(){return w.__now},state:'running',destination:{},createOscillator:node,createGain:node,createBiquadFilter:node,resume(){}}};
   }});
   const w=dom.window; w.addEventListener('error',e=>fail('error',e.message));
   await sleep(60);
-  const d=w.document, X=w.__fretDebug, click=el=>el.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+  const d=w.document, X=w.__fretDebug, click=el=>{if(el&&el.tagName==='OPTION'){el.selected=true; el.closest('select').dispatchEvent(new w.Event('change',{bubbles:true})); return;} el.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));};
+  w.HTMLOptionElement.prototype.getAttribute=function(n){return n==='aria-pressed'?String(this.selected):w.Element.prototype.getAttribute.call(this,n);}; // a dropdown option reads as a pressed chip when picked
   const mode=m=>goMode(d,click,m);
   const advance=(secs)=>{w.__clock+=secs*1000; const end=w.__now+secs; while(w.__now<end){w.__now=Math.min(end,w.__now+0.02); if(X.st.playing&&X.st.mode==='drill') X.schedule();}};
   return {w,d,X,click,mode,advance};
@@ -515,6 +516,36 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     // a scale line keeps degree labels
     qc(qd.querySelector('#exhead [data-act=bchip][data-row=plan][data-v="line"]'));
     ok(!qd.querySelector('.dot.fing')&&qd.getElementById('fhint').hidden&&br.style.display==='none','fing-not-on-lines',[QX.D.plan,!!qd.querySelector('.dot.fing'),br.style.display].join()); }
+
+  // a phone: each builder row is one dropdown, the builder starts folded, and the neck lies sideways
+  { const P=await device(false), {d:pd,X:PX}=P, pc=P.click, opt=(row,v)=>pd.querySelector(`#exhead option[data-row=${row}][data-v="${v}"]`);
+    P.mode('drill'); const sel=row=>pd.querySelector(`#exhead select.bsel[data-row=${row}]`);
+    ok(pd.querySelectorAll('#exhead select.bsel').length>=3&&!pd.querySelector('#exhead .chip.bc')&&!pd.querySelector('#exhead [data-act=pmenu]'),'drop-rows');
+    ok(!pd.querySelector('#exhead details.bwrap').open,'drop-folded');
+    pc(pd.querySelector('#exhead details.bwrap > summary')); pd.querySelector('#exhead details.bwrap').open=true; pd.querySelector('#exhead details.bwrap').dispatchEvent(new P.w.Event('toggle'));
+    ok(PX.saved.fold.bshut===false,'drop-open-saved',PX.saved.fold.bshut);
+    pc(opt('prog','pop')); ok(PX.D.prog==='pop'&&sel('prog').selectedOptions[0].dataset.v==='pop'&&P.w.document.activeElement===sel('prog'),'drop-prog');
+    pc(opt('plan','strum')); ok(PX.D.plan==='strum'&&!!sel('rpat'),'drop-plan');
+    ok(sel('rpat').querySelectorAll('option').length===22&&sel('rpat').querySelectorAll('optgroup').length>=5,'drop-all-patterns',sel('rpat').querySelectorAll('option').length);
+    pc(opt('rpat','shuffle')); ok(PX.R.pat==='shuffle'&&sel('rpat').selectedOptions[0].dataset.v==='shuffle','drop-strum-menu',PX.R.pat);
+    pc(opt('rpat','boom')); ok(PX.D.sbg==='boom','drop-boom');
+    ok(/Add 7ths/.test(pd.querySelector('#exhead .brow.drop .dx').textContent),'drop-sev');
+    ok(!!sel('prog').getAttribute('data-tip')&&/strum/i.test(sel('plan').dataset.tip),'drop-tips',sel('plan').dataset.tip);
+    PX.addSong('Drop Song','','','-1','0','pop','G C D',{}); P.mode('explore'); P.mode('drill');
+    const so=pd.querySelector('#exhead option[data-act=bsongpick]'); ok(!!so&&/Drop Song/.test(so.textContent),'drop-song-listed');
+    pc(so); ok(/^song:/.test(PX.D.prog)&&sel('prog').selectedOptions[0].dataset.act==='bsongpick','drop-song-picked',PX.D.prog);
+    pc(opt('prog','pop'));
+    // the neck lies sideways on a phone; the whole neck is wider than the screen and scrolls, a box fits
+    ok(pd.getElementById('neck').classList.contains('h'),'phone-neck-sideways');
+    P.mode('explore'); ok(/px$/.test(pd.getElementById('neck').style.minWidth),'phone-whole-scrolls',pd.getElementById('neck').style.minWidth+' '+PX.zoom); P.mode('drill');
+    PX.F.pos=PX.cur.pos[1].lo; PX.refresh(); P.mode('explore'); P.mode('drill'); ok(pd.getElementById('neck').style.minWidth==='','phone-box-fits',pd.getElementById('neck').style.minWidth);
+    // Customize in the Exercises tab uses dropdowns too, with the boxes to pin under Follow the focus
+    P.mode('practice'); pc(pd.querySelector('[data-act=exedit]')); pc(pd.querySelector('[data-act=excusti][data-i="2"]'));
+    ok(!!pd.querySelector('.exi.open select.bsel')&&!pd.querySelector('.exi.open .chip.bc'),'drop-customize',[...pd.querySelectorAll('.exi.open select')].map(x=>x.dataset.row+':'+x.value).join());
+    pc(pd.querySelector('.exi.open option[data-row=plan][data-v=arp]')); ok(!!pd.querySelector('.exi.open option[data-row=pick][data-v=thumb]'),'drop-customize-plan');
+    const wp=pd.querySelector('.exi.open option[data-row=wpos]:not([data-v=""])'); pc(wp); ok(PX.st.cedit&&PX.st.cedit.d.where==='focus'&&String(PX.st.cedit.d.pos)===wp.dataset.v,'drop-customize-pin',JSON.stringify(PX.st.cedit&&PX.st.cedit.d));
+    pc(pd.querySelector('.exi.open [data-act=eccancel]'));
+    ok(!/undefined|NaN|\[object/.test(pd.querySelector('.app').textContent),'drop-text'); }
 
   // phone layout text
   B.mode('practice'); ok(!/undefined|NaN|\[object/.test(B.d.querySelector('.app').textContent),'phone-text-path');

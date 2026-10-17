@@ -24,7 +24,8 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
 (async()=>{
   for(const wide of [true,false]){
     const {dom,log}=mk(wide), w=dom.window, d=w.document; await new Promise(r=>setTimeout(r,60));
-    const X=w.__fretDebug, click=el=>el.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+    const X=w.__fretDebug, click=el=>{if(el&&el.tagName==='OPTION'){el.selected=true; el.closest('select').dispatchEvent(new w.Event('change',{bubbles:true})); return;} el.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));};
+  w.HTMLOptionElement.prototype.getAttribute=function(n){return n==='aria-pressed'?String(this.selected):w.Element.prototype.getAttribute.call(this,n);}; // a dropdown option reads as a pressed chip when picked
     const change=(sel,v)=>{const e=d.querySelector(sel); e.value=v; e.dispatchEvent(new w.Event('change',{bubbles:true}));};
     const L=wide?'wide':'phone';
     const bc=(row,v)=>{const e=d.querySelector(`#exhead [data-act=bchip][data-row=${row}][data-v="${v}"]`); if(!e) fail('ui',`${L} no ${row} chip ${v}`); else click(e);};
