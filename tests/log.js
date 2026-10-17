@@ -564,6 +564,15 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     const klook=[...vc.querySelectorAll('.nk .dot')].map(x=>x.className.trim()+'|'+x.textContent+'|'+x.style.getPropertyValue('--c'));
     ok(klook.length>=4&&klook.every(k=>nlook.has(k))&&/high e on top/.test(vc.querySelector('.vc-diag svg').getAttribute('aria-label')),'neck-key-matches',klook.filter(k=>!nlook.has(k)).join(', '));
     ok(kd.querySelector('.neck-wrap').classList.contains('roll')&&/px$/.test(kd.getElementById('neck').style.minWidth),'whole-neck-rolls');
+    // Explore draws the neck the same way: the whole neck in a 7-fret window, a card with the key, Chord tones as solid dots over pearl passing tones
+    Object.assign(KX.F,{key:0,fam:'major',mode:0,pos:-1}); KX.refresh(); K.mode('drill'); K.mode('explore');
+    const xlook=()=>{const n=new Set([...kd.querySelectorAll('#neck .dot')].map(x=>x.className.trim()+'|'+x.textContent+'|'+x.style.getPropertyValue('--c').replace('var(--pearl)','')));
+      const k=[...vc.querySelectorAll('.nk .dot')].map(x=>x.className.trim()+'|'+x.textContent+'|'+x.style.getPropertyValue('--c').replace('var(--pearl)',''));
+      return k.length>=4&&k.every(x=>n.has(x))?'':k.filter(x=>!n.has(x)).join(', ')||'empty';};
+    ok(kd.querySelector('.neck-wrap').classList.contains('roll')&&!vc.hidden&&kd.getElementById('prompt').hidden&&/What the neck shows/.test(vc.textContent)&&!xlook(),'explore-whole-card',xlook());
+    kc(kd.querySelector('[data-act=show][data-v=chord]'));
+    ok(kd.querySelectorAll('#neck .dot.pass').length>10&&/chord tones of Cmaj7/.test(vc.textContent)&&/Passing tones/.test(vc.textContent)&&!xlook(),'explore-chord-tones',xlook());
+    kc(kd.querySelector('[data-act=show][data-v=all]')); K.mode('drill');
     KX.F.pos=KX.cur.pos[1].lo; KX.refresh(); K.mode('explore'); K.mode('drill'); ok(!kd.querySelector('.neck-wrap').classList.contains('roll'),'box-no-roll'); }
 
   // phone layout text

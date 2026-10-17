@@ -215,11 +215,12 @@ html.wide{font-size:19px}
 .voice-card p{margin:4px 0 0;font-size:.8rem;color:var(--muted);text-align:center}
 .voice-card code{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--ink);font-size:.9rem;letter-spacing:.08em}
 .dot.vc{outline:3px solid var(--gold);outline-offset:3px}
-.nkey{display:flex;flex-direction:column;gap:6px;margin:6px 0 4px}
-.nk{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;font-size:.8rem;line-height:1.35;text-align:left}
-.nk-d{display:flex;gap:5px;align-items:center;min-width:28px}
+.nkey{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 10px;align-items:center;margin:6px 0 4px;font-size:.8rem;line-height:1.35;text-align:left}
+.nk{display:contents}
+.nk-d{display:flex;flex-wrap:wrap;gap:5px;align-items:center;max-width:104px}
 .nk .dot{--dot:28px;animation:none;flex:none}
-.voice-card .nkey+p.hint,.nkey+p.hint{text-align:left;margin-top:2px}
+.voice-card .nkey+p.hint,.nkey+p.hint,.voice-card p.vc-tap{text-align:left;margin-top:2px}
+
 .dot.outk{border:2px dashed #14110d}
 .dot.fing{font-size:calc(var(--dot,30px)*.5);font-weight:800}
 .dot.dimx{opacity:.32;transform:scale(.62)}
@@ -1257,8 +1258,8 @@ function setZoom(a,b,force){
 }
 function rollNeck(){
   // more frets than fit at a readable size scroll sideways instead of shrinking: always on an upright phone, and in a
-  // whole-neck drill on any screen, which shows about 7 frets (one hand position's reach) and follows the drill along
-  const n=zoom[1]-zoom[0]+1, port=!wide&&!land, run=st.mode==='drill'&&cur.whole&&!picking(), w=neck.parentElement;
+  // whole-neck Drill or Explore on any screen, which shows about 7 frets (one hand position's reach); Drill follows the line along
+  const n=zoom[1]-zoom[0]+1, port=!wide&&!land, run=(st.mode==='drill'||st.mode==='explore')&&cur.whole&&!picking(), w=neck.parentElement;
   const mw=n>7&&(port||run)?n*(port?58:Math.max(64,Math.round(w.clientWidth/7)))+'px':'';
   w.classList.toggle('roll',!!mw);
   if(mw!==neck.style.minWidth){neck.style.minWidth=mw; sizeDots();}
@@ -2118,6 +2119,16 @@ function drillLabel(p){
   const t=saved.labels==='notes'?noteName(pc(p.s,p.f)):(D.ref==='chord'?chordIv(cur.chord,ivC)[0]:F.fam==='chrom'?IV[ivK][0]:labIn(ivK,dset())[0]);
   return {ref,t};
 }
+const showChord=()=>{const ct=chordTones(); return ct.length===st.visible.size&&ct.every(x=>st.visible.has(x));}; // Explore's Show: Chord tones
+function exploreDot(s,f){
+  // Explore draws the scale like Drill draws a line: the root gold with a pearl ring, each degree in its own color,
+  // and with Show: Chord tones the rest of the scale as smaller pearl passing tones; notes outside the position fade
+  const iv=ivOf({s,f},cur.key), ghost=(!cur.whole&&!inWin(f))?' ghost':'', t=saved.labels==='notes'?noteName(pc(s,f)):lab(iv)[0];
+  if(iv===0) return {t,cls:'root'+ghost};
+  if(!cur.set.has(iv)) return null;
+  if(picking()||st.visible.has(iv)) return {t,c:COL[iv],cls:ghost+(picking()?' faint':'')};
+  return showChord()?{t,cls:'pass'+ghost}:null;
+}
 function lineDot(s,f){
   // how Drill draws a note: a solid dot in its degree's color for a chord tone (the root gold with a pearl ring), a smaller pearl dot
   // for a passing tone, a gold ring on the note each pass starts and ends on (the root's own pearl ring already says it), a dashed edge outside the key
@@ -2177,11 +2188,7 @@ function drawBoard(){
     }
     if(st.mode==='explore'||picking()){
       c.classList.toggle('out',!cur.whole&&!inWin(f)&&!picking());
-      const iv=ivOf({s,f},cur.key), ghost=(!cur.whole&&!inWin(f))?' ghost':'';
-      const t=saved.labels==='notes'?noteName(pc(s,f)):lab(iv)[0];
-      if(iv===0) dot(c,{t,cls:'root'+ghost});
-      else if(cur.set.has(iv)&&(picking()||st.visible.has(iv))) dot(c,{t,c:COL[iv],cls:ghost+(picking()?' faint':'')});
-      else dot(c,null);
+      dot(c,exploreDot(s,f));
     }else if(st.mode==='drill'){
       const out=!inWin(f); c.classList.toggle('out',out);
       const inV=cur.voicing&&cur.voicing.frets[s]===f;
@@ -2252,7 +2259,8 @@ function renderPrompt(){
   }else if(E){
     promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${E.sp(E.key)}</span><span>${esc(E.sk.name)} has no chords yet, so this shows the ${songKey(E.sk)} scale.</span>`;
   }else if(st.mode==='explore'){
-    promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${keyName()}</span><span>Tap any note to make it the key. Faded notes sit outside the position.</span>`;
+    if(wide) promptEl.hidden=true; // the card beside the neck says it
+    else promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${keyName()}</span><span>Tap any note to make it the key.${cur.whole?'':' Faded notes sit outside the position.'}</span>`;
   }else if(st.mode==='name'){
     const rn=keyName(q.key), L=lab(q.iv);
     promptEl.innerHTML=q.answered
@@ -2426,6 +2434,8 @@ function chordFormula(v){
 }
 function renderVoice(){
   const el=document.getElementById('voiceCard');
+  if(wide&&st.mode==='explore'&&!exSong()){ // Explore's card: the key and how to read the neck
+    el.hidden=false; el.innerHTML=`<div class="vc-head"><b>${keyName()}</b><span>${F.fam==='chrom'?'All notes':esc(modeName())}</span></div>${exploreKey()}<p class="hint vc-tap">Tap any note to make it the key.</p>`; return;}
   const show=wide&&st.mode==='drill'&&!picking()&&D.line!=='prog';
   el.hidden=!show; if(!show) return;
   const v=cur.voicing;
@@ -2557,12 +2567,13 @@ function applySetup(s,nav){ // a song's setup: its key, open position, its chord
   st.visible=new Set(cur.allowed); fillSelects(); save();
   if(nav!==false) document.querySelector('#modes [data-mode="drill"]').click();
 }
-function dotsFold(){ // a key to the neck in a scale line, drawn with the neck's own dots, folded until you open it
+// a key to the neck drawn with the neck's own dots: one row per kind of dot
+const nkHas=(d,k)=>new RegExp('\\b'+k+'\\b').test(d.cls);
+const nkRow=(list,txt)=>list.length?`<div class="nk"><span class="nk-d">${list.map(d=>`<span class="dot ${d.cls}" style="--c:${d.c||'var(--pearl)'}">${d.t}</span>`).join('')}</span><span>${txt}</span></div>`:'';
+function dotsFold(){ // the key for a scale line, folded until you open it
   const notes=boxNotes(), per=[0,0,0,0,0,0], seen=new Map(), home=D.resolve==='chord'?cur.chord.root:cur.key;
   notes.forEach(n=>{per[n.s]++; const p=pc(n.s,n.f); if(!seen.has(p)) seen.set(p,{p,...lineDot(n.s,n.f),ord:(p-cur.chord.root+12)%12});});
-  const all=[...seen.values()].sort((a,b)=>a.ord-b.ord), has=(d,k)=>new RegExp('\\b'+k+'\\b').test(d.cls);
-  const dots=list=>`<span class="nk-d">${list.map(d=>`<span class="dot ${d.cls}" style="--c:${d.c}">${d.t}</span>`).join('')}</span>`;
-  const row=(list,txt)=>list.length?`<div class="nk">${dots(list)}<span>${txt}</span></div>`:'';
+  const all=[...seen.values()].sort((a,b)=>a.ord-b.ord), has=nkHas, row=nkRow;
   const root=all.filter(d=>has(d,'root')), tones=all.filter(d=>!has(d,'root')&&!has(d,'pass')), pass=all.filter(d=>has(d,'pass'));
   const ring=all.filter(d=>has(d,'home')), out=all.filter(d=>has(d,'outk')), hn=noteName(home);
   const ends=root.some(d=>d.p===home)?`, where each pass starts and ends`:'';
@@ -2574,6 +2585,24 @@ function dotsFold(){ // a key to the neck in a scale line, drawn with the neck's
     ${row(ring.slice(0,1),`The gold ring marks ${hn}, where each pass starts and ends.`)}
     ${row(out.slice(0,1),`A dashed edge marks a note from outside ${scale}.`)}
     </div><p class="hint">${saved.labels==='notes'?'The dots show note names.':`The labels count from ${D.ref==='chord'?`${rootName(cur.chord)}, the root of ${cur.chord.name}`:`${keyName()}, the key`}.`}${cur.whole?'':` Notes on each string, low E to high e: ${per.join(' ')}.`}${D.pad&&!cur.voicing?' No voicing fits this box, so the chord step is skipped.':''}${wide?'':' Tap the chord in the Over row again to hear it.'}</p>`);
+}
+function exploreKey(){ // Explore's key, from the dots it draws
+  const seen=new Map(); let ghost=null;
+  for(let s=0;s<6;s++)for(let f=0;f<=12;f++){
+    const d=exploreDot(s,f); if(!d) continue; const iv=ivOf({s,f},cur.key);
+    if(nkHas(d,'ghost')){if(!ghost&&!nkHas(d,'root')&&!nkHas(d,'pass')) ghost=d; continue;}
+    if(!seen.has(iv)) seen.set(iv,{...d,iv});
+  }
+  const all=[...seen.values()].sort((a,b)=>a.iv-b.iv), chord=showChord();
+  const root=all.filter(d=>nkHas(d,'root')), tones=all.filter(d=>!nkHas(d,'root')&&!nkHas(d,'pass')), pass=all.filter(d=>nkHas(d,'pass'));
+  const scale=F.fam==='chrom'?'the chromatic scale':`${keyName()} ${modeName()}`, rel=[0,...chordTones()], name=keyName()+qname(QUAL[rel.slice(1).join(',')]??null,rel);
+  const hid=chord?[]:cur.allowed.filter(i=>!st.visible.has(i)).map(i=>lab(i)[0]), list=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+  return fold('vdots','What the neck shows',`<div class="nkey">
+    ${nkRow(root,`${keyName()}, the root of the key.`)}
+    ${nkRow(tones,chord?`The ${root.length?'other ':''}${term('chordtone','chord tones')} of ${name}, the chord built on ${keyName()}, each degree in its own color.`:`The ${root.length?'other ':''}notes of ${scale}, each degree in its own color.`)}
+    ${nkRow(pass,`${term('passing','Passing tones')}: the rest of ${scale}, in pearl.`)}
+    ${nkRow(ghost?[ghost]:[],`Faded: outside the position, ${esc(cur.posLabel)}.`)}
+    </div><p class="hint">${saved.labels==='notes'?'The dots show note names.':`The labels count from ${keyName()}, the key.`}${hid.length?` Hidden: ${list(hid)}. Tap ${hid.length>1?'their chips':'its chip'} under the neck to show ${hid.length>1?'them':'it'}.`:''}</p>`);
 }
 function songNote(){
   // in free Drill, a song you're playing says its goal tempo and how close you are
@@ -3631,8 +3660,8 @@ function renderPanel(){
   if(st.mode==='explore'){
     const ivs=cur.allowed.map(i=>`<button class="ivchip" style="--c:${COL[i]}" data-act="iv" data-i="${i}" aria-pressed="${st.visible.has(i)}" aria-label="${lab(i)[1]}">${lab(i)[0]}</button>`).join('');
     panel.innerHTML=`<div class="row">${ivs}</div>
-      <div class="row">${seg('Show','show',[['all','Whole scale'],['chord','Chord tones']],chordTones().every(x=>st.visible.has(x))&&chordTones().length===st.visible.size?'chord':'all')}
-      ${seg('Labels','labels',[['iv','Degrees'],['notes','Notes']],saved.labels==='notes'?'notes':'iv')}</div>`;
+      <div class="row">${seg('Show','show',[['all','Whole scale'],['chord','Chord tones']],showChord()?'chord':'all')}
+      ${seg('Labels','labels',[['iv','Degrees'],['notes','Notes']],saved.labels==='notes'?'notes':'iv')}</div>${wide?'':`<div class="xkey">${exploreKey()}</div>`}`;
   }else if(st.mode==='name'){
     const n=cur.allowed.length+1, cols=Math.min(n,n>8?6:n);
     const btns=cur.allowed.map(i=>{let cls='ans';
