@@ -8,7 +8,7 @@ async function run(wide){
  const w=dom.window,d=w.document; w.addEventListener('error',e=>{console.log('ERR',e.message);bad++;});
  await new Promise(r=>setTimeout(r,60));
  const X=w.__fretDebug, click=el=>{if(!el){bad++; console.log('MISSING',new Error().stack.split('\n')[2].trim()); return;} if(el&&el.tagName==='OPTION'){el.selected=true; el.closest('select').dispatchEvent(new w.Event('change',{bubbles:true})); return;} el.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));};
- w.HTMLOptionElement.prototype.getAttribute=function(n){return n==='aria-pressed'?String(this.selected):w.Element.prototype.getAttribute.call(this,n);}; // a dropdown option reads as a pressed chip when picked
+ {const ga=w.Element.prototype.getAttribute; w.Element.prototype.getAttribute=function(n){if(n==='aria-pressed'){if(this.tagName==='OPTION') return String(this.selected); if(ga.call(this,'role')==='menuitemradio') return ga.call(this,'aria-checked');} return ga.call(this,n);};} // a picked dropdown choice reads as a pressed chip
  const bc=(row,v)=>click(d.querySelector(`#exhead [data-act=bchip][data-row=${row}][data-v="${v}"]`));
  const check=(label)=>{
    const els=[...d.querySelectorAll(X.TIP_SEL)].filter(e=>!e.closest('[hidden]'));
@@ -32,7 +32,7 @@ async function run(wide){
      click(d.querySelector('[data-act=exedit]')); check('exercises edit'); click(d.querySelector('[data-act=exrm]')); check('exercises delete confirm'); click(d.querySelector('[data-act=exrmno]'));
      click(d.querySelector('[data-act=excusti][data-i="2"]')); check('customize progressions');
      if(wide){click(d.querySelector('.exi.open [data-act=pmenu][data-m=e-rpat]')); check('customize strum menu');
-     click(d.querySelector('.exi.open [data-act=pmenu][data-m=e-wpos]')); check('customize box menu');}
+     click(d.querySelector('.exi.open [data-act=pmenu][data-m=e-where]')); check('customize box menu');}
      else{click(d.querySelector('.exi.open option[data-row=wpos][data-v="5"]')); check('customize box dropdown');}
      click(d.querySelector('.exi.open [data-act=pmenu][data-m=e-key]')); check('customize key menu'); click(d.querySelector('.exi.open [data-act=eccancel]'));
      click(d.querySelector('[data-act=excusti][data-i="0"]')); check('customize box'); click(d.querySelector('.exi.open [data-act=eccancel]'));
@@ -50,7 +50,7 @@ async function run(wide){
      click(d.querySelector('[data-fm=song]')); check('focus on song'); goMode(d,click,'drill'); check('drill focused on song');
      {const sk=X.LOG.skills[X.saved.fsong]; X.saveParts(X.saved.fsong,[{name:'Verse',text:'C D'},{name:'Chorus',text:'Am G'}]); goMode(d,click,'explore'); goMode(d,click,'drill'); check('drill song parts');
       bc('spart','1'); check('drill song chorus');
-      if(wide){click(d.querySelector('#exhead [data-act=bsong]')); check('drill song menu'); click(d.querySelector('#exhead [data-act=bsong]'));}
+      if(wide){click(d.querySelector('#exhead [data-act=pmenu][data-m=prog]')); check('drill song menu'); click(d.querySelector('#exhead [data-act=pmenu][data-m=prog]'));}
       click(d.querySelector('[data-act=spown]')); check('drill part own strum'); bc('spart','-1'); check('drill whole song with part strum');
       X.saveParts(X.saved.fsong,[{name:'Verse',text:'[C G] D'},{name:'Chorus',text:'Am [G . . F]'}]); goMode(d,click,'explore'); goMode(d,click,'drill'); check('drill split bars');
       X.st.newSong=false; X.st.song=X.saved.fsong; goMode(d,click,'songs'); check('songs part strum'); click(d.querySelector('[data-act=pown]')); check('songs part strum on');}
@@ -63,7 +63,7 @@ async function run(wide){
      for(const v of ['roll','thumb']){click(d.querySelector(`#exhead [data-row=pick][data-v=${v}]`)); check('exercise pick '+v);}
      click(d.querySelector('#exhead [data-row=rpat][data-v=boom]')); check('exercise boom');
      click(d.querySelector('#exhead [data-act=excust]')); check('customize from drill');
-     if(wide){click(d.querySelector('#exhead [data-act=pmenu][data-m=wpos]')); check('customize from drill box menu');}
+     if(wide){click(d.querySelector('#exhead [data-act=pmenu][data-m=where]')); check('customize from drill box menu');}
      click(d.querySelector('#exhead [data-act=pmenu][data-m=key]')); check('customize from drill key menu'); click(d.querySelector('#exhead [data-act=edcancel]'));
      click(d.querySelector('[data-act=exnext]')); check('exercise songs');
      click(d.querySelector('[data-act=exleave]')); check('left session');
@@ -82,7 +82,7 @@ async function run(wide){
        if(v==='line'){for(const p of ['updown','thirds','g3','g4','strings']){bc('lpat',p); check('line '+p);} for(const o of ['restart','through']){bc('over',o); check('over '+o);} for(const t of ['altpick','slurs','any']){bc('tech',t); check('tech '+t);}}
        if(v==='tones') for(const p of ['enclose','walk','arp']){bc('tpat',p); check('tones '+p);}}
      for(const v of ['open','cycle','whole','focus']){bc('where',v); check('where '+v);}
-     if(wide){click(d.querySelector('#exhead [data-act=bfold][data-k=plan]')); check('builder row folded'); click(d.querySelector('#exhead [data-act=bfold][data-k=plan]'));}
+     if(wide) for(const m of [...d.querySelectorAll('#exhead [data-act=pmenu]')].map(b=>b.dataset.m)){click(d.querySelector(`#exhead [data-act=pmenu][data-m=${m}]`)); check('menu open '+m); click(d.querySelector(`#exhead [data-act=pmenu][data-m=${m}]`));}
      click(d.querySelector('#exhead [data-act=bnew]')); check('save as new'); click(d.querySelector('#exhead [data-act=bnewok]')); check('saved new'); goMode(d,click,'practice'); check('exercises with yours'); goMode(d,click,'drill');
      bc('prog','one'); bc('plan','line'); for(const v of ['1','4']){bc('chord',v); check('over chord '+v);} bc('chord','0'); bc('prog','pop'); bc('plan','both');
      const pc=d.querySelector('[data-pci="1"]'); if(pc){click(pc); check('prog chord preview');}

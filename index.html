@@ -640,6 +640,16 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 span.blab{cursor:default}
 span.blab::before{content:none}
 .smenu .mg{display:flex;flex-direction:column;gap:2px;min-width:0}
+.smenu[hidden]{display:none}
+.brow.drop .smenu{left:0;right:0;display:flex;max-height:min(70vh,560px);overflow:auto} /* as wide as the row, so long names fit without widening the side panel */
+.brow.drop .smenu[hidden]{display:none}
+/* a desktop builder row: its label, then a dropdown showing the pick */
+.dd{font:inherit;font-size:.92rem;text-align:left;color:var(--ink);background-color:var(--bg);border:1px solid var(--line);border-radius:10px;padding:7px 30px 7px 10px;min-width:0;width:100%;
+  cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 16px) 52%,calc(100% - 11px) 52%;background-size:5px 5px;background-repeat:no-repeat}
+.dd:hover{border-color:var(--muted)}
+.dd[aria-expanded="true"]{border-color:var(--gold);box-shadow:0 0 0 2px color-mix(in srgb,var(--gold) 40%,transparent)}
+.dd:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
 .smenu.cols2{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 10px;max-height:min(70vh,560px);overflow:auto}
 .eline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .eline.rel{position:relative}
@@ -2703,7 +2713,7 @@ function applyBuild(s){
 function exStartNow(o){
   const E=exOf(o.ex); if(!E) return;
   const s=fillSet(o.ex,o.set);
-  stopMet(); st.paused=false; st.sheet=false; st.picking=false; st.songMenu=false; st.bnew=null; st.edit=null; st.pmenu=null;
+  stopMet(); st.paused=false; st.sheet=false; st.picking=false; st.bnew=null; st.edit=null; st.pmenu=null;
   st.ex={rid:o.rid||null,uid:o.uid||null,ex:o.ex,base:s,goal:s.goal};
   if(isQuiz(E)){ if(st.mode!==s.quiz) setMode(s.quiz); else render(); return; }
   if(E.id==='songs'){
@@ -2718,7 +2728,7 @@ function exStartNow(o){
   toDrill();
 }
 function exGo(r,i){const it=r&&r.items[i]; if(!it||!exOf(it.ex)) return; saved.rid=r.id; setRun(r,{at:i}); exStart({rid:r.id,uid:it.uid,ex:it.ex,set:it.set});}
-function exEnd(){st.ex=null; st.songMenu=false; st.bnew=null; st.edit=null; st.pmenu=null;}
+function exEnd(){st.ex=null; st.bnew=null; st.edit=null; st.pmenu=null;}
 function bchoose(k,v){
   // a chip in the builder: switch that choice and keep playing
   if(k==='quiz'){if(st.mode!==v) setMode(v); return;}
@@ -2741,7 +2751,7 @@ function bchoose(k,v){
   refresh(); fillSelects(); save(); regen();
 }
 function bsong(id){ // a song from the Chords row's menu: its key and chords, keeping how you play each chord
-  st.songMenu=false; if(!LOG.skills[id]) return;
+  if(!LOG.skills[id]) return;
   const plan=D.plan, sbg=D.sbg, pick=D.pick; setFocusSong(id);
   if(D.plan!==plan){setPlay(()=>{D.plan=plan; D.sbg=sbg; D.pick=pick;}); save(); if(st.mode==='drill') regen(); else render();}
 }
@@ -2913,61 +2923,50 @@ function pill(c,m,label,pressed,groups,tip,cols){
   const menu=open?`<div class="smenu${cols?' cols2':''}" role="menu" aria-label="${esc(label)}">${groups.map(([g,list])=>`<div class="mg">${g?`<small>${g}</small>`:''}${list.map(([v,l,row,on,t])=>`<button class="mi" role="menuitemradio" data-act="${c.act}" data-row="${row}" data-v="${esc(v)}" aria-checked="${!!on}" data-tip="${esc(t)}">${esc(l)}</button>`).join('')}</div>`).join('')}</div>`:'';
   return `<span class="spick"><button class="chip songpick" data-act="pmenu" data-m="${id}" aria-haspopup="menu" aria-expanded="${open}" aria-pressed="${!!pressed}" data-tip="${esc(tip)}">${esc(label)} ▾</button></span>${menu}`;
 }
-function boxLabel(c,pin){ // where a customized exercise sits when it follows the focus: the focus, or a box pinned for it
-  if(pin==null) return 'Follow the focus'; if(+pin<0) return 'Whole neck';
-  const p=boxesOf(c.V,c.live).find(p=>p.lo===+pin); return p?p.label:`Frets ${pin}–${+pin+4}`;
-}
 function rowsHTML(c){
-  // the builder's rows. c.V is the setup they show, c.live says it's Drill's own, c.act is what a chip does,
+  // the builder's rows, one dropdown each. c.V is the setup they show, c.live says it's Drill's own, c.act is what an option does,
   // c.E and c.s give an exercise's ✓, c.edit is Customize, where Follow the focus can pin a box (c.pin)
-  const {V,live,act,E,s}=c, S=live&&songProg(D.prog);
+  const {V,live,act}=c, S=live&&songProg(D.prog);
   return (c.rows||bRows(V,live)).map(r=>{
-    const xr=exRowFor(E,r.k), now=bNow(r.k,V,live), all=bList(r,V,live);
-    let list=all, extra='', first='';
-    const shut=c.fold&&!!saved.fold['b-'+r.k], picked=r.k==='prog'&&S?S.name:r.k==='where'&&c.edit&&V.where==='focus'?boxLabel(c,c.pin):listLabel(all,now);
-    const chip=([v,l])=>{const done=!!xr&&!!s&&chipDone(E,xr.k,v,s.goal,s);
-      return `<button class="chip bc${done?' done':''}" data-act="${act}" data-row="${r.k}" data-v="${esc(v)}" aria-pressed="${v===now}" data-tip="${esc(bTip(r.k,v,esc(l),done,s&&s.goal))}">${esc(l)}</button>`;};
+    const now=bNow(r.k,V,live);
+    let list=bList(r,V,live);
     if(r.k==='prog'&&S) list=list.filter(([v])=>v!==D.prog);
-    if(r.k==='prog'&&live) extra=songPill(E,s);
-    if(r.k==='rpat'){ // every pattern, grouped, plus boom-chuck and your own
-      const it=(v,l)=>[v,l,'rpat',now===v,bTip('rpat',v,esc(l))];
-      extra=pill(c,'rpat',`All ${RPAT_LIST.length+1} patterns`,false,[...RPATS.map(([g,L])=>[g,L.map(p=>it(p[0],p[1]))]),
-        ['Bluegrass',[it('boom','Boom-chuck')]],...(live?[['Your own',[it('custom','Your pattern')]]]:[])],
-        '<b>All the strum patterns</b>: quarters and 8ths, ghost strums, 16ths, syncopation, shuffles, and boom-chuck. Your pattern is the one you edit in the strum card.',true);}
-    if(r.k==='where'&&c.edit){ // Follow the focus can pin the exercise to one box
-      list=list.filter(([v])=>v!=='focus');
-      const boxes=boxesOf(V,live), on=x=>V.where==='focus'&&String(c.pin??'')===x;
-      first=pill(c,'wpos',boxLabel(c,c.pin),V.where==='focus',[['',[['','Follow the focus','wpos',on(''),'Use whatever box is picked in the bar at the top.'],
-        ...boxes.map(p=>[String(p.lo),p.label,'wpos',on(String(p.lo)),`Always start ${esc(E?E.name:'it')} in this box.`])]]],
-        '<b>Follow the focus</b>: play in the box picked in the bar at the top, or pick one box for this exercise to always start in.');}
+    if(r.k==='where'&&c.edit) list=list.filter(([v])=>v!=='focus');
     const seg=r.k==='lpat'&&V.prog!=='one'?`<div class="swrow"><span class="lab">Over the changes</span><div class="seg" role="group" aria-label="Over the changes">${OVER_CH.map(([v,l])=>`<button data-act="${act}" data-row="over" data-v="${v}" aria-pressed="${V.over===v}" data-tip="${esc(bTip('over',v,l))}">${l}</button>`).join('')}</div></div>`:'';
     const sev=r.k==='prog'&&(!live||cur.set.size===7||D.line==='prog'&&cur.prog)?`<span class="swl">Add 7ths<button class="sw sm" data-act="${live?'sev':act}" data-row="sev" aria-pressed="${!!V.sev}" aria-label="Add 7ths" data-tip="<b>Add 7ths</b>: play 4-note 7th chords, like Am7 and Gmaj7, instead of 3-note triads."></button></span>`:'';
-    if(!wide) return dropRow(c,r,now,list,sev,seg,xr);
-    const body=`<div class="row">${first}${list.map(chip).join('')}${extra}</div>${seg}`;
-    const lab=c.fold?`<button class="blab" data-act="bfold" data-k="${r.k}" aria-expanded="${!shut}" data-tip="${shut?'Open':'Fold'} the ${r.name} row${shut?'':'. A folded row shows only what’s picked'}.">${r.name}${shut?`<span class="pk"> · ${esc(picked)}</span>`:''}</button>`:`<span class="blab">${r.name}</span>`;
-    return `<div class="brow${r.sub?' sub':''}${shut?' shut':''} rel" role="group" aria-label="${r.name}">${sev?`<div class="bh">${lab}${sev}</div>`:lab}${shut?'':body}</div>`;
+    const {groups,pick}=rowOptions(c,r,now,list), ctl=wide?rowMenu(c,r,groups,pick):rowSelect(r,groups,pick);
+    return `<div class="brow drop${r.sub?' sub':''} rel" role="group" aria-label="${r.name}">${ctl}${sev||seg?`<div class="dx">${sev}${seg}</div>`:''}</div>`;
   }).join('');
 }
-function dropRow(c,r,now,list,sev,seg,xr){
-  // on a narrow screen each row is one dropdown: it shows the pick and takes far less room than a row of chips.
-  // Its options are the row's chips plus what the row's pill menus hold (your songs, every strum pattern, a box to pin)
-  const {V,live,act,E,s}=c;
-  const o=(v,l,on,tip,a=act,row=r.k,id='')=>({v,l,on,tip,a,row,id});
+function rowOptions(c,r,now,list){
+  // a row's choices, grouped: its own list plus your songs, every strum pattern, or a box to pin. Each keeps its tooltip and ✓
+  const {V,live,act,E,s}=c, xr=exRowFor(E,r.k);
+  const o=(v,l,on,tip,a=act,row=r.k,id='',cls='')=>({v,l,on,tip,a,row,id,cls});
   const mk=(v,l)=>{const done=!!xr&&!!s&&chipDone(E,xr.k,v,s.goal,s); return o(v,l+(done?' ✓':''),v===now,bTip(r.k,v,esc(l),done,s&&s.goal));};
   const mine=list.map(([v,l])=>mk(v,l));
   let groups=[['',mine]];
-  if(r.k==='prog'&&live) groups=[['Progressions',mine],['Your songs',[...songSteps().map(({id,s:k})=>o('',k.name+(k.artist?` · ${k.artist}`:''),id===D.prog,`<b>${esc(k.name)}</b>: its chords, in its key.`,'bsongpick',r.k,id)),
-    o('','+ Add a song in the Songs tab',false,'Add a song you’re learning, with its chords, in the Songs tab.','songform')]]];
+  if(r.k==='prog'&&live) groups=[['Progressions',mine],['Your songs',[...songSteps().map(({id,s:k})=>o('',k.name+(k.artist?` · ${k.artist}`:''),id===D.prog,`<b>${esc(k.name)}</b>: play over its chords, in its key.`,'bsongpick',r.k,id)),
+    o('','+ Add a song in the Songs tab',false,'Add a song you’re learning, with its chords, in the Songs tab.','songform',r.k,'','add')]]];
   if(r.k==='rpat'){
     groups=[...RPATS.map(([g,L])=>[g,L.map(p=>mk(p[0],p[1]))]),['Bluegrass',[mk('boom','Boom-chuck')]],...(live?[['Your own',[mk('custom','Your pattern')]]]:[])];
     const seen=new Set(groups.flatMap(g=>g[1].map(x=>x.v))), miss=mine.filter(x=>!seen.has(x.v)); if(miss.length) groups.unshift(['',miss]);}
   if(r.k==='where'&&c.edit){const on=x=>V.where==='focus'&&String(c.pin??'')===x;
-    groups=[['Follow the focus',[o('','Follow the focus',on(''),'Use whatever box is picked in the bar at the top.',act,'wpos'),
-      ...boxesOf(V,live).map(p=>o(String(p.lo),p.label,on(String(p.lo)),`Always start ${esc(E?E.name:'it')} in this box.`,act,'wpos'))]],['Somewhere else',mine]];}
-  const every=groups.flatMap(g=>g[1]), pick=every.find(x=>x.on)||every[0];
+    groups=[['Follow the focus',[o('','Follow the focus',on(''),'<b>Follow the focus</b>: use whatever box is picked in the bar at the top.',act,'wpos'),
+      ...boxesOf(V,live).map(p=>o(String(p.lo),p.label,on(String(p.lo)),`<b>${esc(p.label)}</b>: always start ${esc(E?E.name:'it')} in this box.`,act,'wpos'))]],['Somewhere else',mine]];}
+  const every=groups.flatMap(g=>g[1]);
+  return {groups,pick:every.find(x=>x.on)||every[0]};
+}
+function rowSelect(r,groups,pick){ // a phone gets the native dropdown, which is easiest to use by touch
   const opt=x=>`<option data-act="${x.a}" data-row="${x.row}" data-v="${esc(x.v)}"${x.id?` data-id="${esc(x.id)}"`:''}${x===pick?' selected':''}>${esc(x.l)}</option>`;
   const opts=groups.map(([g,L])=>g?`<optgroup label="${esc(g)}">${L.map(opt).join('')}</optgroup>`:L.map(opt).join('')).join('');
-  return `<div class="brow drop${r.sub?' sub':''}" role="group" aria-label="${r.name}"><label class="dl"><span class="blab">${r.name}</span><select class="bsel" data-row="${r.k}" aria-label="${r.name}" data-tip="${esc(pick?pick.tip:r.name)}">${opts}</select></label>${sev||seg?`<div class="dx">${sev}${seg}</div>`:''}</div>`;
+  return `<label class="dl"><span class="blab">${r.name}</span><select class="bsel" data-row="${r.k}" aria-label="${r.name}" data-tip="${esc(pick?pick.tip:r.name)}">${opts}</select></label>`;
+}
+function rowMenu(c,r,groups,pick){
+  // a desktop dropdown opens a menu of its own, so every choice keeps its tooltip while you look through them
+  const id=(c.live?'':'e-')+r.k, open=st.pmenu===id, n=groups.reduce((a,g)=>a+g[1].length,0);
+  const item=x=>`<button class="mi${x.cls?' '+x.cls:''}" role="menuitemradio" data-act="${x.a}" data-row="${x.row}" data-v="${esc(x.v)}"${x.id?` data-id="${esc(x.id)}"`:''} aria-checked="${x===pick}" data-tip="${esc(x.tip)}">${esc(x.l)}</button>`;
+  const menu=`<div class="smenu${n>12?' cols2':''}" role="menu" aria-label="${r.name}"${open?'':' hidden'}>${groups.map(([g,L])=>`<div class="mg">${g?`<small>${esc(g)}</small>`:''}${L.map(item).join('')}</div>`).join('')}</div>`;
+  return `<div class="dl"><span class="blab">${r.name}</span><button class="dd" data-act="pmenu" data-m="${id}" aria-haspopup="menu" aria-expanded="${open}" aria-label="${r.name}: ${esc(pick?pick.l:'')}" data-tip="${esc(pick?pick.tip:r.name)}">${esc(pick?pick.l:'')}</button></div>${menu}`;
 }
 function dropPick(sel){ // a dropdown's option does what its chip would: hand it to the click handler, then keep focus on the dropdown
   const o=sel.selectedOptions[0]; if(!o) return;
@@ -3018,13 +3017,6 @@ function builderHTML(){
 }
 const custTip=(E,r)=>E.user?`Rename ${E.name}, or change where it starts and its goal. The rows switch to editing in place.`
   :`Change where ${E.name} starts and its goal${r?`, for this exercise in ${r.name}`:', as your default'}. The rows switch to editing in place.`;
-function songPill(E,s){
-  // your songs as one pill: it reads Song until you pick one, then the song's name; its menu lists every song
-  const S=songProg(D.prog)?LOG.skills[D.prog]:null, list=songSteps();
-  const menu=st.songMenu?`<div class="smenu" role="menu" aria-label="Your songs"><small>Your songs</small>${list.map(({id,s:k})=>`<button class="mi" role="menuitemradio" data-act="bsongpick" data-id="${esc(id)}" aria-checked="${id===D.prog}" data-tip="${esc(`Play over ${esc(k.name)}’s chords, in its key.`)}"><b>${esc(k.name)}</b>${k.artist?` · ${esc(k.artist)}`:''}<em>${esc(songKey(k).replace(' major',''))}</em></button>`).join('')}
-    <button class="mi add" data-act="songform" data-tip="Add a song you’re learning, with its chords, in the Songs tab.">+ Add a song in the Songs tab</button></div>`:'';
-  return `<span class="spick"><button class="chip songpick" data-act="bsong" aria-haspopup="menu" aria-expanded="${!!st.songMenu}" aria-pressed="${!!S}" data-tip="${esc(S?`<b>${esc(S.name)}</b>: its chords, in its key. Click to pick another song.`:'<b>Song</b>: Practice over the chords of a song you added in the Songs tab.')}">${S?`${esc(S.name)}${S.artist?` · ${esc(S.artist)}`:''}`:'Song'} ▾</button></span>${menu}`;
-}
 function exHeadHTML(){ // the interval quiz's panel
   const E=exOf(st.ex.ex), s={...st.ex.base,goal:st.ex.goal}, pr=exProgress(E,s);
   const rows=E.rows.map(r=>{
@@ -3229,8 +3221,6 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&st.pmenu){const m=
   const n=document.querySelector(`[data-act="pmenu"][data-m="${m}"]`); if(n) n.focus(); e.stopPropagation();} },true);
 document.addEventListener('click',e=>{ if(st.pmenu&&!e.target.closest('.smenu,[data-act="pmenu"]')&&!e.target.closest('button')){st.pmenu=null; if(st.mode==='practice') render(); else renderEx();} });
 exHeadEl.addEventListener('input',e=>{ if(e.target.id==='edName'&&st.edit) st.edit.name=e.target.value; });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&st.songMenu){st.songMenu=false; renderEx(); const n=exHeadEl.querySelector('[data-act="bsong"]'); if(n) n.focus(); e.stopPropagation();} },true);
-document.addEventListener('click',e=>{ if(st.songMenu&&!e.target.closest('.smenu,[data-act="bsong"]')){st.songMenu=false; renderEx();} });
 exHeadEl.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='bName'){e.preventDefault(); const b=exHeadEl.querySelector('[data-act="bnewok"]'); if(b) b.click();} });
 // ---------- songs tab ----------
 // A list of your songs, and the open song: its details, its chords split into parts, a voicing for each chord, and its strum pattern.
@@ -3705,7 +3695,6 @@ const onClick=e=>{
   if(e.target.classList.contains('sets-wrap')){st.sheet=false; render(); return;}
   const b=e.target.closest('button'); if(!b) return;
   const act=b.dataset.act, i=+b.dataset.i;
-  if(st.songMenu&&act!=='bsong'&&act!=='bsongpick'){st.songMenu=false; if(act!=='songform') renderEx();} // a click anywhere else closes the song menu
   if(st.exDel&&act!=='exudel') st.exDel=null;
   if(st.pmenu&&act!=='pmenu'){st.pmenu=null; if(act!=='bchip'&&act!=='echip'){if(st.mode==='practice') render(); else renderEx();}} // a click anywhere else closes a dropdown menu
   if(st.bmsg&&act!=='bnewok') st.bmsg='';
@@ -3729,9 +3718,6 @@ const onClick=e=>{
     case 'clean': toggleClean(); return;
     case 'exchip': if(st.ex) bchoose(b.dataset.row,b.dataset.v); return;
     case 'bchip': bchoose(b.dataset.row,b.dataset.v); return;
-    case 'bfold':{const k='b-'+b.dataset.k; saved.fold[k]=!saved.fold[k]; if(!saved.fold[k]) delete saved.fold[k]; save(); renderEx();
-      const n=exHeadEl.querySelector(`[data-act="bfold"][data-k="${b.dataset.k}"]`); if(n) n.focus({preventScroll:true}); return;}
-    case 'bsong': st.songMenu=!st.songMenu; renderEx(); {const n=exHeadEl.querySelector(st.songMenu?'.smenu .mi':'[data-act="bsong"]'); if(n) n.focus({preventScroll:true});} return;
     case 'bsongpick': bsong(b.dataset.id); return;
     case 'bnew': st.bnew={name:buildText(captureBuild()).replace(/&amp;/g,'&').split(' · ').slice(0,2).join(' · ').slice(0,60)}; st.bmsg=''; renderEx(); {const n=document.getElementById('bName'); if(n){n.focus(); n.select();}} return;
     case 'bnewno': st.bnew=null; renderEx(); return;
@@ -3745,8 +3731,8 @@ const onClick=e=>{
     case 'edsave': editSave(); return;
     case 'edcancel': editCancel(); return;
     case 'pmenu':{const m=b.dataset.m; st.pmenu=st.pmenu===m?null:m; if(st.mode==='practice') render(); else renderEx();
-      const mm=st.pmenu&&document.querySelector('.smenu'); if(mm&&mm.scrollIntoView) mm.scrollIntoView({block:'nearest'});
-      const n=document.querySelector(st.pmenu?'.smenu .mi[aria-checked="true"],.smenu .mi':`[data-act="pmenu"][data-m="${m}"]`); if(n) n.focus({preventScroll:true}); return;}
+      const mm=st.pmenu&&document.querySelector('.smenu:not([hidden])'); if(mm&&mm.scrollIntoView) mm.scrollIntoView({block:'nearest'});
+      const n=document.querySelector(st.pmenu?'.smenu:not([hidden]) .mi[aria-checked="true"],.smenu:not([hidden]) .mi':`[data-act="pmenu"][data-m="${m}"]`); if(n) n.focus({preventScroll:true}); return;}
     case 'echip': cchoose(b.dataset.row,b.dataset.v); return;
     case 'ecsave': ceditSave(); return;
     case 'eccancel': st.cedit=null; render(); return;
@@ -4195,6 +4181,8 @@ function showTip(el){
   const r=el.getBoundingClientRect(), t=tipEl.getBoundingClientRect();
   let x=r.left+r.width/2-t.width/2, y=r.top-t.height-8;
   if(y<8) y=r.bottom+8;
+  const m=el.closest('.smenu'); // in an open menu the tip sits beside it, so it doesn't cover the other choices
+  if(m){const M=m.getBoundingClientRect(); x=M.right+8+t.width<=innerWidth-8?M.right+8:M.left-8-t.width; y=Math.max(8,Math.min(innerHeight-t.height-8,r.top+r.height/2-t.height/2));}
   x=Math.max(8,Math.min(innerWidth-t.width-8,x));
   tipEl.style.transform=`translate(${Math.round(x)}px,${Math.round(y)}px)`;
 }

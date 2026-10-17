@@ -35,7 +35,7 @@ async function device(wide=true,store){
   const w=dom.window; w.addEventListener('error',e=>fail('error',e.message));
   await sleep(60);
   const d=w.document, X=w.__fretDebug, click=el=>{if(el&&el.tagName==='OPTION'){el.selected=true; el.closest('select').dispatchEvent(new w.Event('change',{bubbles:true})); return;} el.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));};
-  w.HTMLOptionElement.prototype.getAttribute=function(n){return n==='aria-pressed'?String(this.selected):w.Element.prototype.getAttribute.call(this,n);}; // a dropdown option reads as a pressed chip when picked
+  {const ga=w.Element.prototype.getAttribute; w.Element.prototype.getAttribute=function(n){if(n==='aria-pressed'){if(this.tagName==='OPTION') return String(this.selected); if(ga.call(this,'role')==='menuitemradio') return ga.call(this,'aria-checked');} return ga.call(this,n);};} // a picked dropdown choice reads as a pressed chip
   const mode=m=>goMode(d,click,m);
   const advance=(secs)=>{w.__clock+=secs*1000; const end=w.__now+secs; while(w.__now<end){w.__now=Math.min(end,w.__now+0.02); if(X.st.playing&&X.st.mode==='drill') X.schedule();}};
   return {w,d,X,click,mode,advance};
@@ -43,11 +43,11 @@ async function device(wide=true,store){
 const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
 (async()=>{
   const A=await device(true); const {w,d,X,click,mode,advance}=A;
-  // the builder's chips, and the song pill's menu for a song
+  // the builder's dropdown choices; your songs are in the Chords dropdown
   const bc=(row,v)=>click(d.querySelector(`#exhead [data-act=bchip][data-row=${row}][data-v="${v}"]`));
-  const strum=v=>{const c=d.querySelector(`#exhead [data-act=bchip][data-row=rpat][data-v="${v}"]`); if(c){click(c); return;} // a common pattern's chip, or the All 21 patterns menu
+  const strum=v=>{const c=d.querySelector(`#exhead [data-act=bchip][data-row=rpat][data-v="${v}"]`); if(c){click(c); return;} // a pattern from the Strum dropdown's menu
     click(d.querySelector('#exhead [data-act=pmenu][data-m=rpat]')); click(d.querySelector(`#exhead .smenu [data-row=rpat][data-v="${v}"]`));};
-  const pickProg=v=>{if(/^song:/.test(v)){click(d.querySelector('#exhead [data-act=bsong]')); click(d.querySelector(`#exhead [data-act=bsongpick][data-id="${v}"]`));} else bc('prog',v);};
+  const pickProg=v=>{if(/^song:/.test(v)){click(d.querySelector(`#exhead [data-act=bsongpick][data-id="${v}"]`));} else bc('prog',v);};
   ok(!d.querySelector('[data-mode=practice]').hidden,'nav');
   // drill: a 60 s run on a box is logged with its passes
   mode('drill'); {const sp=d.getElementById('selPos'); sp.value='5'; sp.dispatchEvent(new w.Event('change',{bubbles:true}));} X.saved.bpm=120;
@@ -75,8 +75,8 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(re&&re.secs===40&&re.passes>=1&&re.prog==='pop'&&re.plan==='both'&&re.swing===false,'prog-run',JSON.stringify(re));
   ok(re&&/Pop: I V vi IV|Pop: Imaj7 V7 vi7 IVmaj7/.test(X.LOG.skills[re.skill].name)&&/frets 5–9/.test(X.LOG.skills[re.skill].name),'prog-skill',re&&JSON.stringify(X.LOG.skills[re.skill]));
   // a different strum pattern is a different skill
-  ok(!d.querySelector('.strum-card [data-set=rpat]')&&d.querySelector('#exhead [data-act=pmenu][data-m=rpat]').textContent==='All 21 patterns ▾','strum-one-picker');
-  strum('gallop'); ok(X.R.pat==='gallop'&&!d.querySelector('#exhead .smenu')&&d.querySelector('#exhead [data-row=rpat][data-v=gallop]').getAttribute('aria-pressed')==='true','strum-menu-pick');
+  ok(!d.querySelector('.strum-card [data-set=rpat]')&&d.querySelectorAll('#exhead .smenu [data-row=rpat]').length===22,'strum-one-picker');
+  strum('gallop'); ok(X.R.pat==='gallop'&&!d.querySelector('#exhead .smenu:not([hidden])')&&d.querySelector('#exhead [data-row=rpat][data-v=gallop]').getAttribute('aria-pressed')==='true','strum-menu-pick');
   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(20); click(d.querySelector('[data-act=play]'));
   const re2=entries(X).filter(e=>e.skill.startsWith('prog:')); ok(re2.length===2&&re2[0].skill!==re2[1].skill&&re2[1].skill.endsWith(':gallop'),'prog-pattern-skill',re2.map(e=>e.skill).join(' '));
   // a gap of more than 20 minutes starts a new session
@@ -92,21 +92,21 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   click(d.querySelector('[data-act=exitem][data-i="0"]'));
   ok(X.st.mode==='drill'&&X.st.ex&&X.st.ex.ex==='box'&&X.F.key===9&&X.F.fam==='pent'&&X.F.pos===5&&X.D.line==='scale'&&X.D.pattern==='thirds','ex-box-setup',[X.st.mode,X.F.key,X.F.fam,X.F.pos,X.D.line,X.D.pattern].join(' '));
   ok(!d.getElementById('exhead').hidden&&!d.getElementById('exstrip').hidden&&d.querySelectorAll('#exhead [data-act=bchip][data-row=lpat]').length===5,'ex-panel');
-  {const labs=[...d.querySelectorAll('#exhead .brow > .blab')].map(e=>e.textContent).join(', ');
+  {const labs=[...d.querySelectorAll('#exhead .brow .blab')].map(e=>e.textContent).join(', ');
    ok(labs==='Chords, Over, Play each chord, Line, Technique, Where'&&!d.querySelector('#sheet [data-set=pattern]'),'ex-builder-rows',labs);}
   ok(/Weeknight/.test(d.getElementById('exstrip').textContent)&&d.querySelector('#exstrip [aria-current=step]').dataset.i==='0','ex-strip');
   ok(/Skip a note/.test(d.getElementById('exhead').textContent),'ex-pent-skip-label');
   bc('lpat','g3'); ok(X.D.pattern==='g3'&&X.st.ex,'ex-chip-switch');
   const runClean=(bpm,secs)=>{X.saved.bpm=bpm; click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(secs); click(d.querySelector('[data-act=play]')); const c=d.querySelector('[data-act=clean]'); ok(c,'clean-chip-'+bpm); if(c) click(c);};
   runClean(70,20); ok(!d.querySelector('#exhead [data-v=g3]').classList.contains('done'),'ex-not-done-below-goal');
-  runClean(80,20); ok(d.querySelector('#exhead [data-v=g3]').classList.contains('done')&&/2 of 5 clean/.test(d.getElementById('exhead').textContent),'ex-done-at-goal',d.getElementById('exhead').textContent.replace(/\s+/g,' ').slice(0,300)+JSON.stringify(entries(X).slice(-1)));
+  runClean(80,20); ok(/ ✓$/.test(d.querySelector('#exhead [data-v=g3]').textContent)&&/2 of 5 clean/.test(d.getElementById('exhead').textContent),'ex-done-at-goal',d.getElementById('exhead').textContent.replace(/\s+/g,' ').slice(0,300)+JSON.stringify(entries(X).slice(-1)));
   ok(X.runOf(X.openRoutine()).done.includes('w1'),'ex-run-mark');
   ok(/You changed the line from Skip a note/.test(d.getElementById('exhead').textContent),'ex-change-shown',d.getElementById('exhead').textContent.slice(-120));
   click(d.querySelector('[data-act=exsave]')); ok(X.openRoutine().items[0].set.pattern==='g3'&&!d.querySelector('[data-act=exsave]'),'ex-save',JSON.stringify(X.openRoutine().items[0].set));
   click(d.querySelector('[data-act=exnext]')); ok(X.st.ex.ex==='tech'&&X.D.tech==='altpick'&&X.D.plan==='line'&&X.D.prog==='one'&&d.querySelector('#exstrip .exstep.done[data-i="0"]'),'ex-next');
   click(d.querySelector('[data-act=exnext]'));
   ok(X.st.ex.ex==='prog'&&X.D.line==='prog'&&X.D.prog==='pop'&&X.D.plan==='both'&&X.R.pat==='backbeat'&&X.F.pos===5&&!X.D.sev,'ex-prog-setup',[X.D.line,X.D.prog,X.D.plan,X.R.pat,X.F.pos].join(' '));
-  ok(d.querySelectorAll('#exhead [data-row=prog]').length===11&&d.querySelectorAll('#exhead [data-row=plan]').length===6&&d.querySelectorAll('#exhead [data-row=rpat]').length===6&&d.querySelectorAll('#exhead [data-row=pick]').length===3&&/0 of 26 clean/.test(d.getElementById('exhead').textContent),'ex-prog-rows',d.getElementById('exhead').textContent.match(/\d+ of \d+ clean/)[0]);
+  ok(d.querySelectorAll('#exhead [data-act=bchip][data-row=prog]').length===11&&d.querySelectorAll('#exhead [data-row=plan]').length===6&&d.querySelectorAll('#exhead [data-row=rpat]').length===22&&d.querySelectorAll('#exhead [data-row=pick]').length===3&&/0 of 26 clean/.test(d.getElementById('exhead').textContent),'ex-prog-rows',d.getElementById('exhead').textContent.match(/\d+ of \d+ clean/)[0]);
   {const labs=[...d.querySelectorAll('#exhead .brow .blab')].map(e=>e.textContent).join(', '); ok(X.cur.prog.map(p=>p.ch.name).join(' ')==='Am Em F Dm'&&labs==='Chords, Play each chord, Strum, Pick, Where','ex-prog-chords',X.cur.prog.map(p=>p.ch.name).join(' ')+' / '+labs);}
   click(d.querySelector('#exhead [data-row=prog][data-v="50s"]')); ok(X.D.prog==='50s'&&X.R.pat==='backbeat'&&X.cur.prog.map(p=>p.ch.name).join(' ')==='Am F Dm Em','ex-doowop',X.cur.prog.map(p=>p.ch.name).join(' '));
   // boom-chuck is a strum and moves Where to the open position; a strum pattern again goes back to the box
@@ -120,7 +120,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   bc('plan','strum');
   // a strum pattern, a progression and a way of playing each count as soon as any run with them is clean at the goal
   runClean(80,20);
-  ok(['[data-row=rpat][data-v=gallop]','[data-row=prog][data-v="50s"]','[data-row=plan][data-v=strum]'].every(q=>d.querySelector('#exhead '+q).classList.contains('done'))&&!d.querySelector('#exhead [data-row=prog][data-v=pop]').classList.contains('done'),'ex-prog-chips-done');
+  ok(['[data-row=rpat][data-v=gallop]','[data-row=prog][data-v="50s"]','[data-row=plan][data-v=strum]'].every(q=>/ ✓$/.test(d.querySelector('#exhead '+q).textContent))&&!/✓/.test(d.querySelector('#exhead [data-row=prog][data-v=pop]').textContent),'ex-prog-chips-done');
   // leave, then resume where you stopped
   // a run logged before Strum and Pick had rows of their own counts for the strum or pick it is now
   {const E=X.EX_BY.prog, s=X.fillSet('prog'); X.LOG.sessions[X.LOG.sessions.length-1].entries.push({id:'old1',skill:'prog:9:pent:1:5:pop:thumb:-',t:w.__clock,secs:60,bpm:[90,90],sub:2,passes:4,clean:90},{id:'old2',skill:'prog:9:pent:1:5:pop:boom:-',t:w.__clock,secs:60,bpm:[90,90],sub:2,passes:4,clean:90});
@@ -163,7 +163,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   {const s=X.openRoutine().items[2].set; ok(s.prog==='blues'&&s.plan==='arp'&&s.pick==='thumb'&&s.goal===75&&!s.chips&&!d.querySelector('.exi.open'),'cust-save',JSON.stringify(s));}
   ok([...d.querySelectorAll('.exi')][2].querySelector('.sumc').textContent==='12-bar bluesPickTravis','cust-summary',[...d.querySelectorAll('.exi')][2].querySelector('.sumc').textContent);
   click(d.querySelector('[data-act=exdone]')); click(d.querySelector('[data-act=exitem][data-i="2"]'));
-  ok(X.D.prog==='blues'&&X.D.plan==='arp'&&X.D.pick==='thumb'&&X.D.where==='open'&&X.F.pos===X.cur.pos[0].lo&&d.querySelectorAll('#exhead [data-row=prog]').length===11&&/goal 75/.test(d.getElementById('exhead').textContent),'cust-applied',[X.D.prog,X.D.plan,X.D.where,X.F.pos,X.cur.pos[0].lo,d.querySelectorAll('#exhead [data-row=prog]').length,/goal 75/.test(d.getElementById('exhead').textContent)].join(' '));
+  ok(X.D.prog==='blues'&&X.D.plan==='arp'&&X.D.pick==='thumb'&&X.D.where==='open'&&X.F.pos===X.cur.pos[0].lo&&d.querySelectorAll('#exhead [data-act=bchip][data-row=prog]').length===11&&/goal 75/.test(d.getElementById('exhead').textContent),'cust-applied',[X.D.prog,X.D.plan,X.D.where,X.F.pos,X.cur.pos[0].lo,d.querySelectorAll('#exhead [data-act=bchip][data-row=prog]').length,/goal 75/.test(d.getElementById('exhead').textContent)].join(' '));
   // Customize as you play: the rows edit in place, and Cancel puts Drill back as it was
   click(d.querySelector('#exhead [data-act=excust]')); ok(X.st.edit&&/Customize/.test(d.querySelector('#exhead .exh-top').textContent)&&d.querySelector('#exhead [data-act=edsave]').textContent==='Save to Weeknights "short"','edit-open');
   bc('pick','roll'); click(d.querySelector('#exhead [data-act=exgoal][data-v="5"]')); ok(X.D.pick==='roll','edit-live');
@@ -172,8 +172,8 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   // Save keeps a key and a box picked from the Key pill and Follow the focus ▾
   click(d.querySelector('#exhead [data-act=excust]')); bc('pick','arp'); ok(X.D.where==='focus'&&X.F.pos===5,'bg-where-back',X.D.where+' '+X.F.pos);
   click(d.querySelector('#exhead [data-act=pmenu][data-m=key]')); click(d.querySelector('#exhead .smenu [data-row=ekey][data-v="7"]'));
-  click(d.querySelector('#exhead [data-act=pmenu][data-m=wpos]')); const box=d.querySelectorAll('#exhead .smenu [data-row=wpos]')[2]; const lo=+box.dataset.v; click(box);
-  ok(X.F.key===7&&X.F.pos===lo&&/frets/.test(d.querySelector('#exhead [data-act=pmenu][data-m=wpos]').textContent),'edit-pins',X.F.key+' '+X.F.pos);
+  click(d.querySelector('#exhead [data-act=pmenu][data-m=where]')); const box=d.querySelectorAll('#exhead .smenu [data-row=wpos]')[2]; const lo=+box.dataset.v; click(box);
+  ok(X.F.key===7&&X.F.pos===lo&&/frets/i.test(d.querySelector('#exhead [data-act=pmenu][data-m=where]').textContent),'edit-pins',X.F.key+' '+X.F.pos);
   click(d.querySelector('#exhead [data-act=edsave]'));
   {const s=X.openRoutine().items[2].set; ok(!X.st.edit&&s.key===7&&s.pos===lo&&s.where==='focus'&&s.pick==='arp'&&s.goal===75,'edit-save',JSON.stringify(s));}
   // sessions sync: the newer copy of a session wins, and an import brings sessions in
@@ -195,7 +195,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   click(d.querySelector(`[data-act=rate][data-id="${song[0]}"][data-v="4"]`)); ok(X.LOG.skills[song[0]].rating===4,'song-rated');
   const older={v:1,sessions:[],skills:{[song[0]]:{...X.LOG.skills[song[0]],rating:2,updated:1}}};
   ok(X.mergeLogs(X.LOG,older).skills[song[0]].rating===4,'older-rating-loses');
-  mode('practice'); click(d.querySelector('[data-act=extry][data-ex=songs]')); click(d.querySelector('#exhead [data-act=bsong]')); ok(X.st.ex&&X.st.ex.ex==='songs'&&d.querySelector(`#exhead [data-act=bsongpick][data-id="${song[0]}"]`),'song-in-exercise'); click(d.querySelector('#exhead [data-act=bsong]'));
+  mode('practice'); click(d.querySelector('[data-act=extry][data-ex=songs]')); click(d.querySelector('#exhead [data-act=pmenu][data-m=prog]')); ok(X.st.ex&&X.st.ex.ex==='songs'&&d.querySelector(`#exhead [data-act=bsongpick][data-id="${song[0]}"]`),'song-in-exercise'); click(d.querySelector('#exhead [data-act=pmenu][data-m=prog]'));
   mode('songs'); click(d.querySelector(`[data-act=songopen][data-id="${song[0]}"]`)); click(d.querySelector(`[data-act=songplay][data-id="${song[0]}"]`));
   ok(X.st.mode==='drill'&&X.F.key===7&&X.F.mode===0&&X.D.line==='prog'&&X.D.prog==='145'&&X.F.pos===0,'song-play',[X.F.key,X.F.mode,X.D.prog,X.F.pos].join(' '));
   ok(/Wish You Were Here: play the changes/.test(d.getElementById('sheet').textContent),'song-path-note');
@@ -211,7 +211,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok([...d.querySelectorAll('#cchips0 .cchip b')].map(e=>e.textContent).join(' ')==='A E6 Dmaj7 D','song-chord-chips');
   click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]'));
   ok(X.D.prog==='song:here-pavement'&&X.F.key===9&&X.cur.prog.length===10&&X.cur.prog.map(p=>p.ch.roman).slice(0,3).join(' ')==='I V6 IVmaj7'&&X.cur.prog.every(p=>p.voicing),'song-chords-drill',X.cur.prog.map(p=>p.ch.roman+(p.voicing?'':'!')).join(' '));
-  ok(/^Here · Pavement/.test(d.querySelector('#exhead [data-act=bsong]').textContent)&&[...d.querySelectorAll('.sh-bars .nm')].slice(0,3).map(e=>e.textContent).join(' ')==='A E6 Dmaj7','song-in-prog-menu');
+  ok(/^Here · Pavement/.test(d.querySelector('#exhead [data-act=pmenu][data-m=prog]').textContent)&&[...d.querySelectorAll('.sh-bars .nm')].slice(0,3).map(e=>e.textContent).join(' ')==='A E6 Dmaj7','song-in-prog-menu');
   ok(d.querySelectorAll('.sh-bars .bar').length===10,'song-sheet-tiles');
   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(30); click(d.querySelector('[data-act=play]'));
   ok(entries(X).slice(-1)[0].skill.includes(':song:here-pavement:'),'song-chords-logged',entries(X).slice(-1)[0].skill);
@@ -546,6 +546,15 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     const wp=pd.querySelector('.exi.open option[data-row=wpos]:not([data-v=""])'); pc(wp); ok(PX.st.cedit&&PX.st.cedit.d.where==='focus'&&String(PX.st.cedit.d.pos)===wp.dataset.v,'drop-customize-pin',JSON.stringify(PX.st.cedit&&PX.st.cedit.d));
     pc(pd.querySelector('.exi.open [data-act=eccancel]'));
     ok(!/undefined|NaN|\[object/.test(pd.querySelector('.app').textContent),'drop-text'); }
+
+  // desktop: each row's dropdown opens a menu of its own, every choice with its tooltip
+  { const K=await device(true), {d:kd,X:KX}=K, kc=K.click; K.mode('drill');
+    const dd=m=>kd.querySelector(`#exhead [data-act=pmenu][data-m=${m}]`), menu=()=>kd.querySelector('#exhead .smenu:not([hidden])');
+    ok(!kd.querySelector('#exhead select')&&!!dd('prog')&&!!dd('plan')&&!menu(),'menu-rows');
+    kc(dd('plan')); ok(!!menu()&&dd('plan').getAttribute('aria-expanded')==='true'&&[...menu().querySelectorAll('.mi')].every(b=>b.dataset.tip&&b.dataset.tip.length>20),'menu-open-tips');
+    kc(menu().querySelector('[data-v=strum]')); ok(KX.D.plan==='strum'&&!menu()&&/^Strum/.test(dd('plan').textContent)&&/Strum each chord/.test(dd('plan').dataset.tip),'menu-pick',dd('plan').dataset.tip);
+    kc(dd('rpat')); kc(menu().querySelector('[data-v=tresillo]')); ok(KX.R.pat==='tresillo'&&/3-3-2|tresillo/i.test(dd('rpat').textContent),'menu-strum',dd('rpat').textContent);
+    kc(dd('prog')); K.w.document.dispatchEvent(new K.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true})); ok(!menu(),'menu-escape'); }
 
   // phone layout text
   B.mode('practice'); ok(!/undefined|NaN|\[object/.test(B.d.querySelector('.app').textContent),'phone-text-path');
