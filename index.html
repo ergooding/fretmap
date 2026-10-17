@@ -1258,8 +1258,8 @@ function setZoom(a,b,force){
 }
 function rollNeck(){
   // more frets than fit at a readable size scroll sideways instead of shrinking: always on an upright phone, and in a
-  // whole-neck Drill or Explore on any screen, which shows about 7 frets (one hand position's reach); Drill follows the line along
-  const n=zoom[1]-zoom[0]+1, port=!wide&&!land, run=(st.mode==='drill'||st.mode==='explore')&&cur.whole&&!picking(), w=neck.parentElement;
+  // whole neck in Drill, Explore or the quiz on any screen, which shows about 7 frets (one hand position's reach); Drill follows the line along, the quiz centers its question
+  const n=zoom[1]-zoom[0]+1, port=!wide&&!land, run=['drill','explore','name','find'].includes(st.mode)&&cur.whole&&!picking(), w=neck.parentElement;
   const mw=n>7&&(port||run)?n*(port?58:Math.max(64,Math.round(w.clientWidth/7)))+'px':'';
   w.classList.toggle('roll',!!mw);
   if(mw!==neck.style.minWidth){neck.style.minWidth=mw; sizeDots();}
@@ -2119,6 +2119,32 @@ function drillLabel(p){
   const t=saved.labels==='notes'?noteName(pc(p.s,p.f)):(D.ref==='chord'?chordIv(cur.chord,ivC)[0]:F.fam==='chrom'?IV[ivK][0]:labIn(ivK,dset())[0]);
   return {ref,t};
 }
+function quizDot(s,f){
+  // the quiz's dots: R gold with a pearl ring; the note to name a pearl ? with a gold ring; an answer in its degree's color,
+  // ringed green when right and red when wrong; after Find it, the other places that degree sits, faded
+  const q=st.q; if(!q) return null;
+  if(s===q.root.s&&f===q.root.f) return {t:'R',cls:'root'};
+  if(st.mode==='name'){
+    if(s!==q.target.s||f!==q.target.f) return null;
+    return q.answered?{t:lab(q.iv)[0],c:COL[q.iv],cls:q.picked===q.iv?'right':'wrong'}:{t:'?',cls:'ask'};
+  }
+  const iv=ivOf({s,f},q.key), out=!cur.whole&&!inWin(f);
+  if(q.picked&&q.picked.s===s&&q.picked.f===f) return {t:lab(iv)[0],c:COL[iv],cls:iv===q.iv?'right':'wrong'};
+  return q.answered&&iv===q.iv&&!out?{t:lab(iv)[0],c:COL[iv],cls:'faint'}:null;
+}
+function quizKey(){ // the quiz's key, from the dots it draws
+  const q=st.q; if(!q) return '';
+  const seen=new Map();
+  for(let s=0;s<6;s++)for(let f=0;f<=12;f++){const d=quizDot(s,f); if(d&&!seen.has(d.cls)) seen.set(d.cls,d);}
+  const g=k=>seen.has(k)?[seen.get(k)]:[], L=lab(q.iv), name=st.mode==='name';
+  return fold('vdots','What the neck shows',`<div class="nkey">
+    ${nkRow(g('root'),`${keyName(q.key)}, the root. Count up from here, in any octave.`)}
+    ${nkRow(g('ask'),'The note to name: which degree of the scale is it?')}
+    ${nkRow(g('right'),name?'Right: the dot shows its degree, ringed green.':'Your tap, ringed green: right.')}
+    ${nkRow(g('wrong'),name?'Not quite: the dot shows the degree it is, ringed red.':'Your tap, ringed red, labeled with the degree it is.')}
+    ${nkRow(g('faint'),`Faded: the other places the ${L[1]} sits${cur.whole?'':' in the position'}.`)}
+    </div>${cur.whole?'':`<p class="hint">Shaded frets sit outside the position, ${esc(cur.posLabel)}.</p>`}`);
+}
 const showChord=()=>{const ct=chordTones(); return ct.length===st.visible.size&&ct.every(x=>st.visible.has(x));}; // Explore's Show: Chord tones
 function exploreDot(s,f){
   // Explore draws the scale like Drill draws a line: the root gold with a pearl ring, each degree in its own color,
@@ -2149,6 +2175,11 @@ function keepInView(){
     if(fs.length){const a=cells[0][Math.min(...fs)].getBoundingClientRect(), b=cells[0][Math.max(...fs)].getBoundingClientRect();
       if(a.left<R.left+4||b.right>R.right-4) to(w.scrollLeft+(a.left+b.right)/2-R.left-R.width/2);}
     viewKey=key; return;}
+  const q=(st.mode==='name'||st.mode==='find')&&st.q;
+  if(q){ // a quiz question: center the R, and the ? beside it
+    const k2=key+`:${q.root.s}/${q.root.f}`; if(k2===viewKey) return; viewKey=k2;
+    const fs=[q.root.f].concat(st.mode==='name'?[q.target.f]:[]), a=cells[0][Math.min(...fs)].getBoundingClientRect(), b=cells[0][Math.max(...fs)].getBoundingClientRect();
+    to(w.scrollLeft+(a.left+b.right)/2-R.left-R.width/2); return;}
   if(key===viewKey) return; viewKey=key;
   const c=cells[0][Math.max(zoom[0],cur.whole?0:cur.lo-1)]; if(c) to(w.scrollLeft+c.getBoundingClientRect().left-R.left);
 }
@@ -2224,19 +2255,9 @@ function drawBoard(){
       if(rf!=null) cls+=' nextshape';
       if(st.flashUntil>Date.now()&&cur.voicing&&cur.voicing.frets[s]===f) cls+=' vc';
       dot(c,{t,c:col,cls});
-    }else if(st.mode==='name'){
-      c.classList.remove('out');
-      if(s===q.root.s&&f===q.root.f) dot(c,{t:'R',cls:'root'});
-      else if(s===q.target.s&&f===q.target.f)
-        dot(c,q.answered?{t:lab(q.iv)[0],c:COL[q.iv],cls:q.picked===q.iv?'right':'wrong'}:{t:'?',cls:'ask'});
-      else dot(c,null);
-    }else{
-      const out=!cur.whole&&!inWin(f); c.classList.toggle('out',out);
-      const iv=ivOf({s,f},q.key), picked=q.picked&&q.picked.s===s&&q.picked.f===f;
-      if(s===q.root.s&&f===q.root.f) dot(c,{t:'R',cls:'root'});
-      else if(picked) dot(c,{t:lab(iv)[0],c:COL[iv],cls:iv===q.iv?'right':'wrong'});
-      else if(q.answered&&iv===q.iv&&!out) dot(c,{t:lab(iv)[0],c:COL[iv],cls:'faint'});
-      else dot(c,null);
+    }else{ // the quiz: shade the frets outside the position, as Explore and Drill do
+      c.classList.toggle('out',!cur.whole&&!inWin(f));
+      dot(c,quizDot(s,f));
     }
   }
 }
@@ -2296,7 +2317,7 @@ function howtoHTML(){
 }
 function renderHowto(){
   const el=document.getElementById('howto'), show=wide&&(st.mode==='name'||st.mode==='find')&&!!st.q;
-  el.hidden=!show; el.innerHTML=show?howtoHTML():'';
+  el.hidden=!show; el.innerHTML=show?quizKey()+howtoHTML():'';
 }
 function finger(n){
   // a note of the chord shape you're holding takes that shape's finger, as the Fingers labels on the neck show it
@@ -3668,10 +3689,10 @@ function renderPanel(){
       if(q.answered){if(i===q.iv)cls+=' right';else if(i===q.picked)cls+=' wrong';}
       return `<button class="${cls}" data-act="answer" data-i="${i}" ${q.answered?'disabled':''} aria-label="${lab(i)[1]}">${lab(i)[0]}</button>`;}).join('');
     panel.innerHTML=`${quizSeg()}<div class="answers" style="grid-template-columns:repeat(${cols},1fr)">${btns}<button class="ans" data-act="hear" aria-label="Hear it again">🔁</button></div>
-      <div class="actions"><button class="btn" data-act="reset">Reset score</button><button class="btn primary" data-act="next">${q.answered?'Next':'Skip'}</button></div>${wide?'':`<div class="howto">${howtoHTML()}</div>`}`;
+      <div class="actions"><button class="btn" data-act="reset">Reset score</button><button class="btn primary" data-act="next">${q.answered?'Next':'Skip'}</button></div>${wide?'':`<div class="howto">${quizKey()}${howtoHTML()}</div>`}`;
   }else{
     panel.innerHTML=`${quizSeg()}<p class="hint">Tap the fretboard. Any octave counts${cur.whole?'':', as long as it’s inside the lit frets'}.</p>
-      <div class="actions"><button class="btn" data-act="reset">Reset score</button><button class="btn primary" data-act="next">${q.answered?'Next':'Skip'}</button></div>${wide?'':`<div class="howto">${howtoHTML()}</div>`}`;
+      <div class="actions"><button class="btn" data-act="reset">Reset score</button><button class="btn primary" data-act="next">${q.answered?'Next':'Skip'}</button></div>${wide?'':`<div class="howto">${quizKey()}${howtoHTML()}</div>`}`;
   }
 }
 

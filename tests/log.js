@@ -573,6 +573,12 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     kc(kd.querySelector('[data-act=show][data-v=chord]'));
     ok(kd.querySelectorAll('#neck .dot.pass').length>10&&/chord tones of Cmaj7/.test(vc.textContent)&&/Passing tones/.test(vc.textContent)&&!xlook(),'explore-chord-tones',xlook());
     kc(kd.querySelector('[data-act=show][data-v=all]')); K.mode('drill');
+    // the quiz too: a 7-fret window over the whole neck centered on the question, and a key drawn from the quiz's own dots
+    const hw=kd.getElementById('howto'), qlook=()=>{const n=new Set([...kd.querySelectorAll('#neck .dot')].map(x=>x.className.trim()+'|'+x.textContent));
+      const k=[...hw.querySelectorAll('.nk .dot')].map(x=>x.className.trim()+'|'+x.textContent); return k.length>=2&&k.every(x=>n.has(x))?'':k.filter(x=>!n.has(x)).join(', ')||'empty';};
+    K.mode('name'); ok(kd.querySelector('.neck-wrap').classList.contains('roll')&&!hw.hidden&&/What the neck shows/.test(hw.textContent)&&kd.querySelector('#neck .dot.ask')&&!qlook(),'quiz-whole-key',qlook());
+    KX.F.pos=KX.cur.pos[0].lo; KX.refresh(); K.mode('explore'); K.mode('name'); ok(kd.querySelectorAll('#neck .cell.out').length>20&&!kd.querySelector('.neck-wrap').classList.contains('roll')&&/outside the position/.test(hw.textContent),'quiz-box-shaded');
+    KX.F.pos=-1; KX.refresh(); K.mode('drill');
     KX.F.pos=KX.cur.pos[1].lo; KX.refresh(); K.mode('explore'); K.mode('drill'); ok(!kd.querySelector('.neck-wrap').classList.contains('roll'),'box-no-roll'); }
 
   // phone layout text
