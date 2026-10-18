@@ -40,6 +40,7 @@ h1{font-size:1.05rem;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
 .stats{font-size:.8rem;color:var(--muted);text-align:right;line-height:1.25}
 .stats b{color:var(--ink);font-weight:600}
 .icon{border:1px solid var(--line);background:var(--surface);border-radius:10px;width:36px;height:36px;display:grid;place-items:center;font-size:1rem;cursor:pointer}
+.hicon{color:var(--ink)}.hicon svg{width:20px;height:20px}
 
 .modes{display:grid;grid-template-columns:repeat(5,auto);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px}
 .modes button{border:0;background:none;padding:8px 4px;border-radius:9px;font-size:.88rem;font-weight:600;color:var(--muted);cursor:pointer}
@@ -48,7 +49,7 @@ h1{font-size:1.05rem;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
 .prompt{min-height:2.6em;font-size:.95rem;line-height:1.3;display:flex;align-items:center;gap:10px}
 .prompt .big{font-size:1.6rem;font-weight:700;line-height:1;min-width:1.6em;text-align:center}
 .prompt .sub{color:var(--muted);font-size:.82rem}
-.prompt.flash{animation:flash .5s}
+.prompt.flash,.voice-card.flash{animation:flash .5s}
 .prompt[hidden]{display:none}
 @keyframes flash{50%{color:var(--bad)}}
 
@@ -99,9 +100,30 @@ h1{font-size:1.05rem;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
 .ivchip{flex:none;width:40px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:.85rem;cursor:pointer;position:relative}
 .ivchip[aria-pressed="true"]{background:var(--c);color:#14110d;border-color:transparent}
 .answers{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
-.ans{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 0;font-weight:700;font-size:.95rem;cursor:pointer}
-.ans.right{background:var(--good);color:#fff;border-color:var(--good)}
-.ans.wrong{background:var(--bad);color:#fff;border-color:var(--bad)}
+.ans{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 0;font-weight:700;font-size:.95rem;cursor:pointer;color:var(--ink)}
+.ans::before{content:'';display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--c);margin-right:6px;vertical-align:1px}
+.ans:disabled{cursor:default}
+.ans.right{background:var(--c);color:#14110d;border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
+.ans.right::before{display:none}
+.ans.wrong{color:var(--bad);border-color:var(--bad);text-decoration:line-through;opacity:.8}
+.ans.dim{opacity:.4}
+.ans.hear{display:flex;align-items:center;justify-content:center;gap:6px;font-weight:600;padding:8px 12px}
+.ans.hear::before{display:none}
+.ans.hear svg{width:18px;height:18px;flex:none}
+.ans.hear span{white-space:nowrap}
+.app:not(.wide) .ans.hear{padding:8px 6px;gap:4px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap}
+.toolbar .tl,.toolbar .tr{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;min-width:0}
+.toolbar .tr{margin-left:auto;flex-shrink:0;max-width:100%}
+.qscore{font-size:.82rem;color:var(--muted);white-space:nowrap}
+.qscore b{color:var(--ink)}
+.toolbar .chip{padding:5px 12px}
+.degrow{align-items:center}
+.ivchip:disabled{cursor:default}
+.btn.quiet{background:transparent}
+.qfind{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.qfind .btn{flex:none;padding:10px 24px}
+.actions .qnext{flex:1}
 .actions{display:flex;gap:8px}
 .btn{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:11px;font-weight:600;cursor:pointer}
 .btn.primary{background:var(--wood);color:var(--pearl);border-color:var(--wood)}
@@ -109,6 +131,7 @@ h1{font-size:1.05rem;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
 .hint{font-size:.78rem;color:var(--muted);margin:0}
 
 .goal{display:flex;flex-direction:column;gap:6px}
+.goal[hidden]{display:none}
 .focus{display:flex;gap:6px;align-items:stretch}
 .focus-sum{flex:1;min-width:0;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 10px;cursor:pointer;line-height:1.25}
 .focus-sum b{display:block;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -183,7 +206,12 @@ html.wide{font-size:19px}
 .neck-wrap.roll .neck{max-width:none}
 .app.wide .panel{grid-area:panel;min-height:0;overflow:auto;gap:12px;align-content:start}
 .app.wide .row{flex-wrap:wrap;overflow:visible}
-.app.wide .answers,.app.wide .actions,.app.wide .drow,.app.wide .transport{max-width:900px}
+.app.wide .drow,.app.wide .transport{max-width:900px}
+.app.wide .answers{grid-template-columns:repeat(var(--n),minmax(0,1fr)) auto auto}
+.app.wide .answers .btn{flex:none;padding:10px 26px}
+.app.wide .toolbar .pbar{position:static;margin:0;padding:0;max-width:none;background:none;align-items:center;flex-wrap:nowrap}
+.app.wide .toolbar .pbar .play{flex:none;min-width:130px;padding:9px 24px}
+.app.wide .toolbar .pbar .icon,.app.wide .toolbar .pbar .bpm{min-height:40px}
 .app.wide .tab{padding:8px 0}
 .app.wide .tcol{width:30px}
 .app.wide .tcol span{height:17px;line-height:17px;font-size:13px}
@@ -231,14 +259,10 @@ html.wide{font-size:19px}
 .dot.ghost.under{opacity:.1}
 .exlines{position:absolute;left:0;top:0;pointer-events:none;z-index:4;overflow:visible}
 .exlines line{stroke:#F5F7F2;stroke-width:3;stroke-linecap:round;opacity:.8}
-.focus .lockbtn{width:auto;padding:0 12px;display:flex;gap:6px;align-items:center;font-weight:600;font-size:.85rem}
-.lockbtn svg{width:16px;height:16px;flex:none}
-.lockbtn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.app:not(.wide) .lockbtn span{display:none}
-.focus .lockbtn[hidden]{display:none}
 .xnote{display:flex;flex-direction:column;gap:8px;font-size:.84rem;line-height:1.45;text-align:left}
 .xnote p{margin:0;text-align:left;color:var(--ink);font-size:.84rem}
 .xnote .vc-head{align-items:center}
+.xnote .vc-head .qh{color:var(--ink);font-size:.95rem;line-height:1.35}
 .xnote .vc-head b{font-size:1.6rem;line-height:1}
 .xnote .hdeg{width:auto;min-width:28px;padding:0 5px;border-radius:14px;box-sizing:border-box}
 .xn-lab{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:2px 0 1px}
@@ -249,7 +273,6 @@ html.wide{font-size:19px}
 .xch-top b{font-size:.95rem}
 .xch-top .swl{margin:2px 0 0;flex:none}
 .xshapes{grid-template-columns:repeat(auto-fill,minmax(178px,1fr))}
-.app.wide .focus:has(.lockbtn:not([hidden])){flex-basis:530px}
 .xshape{align-items:stretch;text-align:left;padding:6px 8px 8px;gap:3px;font-size:.78rem}
 .xshape svg{max-width:none;align-self:center}
 .xshape b{font-size:.92rem}
@@ -350,7 +373,7 @@ html.wide{font-size:19px}
 .rchords select:disabled{opacity:.4}
 .rchords .hint{flex:1;min-width:10em}
 .rchords .now{outline:2px solid var(--gold)}
-.app.wide .rgrid{max-width:900px;padding:10px 8px}
+.app.wide .rgrid{padding:10px 8px}
 .app.wide .modes button{padding:7px 16px;font-size:.85rem;white-space:nowrap}
 .app.wide header{gap:16px}
 .app.wide h1{flex:none}
@@ -458,7 +481,7 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 .strum-card .rgrid{border:0;padding:2px 0;background:none;max-width:none}
 .sc-top{align-items:center}
 .saved-with{font-size:.75rem;color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:3px 10px;white-space:nowrap;flex:none}
-.app.wide .strum-card{max-width:900px}
+.app.wide .strum-card{max-width:none}
 .pbar{display:flex;gap:6px;align-items:stretch;flex-wrap:wrap;position:sticky;bottom:0;z-index:4;background:var(--bg);padding:6px 0 2px;margin-top:auto;flex:none}
 .pbar .icon{height:auto;min-height:42px;width:40px;font-size:1.1rem}
 .pbar .play{flex:0 1 150px;min-width:100px}
@@ -483,7 +506,7 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 .songlist .st-lab{display:none}
 .sl-item{flex:none;display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:.9rem;line-height:1.3}
 .sl-item small{color:var(--muted);font-size:.76rem}
-.sl-item[aria-pressed="true"]{border-color:var(--wood);box-shadow:inset 0 0 0 1px var(--wood)}
+.sl-item[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
 .sl-add{color:var(--muted);justify-content:center}
 .song-ed{display:flex;flex-direction:column;gap:10px;min-width:0}
 .app.wide .songs{display:grid;grid-template-columns:240px minmax(0,1fr);gap:24px;align-items:start}
@@ -665,8 +688,10 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 .exconfirm .btn{flex:none;padding:8px 14px}
 .btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
 .exgrp{font-size:.8rem;font-weight:700;margin-top:4px}
-.extile{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 10px}
-.extile.in{border-color:color-mix(in srgb,var(--good) 70%,var(--line))}
+.extile{display:flex;flex-direction:column;align-items:stretch;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 10px}
+.et-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.intag{font-size:.7rem;font-weight:700;background:color-mix(in srgb,var(--gold) 22%,var(--surface));border-radius:8px;padding:2px 8px;white-space:nowrap;color:var(--ink)}
+.et-f{display:flex;gap:6px;justify-content:flex-end;align-items:center}
 .extile .tx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.35}
 .extile small{color:var(--muted);font-size:.76rem}
 .extile .chip{padding:5px 10px}
@@ -702,6 +727,20 @@ span.blab::before{content:none}
 .sumc{display:flex;flex-wrap:wrap;gap:4px;margin:3px 0 1px}
 .chip.sm{padding:2px 9px;font-size:.74rem;cursor:default;background:color-mix(in srgb,var(--ink) 5%,var(--surface));white-space:normal}
 .exi.open{grid-template-columns:auto minmax(0,1fr);border:2px solid var(--gold);align-items:start}
+/* one chord tile: Songs, Drill with a song, and Explore with a song */
+.ctile,.app.wide button.bar.ctile{display:flex;flex-direction:column;align-items:stretch;gap:3px;padding:6px 8px 7px;text-align:left;min-width:0}
+.ctile svg{display:block;width:100%;height:auto}
+.ct-h{display:flex;align-items:baseline;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.ct-h b{font-size:.92rem;font-weight:700;color:var(--ink)}
+.ct-h .rn{font-family:"Times New Roman",Georgia,serif;color:var(--gold);font-weight:700;margin-left:5px;font-size:.92rem}
+.ct-h code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.74rem;color:var(--muted);white-space:nowrap}
+.cchip.own .ct-h code,button.bar.own .ct-h code{color:color-mix(in srgb,var(--gold) 72%,var(--ink));font-weight:700}
+.ctile .ct-out{font-size:.72rem;color:var(--bad);font-family:inherit}
+.ctile .xnone{color:var(--muted);font-size:.78rem;padding:14px 0;text-align:center}
+.app.wide .cchips:has(.ctile){display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.ex-side .vc-head .rn{font-family:"Times New Roman",Georgia,serif;color:var(--gold);font-weight:700;font-size:1.2rem}
+.ex-side .ex-play{align-items:center;gap:10px}
+.ex-side .ex-tag{margin:0}
 .exi .tx.ed{gap:10px}
 </style>
 </head>
@@ -710,9 +749,9 @@ span.blab::before{content:none}
   <header>
     <h1>Fretmap</h1>
     <div class="stats" id="stats"></div>
-    <button class="icon" id="glossBtn" aria-label="Glossary">?</button>
-    <button class="icon" id="layoutBtn"></button>
-    <button class="icon" id="soundBtn" aria-label="Toggle sound">🔊</button>
+    <button class="icon hicon" id="glossBtn" aria-label="Glossary"></button>
+    <button class="icon hicon" id="layoutBtn"></button>
+    <button class="icon hicon" id="soundBtn" aria-label="Toggle sound"></button>
   </header>
   <div class="goal" id="goal" role="region" aria-label="Focus: key, scale, mode and position for every tab">
     <div class="focus">
@@ -720,7 +759,6 @@ span.blab::before{content:none}
       <button class="focus-sum" id="focusBtn" aria-expanded="false"><b id="focusTitle"></b><span id="focusSub"></span></button>
       <button class="icon" data-step="-1" aria-label="Previous position">◀</button>
       <button class="icon" data-step="1" aria-label="Next position">▶</button>
-      <button class="icon lockbtn" id="lockBtn" aria-pressed="true" hidden></button>
     </div>
     <div class="focus-grid" id="focusGrid" hidden>
       <label class="fk">Key<select id="selKey"></select></label>
@@ -1007,7 +1045,7 @@ try{const raw=localStorage.getItem(KEY); if(raw){const o=JSON.parse(raw); saved=
   if(!o.focus) saved.focus={key:0,fam:'major',mode:0,pos:-1}; saved.drill=Object.assign({...DRILL_DEF,b2:0},o.drill||{}); if(!saved.bpm) saved.bpm=80;}}catch(e){}
 saved.rhythm=Object.assign({...RHY_DEF},saved.rhythm||{});
 saved.fold=saved.fold||{}; // explanation blocks you collapsed
-['bshut','vdots','vbuilt'].forEach(k=>{if(saved.fold[k]===undefined) saved.fold[k]=true;}); // the phone builder and the chord card's explainers start folded
+['bshut','vdots','vbuilt','qall'].forEach(k=>{if(saved.fold[k]===undefined) saved.fold[k]=true;}); // the phone builder and the chord card's explainers start folded
 const fold=(k,sum,body)=>`<details class="fold" data-fold="${k}"${saved.fold[k]?'':' open'}><summary>${sum}</summary>${body}</details>`;
 if(!FAMS[saved.focus.fam]) saved.focus={key:0,fam:'major',mode:0,pos:-1};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
@@ -1352,6 +1390,16 @@ function rollNeck(){
 }
 // ---------- layout detection ----------
 const appEl=document.querySelector('.app'), layoutBtn=document.getElementById('layoutBtn');
+// the header's icons, drawn as line icons of one weight
+const ICO=(d,extra='')=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ICONS={
+  help:ICO('<circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.9" r=".7" fill="currentColor" stroke="none"/>'),
+  auto:ICO('<rect x="2.5" y="4.5" width="13.5" height="9.5" rx="1.5"/><path d="M6.5 18h5"/><rect x="16" y="9" width="5.5" height="10.5" rx="1.2"/>'),
+  wide:ICO('<rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M8.5 20h7M12 16.5V20"/>'),
+  compact:ICO('<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/>'),
+  sound:ICO('<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>'),
+  mute:ICO('<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>')};
+document.getElementById('glossBtn').innerHTML=ICONS.help;
 const mq=matchMedia('(min-width: 1000px) and (orientation: landscape)');
 const mqLand=matchMedia('(orientation: landscape) and (max-height: 540px)'); // phones held sideways
 if(!saved.layout) saved.layout='auto';
@@ -1362,8 +1410,8 @@ function applyLayout(){
   appEl.classList.toggle('land',land); document.documentElement.classList.toggle('land',land);
   const nav=document.getElementById('modes'), hd=appEl.querySelector('header');
   if(wide) hd.insertBefore(nav,hd.querySelector('.stats')); else appEl.insertBefore(nav,document.getElementById('exstrip'));
-  const L={auto:['◐','Layout: automatic'],wide:['🖥','Layout: desktop'],compact:['📱','Layout: phone']}[saved.layout];
-  layoutBtn.textContent=L[0]; layoutBtn.setAttribute('aria-label',L[1]);
+  const L={auto:'Layout: automatic',wide:'Layout: desktop',compact:'Layout: phone'}[saved.layout];
+  layoutBtn.innerHTML=ICONS[saved.layout]; layoutBtn.setAttribute('aria-label',L);
   layoutNeck();
 }
 [mq,mqLand].forEach(m=>m.addEventListener?m.addEventListener('change',()=>{applyLayout();render();}):m.addListener(()=>{applyLayout();render();}));
@@ -2219,15 +2267,15 @@ nextTagEl.addEventListener('click',()=>{st.showNext=!st.showNext; renderBoard();
 const promptEl=document.getElementById('prompt'), panel=document.getElementById('panel'), sheetEl=document.getElementById('sheet');
 function renderStats(){
   const m=mins(entriesSince(startOfDay(now())));
-  document.getElementById('stats').innerHTML=(saved.total?`<b>${saved.hits}/${saved.total}</b> right, streak <b>${saved.streak}</b>`:'Pick a focus, then quiz')
-    +`<br><b>${m} min</b> today${sync.state==='err'?', <span style="color:var(--bad)">sync failed</span>':''}`;
-  document.getElementById('soundBtn').textContent=saved.sound?'🔊':'🔇';
+  document.getElementById('stats').innerHTML=`<b>${m} min</b> today${sync.state==='err'?', <span style="color:var(--bad)">sync failed</span>':''}`;
+  const sb=document.getElementById('soundBtn'); sb.innerHTML=saved.sound?ICONS.sound:ICONS.mute; sb.setAttribute('aria-label',saved.sound?'Sound on':'Sound off');
 }
 function render(){
   document.querySelectorAll('#modes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===st.mode||(b.dataset.mode==='quiz'&&(st.mode==='name'||st.mode==='find'))));
+  document.getElementById('goal').hidden=st.mode==='songs'; // a song has its own key, so the focus bar steps aside
   appEl.classList.toggle('m-practice',st.mode==='practice'||st.mode==='songs'); appEl.classList.toggle('m-songs',st.mode==='songs'); appEl.classList.toggle('m-drill',st.mode==='drill');
   if(saved.fmode==='song'&&!focusSong()) saved.fmode='key'; // the song was removed
-  fillSongSel(); renderStats(); focusText(); lkTop(); renderBoard(); renderPrompt(); renderPanel(); renderSheet(); renderVoice(); renderHowto(); renderEx(); updateLive(); navSync();
+  fillSongSel(); renderStats(); focusText(); renderBoard(); renderPrompt(); renderPanel(); renderSheet(); renderVoice(); renderHowto(); renderEx(); updateLive(); navSync();
 }
 const picking=()=>st.mode==='drill'&&st.picking;
 function drillLabel(p){
@@ -2257,8 +2305,8 @@ function quizKey(){ // the quiz's key, from the dots it draws
   return fold('vdots','What the neck shows',`<div class="nkey">
     ${nkRow(g('root'),`${keyName(q.key)}, the root. Count up from here, in any octave.`)}
     ${nkRow(g('ask'),'The note to name: which degree of the scale is it?')}
-    ${nkRow(g('right'),name?'Right: the dot shows its degree, ringed green.':'Your tap, ringed green: right.')}
-    ${nkRow(g('wrong'),name?'Not quite: the dot shows the degree it is, ringed red.':'Your tap, ringed red, labeled with the degree it is.')}
+    ${nkRow(g('right'),name?'Right: the dot shows its degree, ringed green.':`Your ${tapWord(false)}, ringed green: right.`)}
+    ${nkRow(g('wrong'),name?'Not quite: the dot shows the degree it is, ringed red.':`Your ${tapWord(false)}, ringed red, labeled with the degree it is.`)}
     ${nkRow(g('faint'),`Faded: the other places the ${L[1]} sits${cur.whole?'':' in the position'}.`)}
     </div>${cur.whole?'':`<p class="hint">Shaded frets sit outside the position, ${esc(cur.posLabel)}.</p>`}`);
 }
@@ -2388,15 +2436,16 @@ function renderPrompt(){
   if(st.mode==='practice'){promptEl.hidden=true; return;}
   if(st.mode==='songs'){promptEl.hidden=true; return;}
   if(st.mode==='drill'){
-    if(picking()){promptEl.innerHTML=`<span class="big">☝</span><span>Tap where your index finger sits. The drill uses the 5 frets from there.</span>`;return;}
+    if(picking()){promptEl.innerHTML=`<span class="big">☝</span><span>${tapWord()} where your index finger sits. The drill uses the 5 frets from there.</span>`;return;}
     promptEl.hidden=true; updateLive(); return; // the song sheet and the practice bar say what's playing
   }
   const E=exSong();
+  if(E&&E.c&&wide){promptEl.hidden=true; return;} // the card beside the neck explains the chord and the note you clicked
   if(E&&E.c){
     const t=st.exTap;
     promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${esc(E.sel)}</span><span>`+(t!=null
       ?`<b>${exNote(E,t)}</b> is the ${exDeg(E,t)[1]} of ${esc(E.sel)}${E.c.rel.includes((t-E.c.root+12)%12)?', one of its notes':''}, and ${E.scale.includes((t-E.key+12)%12)?`the ${labIn((t-E.key+12)%12,new Set(E.scale))[1]} of ${songKey(E.sk)}`:`outside ${songKey(E.sk)}`}.`
-      :`${esc(E.c.roman)} in ${songKey(E.sk)}. Tap a note to see what it is here.`)+`</span>`;
+      :`${esc(E.c.roman)} in ${songKey(E.sk)}. ${tapWord()} a note to see what it is here.`)+`</span>`;
   }else if(E){
     promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${E.sp(E.key)}</span><span>${esc(E.sk.name)} has no chords yet, so this shows the ${songKey(E.sk)} scale.</span>`;
   }else if(st.mode==='explore'){
@@ -2404,6 +2453,8 @@ function renderPrompt(){
     else if(lkSel()!==null){const p=lkSel(), iv=(p-cur.key+12)%12, L=lab(iv);
       promptEl.innerHTML=`<span class="big" style="color:${COL[iv]}">${noteName(p)}</span><span>${iv?`The ${L[0]} of ${lkScale()}: a ${L[1]}, ${iv} half step${iv>1?'s':''} above ${keyName()}.`:`The root of ${lkScale()}.`} Tap it again to clear.</span>`;}
     else promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${keyName()}</span><span>${lkLocked()?'Tap any note to see how it fits the key.':'Tap any note to make it the key.'}${cur.whole?'':' Faded notes sit outside the position.'}</span>`;
+  }else if(wide){
+    promptEl.hidden=true; // the card beside the neck asks the question
   }else if(st.mode==='name'){
     const rn=keyName(q.key), L=lab(q.iv);
     promptEl.innerHTML=q.answered
@@ -2441,9 +2492,28 @@ function howtoHTML(){
   return fold('howto','How to find it',`<p class="hint">Find R first, then ${find?'pick the shape for the degree you\u2019re asked for':'match the ? to a shape'}. Higher means the next thinner string.</p>${rows}
     <p class="hgb"><b>G and B strings:</b> any shape that crosses between them moves one fret. Going up to the B string, add a fret (1 string higher, 1 fret down becomes the same fret). Coming down from B to G, take one away.</p>`);
 }
+function quizCardHTML(){
+  // Quiz's card beside the neck, in the same shape as Explore's note card: the question, then once it's answered (or, in
+  // Find it, as soon as the degree is known) what the degree is and how to find it from R; the shapes for every degree fold away
+  const q=st.q, L=lab(q.iv), r=keyName(q.key), n=noteName((q.key+q.iv)%12,q.key), Lc=L[1][0].toUpperCase()+L[1].slice(1);
+  const hs=`${q.iv} half step${q.iv===1?'':'s'} above ${r}`, what=lkWhat(q.iv,n,r,q.key);
+  const all=fold('qall','All the shapes',`<p class="hint">Find R first, then ${st.mode==='find'?'pick the shape for the degree you\u2019re asked for':'match the ? to a shape'}. Higher means the next thinner string.</p>${[...cur.allowed,12].map(i=>{const M=i===12?['8','Octave']:lab(i);
+    return `<div class="hrow"><span class="hdeg" style="--c:${COL[i%12]}">${M[0]}</span><div><b>${M[1][0].toUpperCase()+M[1].slice(1)}</b>${ivShapes(i).map(t=>`<small>${t}</small>`).join('')}</div></div>`;}).join('')}`);
+  const tail=`${quizKey()}${all}`;
+  if(st.mode==='name'){
+    if(!q.answered) return `<div class="xnote"><div class="vc-head"><b>?</b><span class="qh">Which degree is the ?${ctx(q.key)}?</span></div>
+      <p class="hint">Counted up from ${r}, in any octave. Find R first, then match the ? to a shape. Higher means the next thinner string.</p>${tail}</div>`;
+    const ok=q.picked===q.iv;
+    return `<div class="xnote"><div class="vc-head"><b>${n}</b><span class="hdeg" style="--c:${COL[q.iv]}">${L[0]}</span><span class="qh">${ok?'Right':'Not quite'}: it’s the ${term(IVKEY[q.iv],L[1])}</span></div>
+      <p>${Lc}: ${hs}${ok?'':`. You picked ${lab(q.picked)[0]}`}.</p>${what?`<p>${what}</p>`:''}${findFromR(q.iv)}${tail}</div>`;
+  }
+  const res=q.answered?(q.picked&&ivOf(q.picked,q.key)===q.iv?'<p><b>Right.</b></p>':'<p><b>Not quite.</b> Faded dots show where it was.</p>'):'';
+  return `<div class="xnote"><div class="vc-head"><b style="color:${COL[q.iv]}">${L[0]}</b><span class="qh">Find the ${term(IVKEY[q.iv],L[1])}${ctx(q.key)}${cur.whole?' anywhere':' in the lit frets'}.</span></div>
+    ${res}<p>${Lc}: ${hs}.</p>${what?`<p>${what}</p>`:''}${findFromR(q.iv)}${tail}</div>`;
+}
 function renderHowto(){
   const el=document.getElementById('howto'), show=wide&&(st.mode==='name'||st.mode==='find')&&!!st.q;
-  el.hidden=!show; el.innerHTML=show?quizKey()+howtoHTML():'';
+  el.hidden=!show; el.innerHTML=show?quizCardHTML():'';
 }
 function finger(n){
   // a note of the chord shape you're holding takes that shape's finger, as the Fingers labels on the neck show it
@@ -2562,6 +2632,9 @@ function voiceSVG(v,root=cur.chord.root,ch=cur.chord,lab=null,ring=null,from=nul
   });
   return o+'</svg>';
 }
+function ctileHTML(c,name,frets,roman=c.roman,extra=''){ // a chord tile, the same in Songs, Drill and Explore: diagram, name and numeral, shape
+  return `${frets?voiceSVG({frets},c.root,c):'<span class="xnone">No shape</span>'}<span class="ct-h"><b>${esc(name)}${roman?`<span class="rn">${roman}</span>`:''}</b>${frets?`<code>${fretText(frets)}</code>`:''}</span>${extra}`;
+}
 function chordFormula(v){
   const rel=cur.chord.rel, sym=r=>chordIv(cur.chord,r)[0];
   const played=v?new Set(v.frets.map((f,s)=>f===null?null:(pc(s,f)-cur.chord.root+12)%12)):null;
@@ -2581,6 +2654,7 @@ function chordFormula(v){
 }
 function renderVoice(){
   const el=document.getElementById('voiceCard');
+  if(wide&&exSong()&&exSong().c){el.hidden=false; el.innerHTML=exCard(exSong(),true); return;}
   if(wide&&st.mode==='explore'&&!exSong()){ // Explore's card: the key and how to read the neck
     el.hidden=false; el.innerHTML=lkSel()!==null?lkNoteHTML(lkSel()):`<div class="vc-head"><b>${keyName()}</b><span>${F.fam==='chrom'?'All notes':esc(modeName())}</span></div>${exploreKey()}<p class="hint vc-tap">${lkLocked()?'Click any note to see how it fits the key and the chords that use it.':'Click any note to make it the key.'}</p>`; return;}
   const show=wide&&st.mode==='drill'&&!picking()&&D.line!=='prog';
@@ -2594,9 +2668,10 @@ function renderVoice(){
   el.innerHTML=`${head}${dotsFold()}${fold('vbuilt',built,`<p class="vc-shape">${v.own?esc(v.name):`${v.name.startsWith('Drop')?term('drop3',v.name):v.name.startsWith('Found')?v.name:term('shape',v.name)}, frets ${vFrets(v)}`}</p>
     ${chordFormula(v)}`)}
     <button class="vc-diag" aria-label="Play ${cur.chord.name} and show it on the neck">${voiceSVG(v,undefined,undefined,(s,f)=>drillLabel({s,f}))}</button>
-    <p><code>${tabTxt}</code><br>Tap the diagram to hear it and see it on the neck.</p>`;
+    <p><code>${tabTxt}</code><br>${tapWord()} the diagram to hear it and see it on the neck.</p>`;
 }
 document.getElementById('voiceCard').addEventListener('click',e=>{
+  if(e.target.closest('[data-act]')){onClick(e); return;}
   const rb=e.target.closest('[data-rn]');
   if(rb){D.chord=+rb.dataset.rn; refresh(); save(); regen(); return;}
   const pb=e.target.closest('[data-pci]');
@@ -2655,7 +2730,11 @@ function updateTab(){
   if(c){c.classList.add('now'); const R=el.getBoundingClientRect(), r=c.getBoundingClientRect();
     if(r.left<R.left+8||r.right>R.left+R.width*.8){const x=Math.max(0,el.scrollLeft+r.left-R.left-R.width/3); try{el.scrollTo({left:x,behavior:'smooth'});}catch(e){el.scrollLeft=x;}}}
 }
-const quizSeg=()=>`<div class="row">${seg('Quiz','quiz',[['name','Name it'],['find','Find it']],st.mode)}</div>`;
+// Quiz's toolbar: Name it or Find it on the left, the score and Reset on the right
+const quizBar=()=>`<div class="toolbar"><div class="tl">${seg('Quiz','quiz',[['name','Name it'],['find','Find it']],st.mode)}</div>
+  <div class="tr"><span class="qscore" id="qscore">${saved.total?`<b>${saved.hits}/${saved.total}</b> right · streak <b>${saved.streak}</b>`:'No answers yet'}</span><button class="chip" data-act="reset">Reset</button></div></div>`;
+const quizNext=()=>`<button class="btn qnext${st.q&&st.q.answered?' primary':' quiet'}" data-act="next">${st.q&&st.q.answered?'Next':'Skip'}</button>`;
+const tapWord=(cap=true)=>wide?(cap?'Click':'click'):(cap?'Tap':'tap'); // desktop hints say click, phone hints say tap
 function seg(label,act,list,v){return `<div class="segw" role="group" aria-label="${label}"><span class="seglab">${label}</span><div class="seg">`+list.map(([k,l])=>`<button data-act="${act}" data-v="${k}" aria-pressed="${k===v}">${l}</button>`).join('')+'</div></div>';}
 function opts(list,v){return list.map(([k,l])=>`<option value="${k}"${String(k)===String(v)?' selected':''}>${l}</option>`).join('');}
 function rgridHTML(P,act='rstep',extra=''){
@@ -2670,6 +2749,7 @@ function markProgChord(){
   const fk=document.getElementById('fkey'); if(fk) fk.innerHTML=fingOn()?fingKey():'';
   const no=document.getElementById('barNo'); if(no&&cur.prog) no.textContent=`bar ${cur.prog[cur.pci].bar+1} of ${cur.nbars}`;
   const strip=document.querySelector('.sh-bars'), b=strip&&strip.querySelector(`[data-pci="${cur.pci}"]`);
+  if(wide&&b&&st.playing&&b.scrollIntoView) b.scrollIntoView({block:'nearest'}); // the bar playing stays in view in the column beside the neck
   if(b&&strip.scrollWidth>strip.clientWidth+2) strip.scrollLeft=b.offsetLeft-strip.clientWidth/2+b.offsetWidth/2;
 }
 function updateRGrid(){
@@ -2761,15 +2841,7 @@ function fingKey(){ // the key for a strummed or picked chord with Fingers on, f
     </div><p class="hint">${D.ref==='chord'?`Colors count from each chord’s root.`:`Colors count from ${keyName()}, the key.`}${D.plan==='mix'?' In the scale-run bar the dots show degrees instead of fingers.':''}</p>`);
 }
 // ---------- Explore, locked: a click explains the note against the key's root and lists the chords of the key that use it ----------
-const LOCK_SVG=on=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="${on?'M8 11V8a4 4 0 0 1 8 0v3':'M8 11V8a4 4 0 0 1 7.5-2'}"/></svg>`;
 function lkLocked(){return st.mode==='explore'&&!exSong()&&saved.lkLock!==false;}
-function lkTop(){ // the lock sits beside the position arrows, in Explore only
-  const b=document.getElementById('lockBtn'), on=saved.lkLock!==false;
-  b.hidden=!(st.mode==='explore'&&!exSong()); b.setAttribute('aria-pressed',String(on));
-  b.setAttribute('aria-label',on?'Key locked: a click explains the note. Click to unlock':'Lock the key');
-  b.innerHTML=LOCK_SVG(on)+`<span>${on?'Locked':'Lock'}</span>`;
-}
-document.getElementById('lockBtn').onclick=()=>{saved.lkLock=saved.lkLock===false; st.lkSel=null; st.lkAt=null; st.lkPin=null; st.lkHov=null; save(); render();};
 function lkSel(){ // the note you clicked, while the key is locked and the note is still in the scale
   if(!lkLocked()||st.lkSel==null) return null;
   return cur.set.has((st.lkSel-cur.key+12)%12)?st.lkSel:null;
@@ -2837,19 +2909,24 @@ function lkLines(){
 }
 const lkAnd=l=>l.length>1?l.slice(0,-1).join(', ')+' and '+l[l.length-1]:l[0]||'';
 const lkShift=(n,d)=>d>0?(n.endsWith('♭')?n.slice(0,-1):n.endsWith('♯')?n.slice(0,-1)+'𝄪':n+'♯'):(n.endsWith('♯')?n.slice(0,-1):n+'♭'); // a letter raised or lowered a half step
+function lkWhat(iv,n,r,key){ // what a degree tends to do in the scale, in a sentence ('' when there's nothing short to say)
+  const S=cur.set, H=cur.chords&&cur.chords[0];
+  if(!iv) return `${n} is home: lines feel finished when they land on it.`;
+  if(F.fam==='chrom') return '';
+  if((iv===3||iv===4)&&!S.has(7-iv)) return `The ${iv===3?'minor':'major'} 3rd makes the scale sound ${iv===3?'minor':'major'}. A ${iv===3?'major':'minor'} 3rd, ${lkShift(n,iv===3?1:-1)}, would make it ${iv===3?'major':'minor'}.`;
+  if(iv===7&&H&&H.root===key&&H.rel.includes(7)) return `The 5th is the steadiest note after the root, and part of ${H.name}, the chord on ${r}.`;
+  if(iv===11) return `A half step below ${r}, it pulls up to it strongly. It’s called the leading tone.`;
+  if(iv===10) return `A whole step below ${r}, it leads back up to it, more gently than a major 7th would.`;
+  if(iv===1) return `A half step above ${r}, it leans back down to it.`;
+  return '';
+}
+const findFromR=iv=>`<div><p class="xn-lab">Find it from R</p><p class="xn-list">${ivShapeList(iv).map(([k,d])=>`<span>${shapeText(k,d)}</span>`).join('')}</p>
+    <p class="hgb"><b>G and B strings:</b> any shape that crosses between them moves one fret. Going up to the B string, add a fret; coming down from B to G, take one away.</p></div>`;
 function lkNoteHTML(p){
   // what the note is against the root, what that degree tends to do, its neighbors, whether your pentatonic has it, where it sits, and how to find it from R
   const iv=(p-cur.key+12)%12, L=lab(iv), n=noteName(p), r=keyName(), chrom=F.fam==='chrom', S=cur.set, scale=lkScale();
   const A=[...S].sort((a,b)=>a-b), i=A.indexOf(iv), N=A.length, steps=d=>d===1?'a half step':d===2?'a whole step':`${d} half steps`;
-  const H=cur.chords&&cur.chords[0];
-  let what='';
-  if(!iv) what=`${n} is home: lines feel finished when they land on it.`;
-  else if(chrom) what='';
-  else if((iv===3||iv===4)&&!S.has(7-iv)) what=`The ${iv===3?'minor':'major'} 3rd makes the scale sound ${iv===3?'minor':'major'}. A ${iv===3?'major':'minor'} 3rd, ${lkShift(n,iv===3?1:-1)}, would make it ${iv===3?'major':'minor'}.`;
-  else if(iv===7&&H&&H.root===cur.key&&H.rel.includes(7)) what=`The 5th is the steadiest note after the root, and part of ${H.name}, the chord on ${r}.`;
-  else if(iv===11) what=`A half step below ${r}, it pulls up to it strongly. It’s called the leading tone.`;
-  else if(iv===10) what=`A whole step below ${r}, it leads back up to it, more gently than a major 7th would.`;
-  else if(iv===1) what=`A half step above ${r}, it leans back down to it.`;
+  const what=lkWhat(iv,n,r,cur.key);
   const nb=chrom||N<3?'':`Its neighbors in the scale are ${noteName((cur.key+A[(i-1+N)%N])%12)}, ${steps((iv-A[(i-1+N)%N]+12)%12)} below, and ${noteName((cur.key+A[(i+1)%N])%12)}, ${steps((A[(i+1)%N]-iv+12)%12)} above.`;
   let pent='';
   if(!chrom&&N>5){
@@ -2859,13 +2936,12 @@ function lkNoteHTML(p){
       pent=P[1].includes(iv)?`Also in ${pn}.`:`Not in ${pn}: ${lkAnd(add)} ${add.length>1?'are the notes':'is the note'} ${scale} adds to it.`;}
   }
   const w=lkWin(), at=[]; for(let s=0;s<6;s++)for(let f=w.lo;f<=w.hi;f++) if(pc(s,f)===p) at.push(`${STR_NAME[s]} ${f?'fret '+f:'open'}`);
-  const find=iv?`<div><p class="xn-lab">Find it from R</p><p class="xn-list">${ivShapeList(iv).map(([k,d])=>`<span>${shapeText(k,d)}</span>`).join('')}</p>
-    <p class="hgb"><b>G and B strings:</b> any shape that crosses between them moves one fret. Going up to the B string, add a fret; coming down from B to G, take one away.</p></div>`:'';
+  const find=iv?findFromR(iv):'';
   return `<div class="xnote"><div class="vc-head"><b>${n}</b><span class="hdeg" style="--c:${COL[iv]}">${L[0]}</span><span>${iv?`the ${L[0]} of ${esc(scale)}`:`the root of ${esc(scale)}`}</span></div>
     ${iv?`<p>${term(IVKEY[iv],L[1][0].toUpperCase()+L[1].slice(1))}: ${iv} half step${iv>1?'s':''} above ${r}.</p>`:''}
     ${what?`<p>${what}</p>`:''}${nb?`<p>${nb}</p>`:''}${pent?`<p class="xn-pent">${pent}</p>`:''}
     ${at.length?`<div><p class="xn-lab">${cur.whole?'Near where you clicked':'In this position'}</p><p>${at.join(' · ')}</p></div>`:''}
-    ${find}<p class="hint">${wide?'Click':'Tap'} ${n} again to clear it.</p></div>`;
+    ${find}<p class="hint">${wide?'Click':'Tap'} ${n} again to clear it.</p>${exploreKey()}</div>`;
 }
 function lkChordsHTML(){
   if(!lkLocked()) return '';
@@ -2905,7 +2981,7 @@ function exploreKey(){ // Explore's key, from the dots it draws
     ${nkRow(tones,chord?`The ${root.length?'other ':''}${term('chordtone','chord tones')} of ${name}, the chord built on ${keyName()}, each degree in its own color.`:`The ${root.length?'other ':''}notes of ${scale}, each degree in its own color.`)}
     ${nkRow(pass,`${term('passing','Passing tones')}: the rest of ${scale}, in pearl.`)}
     ${nkRow(ghost?[ghost]:[],`Faded: outside the position, ${esc(cur.posLabel)}.`)}
-    </div><p class="hint">${saved.labels==='notes'?'The dots show note names.':`The labels count from ${keyName()}, the key.`}${hid.length?` Hidden: ${list(hid)}. Tap ${hid.length>1?'their chips':'its chip'} under the neck to show ${hid.length>1?'them':'it'}.`:''}</p>`);
+    </div><p class="hint">${saved.labels==='notes'?'The dots show note names.':`The labels count from ${keyName()}, the key.`}${hid.length?` Hidden: ${list(hid)}. ${tapWord()} ${hid.length>1?'their chips':'its chip'} under the neck to show ${hid.length>1?'them':'it'}.`:''}</p>`);
 }
 function songNote(){
   // in free Drill, a song you're playing says its goal tempo and how close you are
@@ -2913,7 +2989,7 @@ function songNote(){
   const id=skillNow().id, song=songSteps().find(({id:i,s:x})=>setupSkill(songSetup(x,i))===id);
   if(!song) return '';
   const step=songSetup(song.s,song.id), {best:b,done}=stepState(step);
-  return `<div class="pathnote" data-tip="${done?'Done: a run is marked clean at the song’s tempo.':'Play a run at the song’s tempo, then tap Mark last run clean if it was clean.'}"><span><b>${done?'✓ ':''}${esc(song.s.name)}: play the changes</b> · goal ${step.goal} bpm${b?`, best ${b.bpm}`:''}</span></div>`;
+  return `<div class="pathnote" data-tip="${done?'Done: a run is marked clean at the song’s tempo.':`Play a run at the song’s tempo, then ${tapWord(false)} Mark last run clean if it was clean.`}"><span><b>${done?'✓ ':''}${esc(song.s.name)}: play the changes</b> · goal ${step.goal} bpm${b?`, best ${b.bpm}`:''}</span></div>`;
 }
 const PLAY_CH=[['strum','Strum'],['arp','Pick'],['both','Strum, then pick'],['mix','Strum, then scale'],['line','Scale line'],['tones','Chord tones']];
 const WHERE=[['focus','Follow the focus'],['open','Open position'],['cycle','Each shape in turn'],['whole','Whole neck']];
@@ -3382,12 +3458,12 @@ function builderHTML(){
   const E=st.ex&&exOf(st.ex.ex), s=E?{...st.ex.base,goal:st.ex.goal}:null;
   const ctx={V:liveV(),live:true,act:'bchip',E,s,fold:true,edit:!!st.edit,pin:st.edit&&st.edit.pos};
   const rows=rowsHTML(ctx);
-  const gear=wide?`<button class="icon gear" data-act="sheet" aria-label="Drill settings" aria-haspopup="dialog" data-tip="Settings: notes per beat, the click, dot labels, what the neck shows while playing, and the tempo ramp.">⚙</button>`:'';
+  const gear=''; // on a desktop the settings open from the toolbar under the neck
   if(E&&st.edit){ // Customize: the same rows set where the exercise starts, and the neck plays what you pick
     const w=editWhere(E,st.ex.rid,st.ex.uid);
     return `<div class="exh-top"><span class="lab">Customize</span><span class="sp"></span>${gear}</div><div class="exh-title"><b>${esc(E.name)}</b><small>${w.lab}</small></div>
       ${E.user?`<input id="edName" class="ename" value="${esc(st.edit.name)}" maxlength="60" aria-label="Name" data-tip="The exercise’s name, under Yours in the Exercises tab.">`:''}
-      <p class="hint">Tap a chip to start ${esc(E.name)} there. The neck plays what you pick.</p>${rows}
+      <p class="hint">${tapWord()} a chip to start ${esc(E.name)} there. The neck plays what you pick.</p>${rows}
       ${E.id==='songs'?'':keyLine(ctx,st.edit.key)}${goalLine(E,st.ex.goal,'exgoal','edsave','edcancel',w.save,w.tip)}`;
   }
   const nw=st.bnew?`<div class="bnew"><input id="bName" value="${esc(st.bnew.name)}" maxlength="60" aria-label="Name for the new exercise"><button class="btn primary" data-act="bnewok" data-tip="Save this setup under Yours in the Exercises tab.">Save</button><button class="btn" data-act="bnewno" data-tip="Don’t save it.">Cancel</button></div>`
@@ -3417,7 +3493,7 @@ function exHeadHTML(){ // the interval quiz's panel
   const ch=exChange(), r=st.ex.rid&&LOG.routines[st.ex.rid];
   const saveRow=ch&&r?`<div class="exsave"><button class="chip" data-act="exsave" data-tip="${esc(`Keep these choices for this exercise in ${r.name}, so it starts this way next time.`)}">Save to session</button><span>${ch} Save keeps it for next time.</span></div>`:'';
   if(st.edit){const w=editWhere(E,st.ex.rid,st.ex.uid);
-    return `<div class="exh-top"><span class="lab">Customize</span></div><div class="exh-title"><b>${E.name}</b><small>${w.lab}</small></div><p class="hint">Tap a quiz to start ${E.name} there.</p>${rows}${goalLine(E,st.ex.goal,'exgoal','edsave','edcancel',w.save,w.tip)}`;}
+    return `<div class="exh-top"><span class="lab">Customize</span></div><div class="exh-title"><b>${E.name}</b><small>${w.lab}</small></div><p class="hint">${tapWord()} a quiz to start ${E.name} there.</p>${rows}${goalLine(E,st.ex.goal,'exgoal','edsave','edcancel',w.save,w.tip)}`;}
   const close=st.ex.rid?'':`<button class="icon sm" data-act="exclose" aria-label="Close the exercise" data-tip="Close the exercise and go back to the Quiz’s own controls.">✕</button>`;
   return `<div class="exh-top"><span class="lab">Exercise</span><span class="sp"></span><button class="chip" data-act="excust" data-tip="${esc(custTip(E,r))}">Customize</button>${close}</div>
     <div class="exh-title"><b>${E.name}</b><small>${pr.n} of ${pr.m} clean</small></div>${rows}
@@ -3479,16 +3555,16 @@ function exPageHTML(){
     const go=r.items.length?(started?`<button class="btn primary" data-act="exresume" data-tip="Open exercise ${at+1}, where you stopped.">▶ Resume at ${at+1}</button>`:`<button class="btn primary" data-act="exover" data-tip="Start ${esc(r.name)} from its first exercise.">▶ Start</button>`):'';
     const when=run.t?`Last played ${dayText(run.t)}, ${fin?'finished':`stopped at ${esc(itemLabel(r,r.items[at]||r.items[0]||{ex:'box'}))}`}`:'Not played yet';
     open=`<section class="exopen"><div class="exs-head"><b>${esc(r.name)}</b><span class="sp"></span><button class="chip" data-act="exedit" data-tip="Rename ${esc(r.name)}, reorder or remove its exercises, and customize each one.">Edit</button>${started?`<button class="btn" data-act="exover" data-tip="Start ${esc(r.name)} again from its first exercise.">Start over</button>`:''}${go}</div>
-      <p class="hint">${when}</p>
+      <p class="hint">${when}. Exercises set to Follow the focus play in the key and position in the bar above.</p>
       <div class="exlist">${r.items.map((it,k)=>exItemHTML(r,it,k,started&&k===at)).join('')||'<p class="hint">No exercises yet. Add some from the library.</p>'}</div></section>`;
   }
   const tile=E=>{
       const inR=!!r&&r.items.some(x=>x.ex===E.id), del=E.user&&st.exDel===E.id;
       const blurb=E.id==='songs'?'<span class="sumc"><span class="chip sm">A song</span><span class="chip sm">Its own strum</span></span>':isQuiz(E)?'<span class="sumc"><span class="chip sm">Name it</span><span class="chip sm">Find it</span></span>':sumChips(E,fillSet(E.id));
-      return `<div class="extile${inR?' in':''}" draggable="true" data-ex="${esc(E.id)}"><span class="tx"><b>${esc(E.name)}</b>${blurb}</span>
-        <button class="chip" data-act="extry" data-ex="${esc(E.id)}" data-tip="Try ${esc(E.name)} on its own, outside a session.">Try</button>
+      return `<div class="extile${inR?' in':''}" draggable="true" data-ex="${esc(E.id)}"><span class="tx"><span class="et-h"><b>${esc(E.name)}</b>${inR?`<span class="intag">In ${esc(r.name)}</span>`:''}</span>${blurb}</span>
+        <span class="et-f"><button class="chip" data-act="extry" data-ex="${esc(E.id)}" data-tip="Try ${esc(E.name)} on its own, outside a session.">Try</button>
         <button class="chip add" data-act="exadd" data-ex="${esc(E.id)}" data-tip="${r?`Add ${esc(E.name)} to the end of ${esc(r.name)}${inR?' again, with its own settings':''}.`:`Start a new session with ${esc(E.name)}.`}">${inR?'+ Add again':'+ Add'}</button>
-        ${E.user?`<button class="${del?'btn danger sm':'icon sm'}" data-act="exudel" data-ex="${esc(E.id)}" aria-label="Delete ${esc(E.name)}" data-tip="${del?`Delete ${esc(E.name)} for good, and take it out of every session.`:`Delete ${esc(E.name)}. Click again to confirm.`}">${del?'Delete':'✕'}</button>`:''}</div>`;};
+        ${E.user?`<button class="${del?'btn danger sm':'icon sm'}" data-act="exudel" data-ex="${esc(E.id)}" aria-label="Delete ${esc(E.name)}" data-tip="${del?`Delete ${esc(E.name)} for good, and take it out of every session.`:`Delete ${esc(E.name)}. Click again to confirm.`}">${del?'Delete':'✕'}</button>`:''}</span></div>`;};
   const mine=userExs();
   const lib=`<section class="exlib"><p class="st-lab">Library${r?` · adds to ${esc(r.name)}`:''}</p><p class="hint">Each one opens the same rows in Drill, set up its way.</p>
     <div class="exgrp">Starting points</div>${EXS.filter(E=>E.grp==='Starting points').map(tile).join('')}
@@ -3686,7 +3762,7 @@ function exRole(E,c){ // what the chord does in the song's key
   if(dom&&tgt!==0&&E.scale.includes(tgt)&&E.scale.includes((tgt+7)%12)&&tn===E.sp((E.key+tgt)%12)) return `A secondary dominant: the V of ${tn}, so it pulls toward that chord.`;
   return 'From outside the key. It adds a color the key on its own doesn\'t have.';
 }
-function exCard(E){
+function exCard(E,side=false){ // side: the card beside the neck on a desktop, with the head every card has and the note you clicked
   const c=E.c, sel=E.sel, key=E.key, kname=songKey(E.sk), cn=rootName(c), N=p=>exNote(E,p);
   const pcs=c.rel.map(r=>(c.root+r)%12), outs=c.tones.filter(t=>!E.scale.includes(t));
   const notes=E.cs.map((x,k)=>`<span class="exn${E.scale.includes(c.tones[k])?'':' outk'}" style="--c:${x.sym==='R'?'var(--gold)':COL[c.rel[k]]}"><b>${x.name}</b><small>${x.sym} of ${esc(cn)} · ${E.scale.includes(c.tones[k])?labIn(c.tones[k],new Set(E.scale))[0]+' in key':'outside the key'}</small></span>`).join('');
@@ -3712,6 +3788,12 @@ function exCard(E){
   const f=exVoicing(E,sel);
   const from=saved.exlab==='notes'?'':saved.exlab==='key'?`, counted from ${E.sp(key)}`:`, counted from ${cn}`;
   const legend=`<p class="hint">On the neck: colored dots are its notes and pearl dots are the other notes to play over it${from}.${outs.length?' A dashed edge marks a note from outside the key.':''} Gold rings are the shape you play.</p>`;
+  const t=st.exTap, tapped=t==null?`<p class="hint vc-tap">${tapWord()} a note on the neck to see what it is here.</p>`
+    :`<p class="xn-pent"><b>${exNote(E,t)}</b> is the ${exDeg(E,t)[1]} of ${esc(sel)}${c.rel.includes((t-c.root+12)%12)?', one of its notes':''}, and ${E.scale.includes((t-E.key+12)%12)?`the ${labIn((t-E.key+12)%12,new Set(E.scale))[1]} of ${kname}`:`outside ${kname}`}.</p>`;
+  if(side) return `<div class="xnote ex-side"><div class="vc-head"><b>${esc(sel)}</b><span class="rn">${esc(c.roman)}</span><span>in ${kname} · ${esc(E.sk.name)}</span></div>
+    ${outs.length?'<p class="ex-tag out">Outside the key</p>':''}<p>${exRole(E,c)}${c.bass!==undefined?` ${N(c.bass)} is its lowest note: ${c.rel.slice(0,c.core).includes((c.bass-c.root+12)%12)?`the chord's own ${exDeg(E,c.bass)[1]}, moved to the bottom`:'an extra note under the chord'}.`:''}</p>
+    <div class="exns">${notes}</div><p>${over}</p>${next}
+    <div class="row ex-play">${f?`<code>${fretText(f)}</code><button class="chip" data-act="exhear">Hear it</button>`:''}</div>${tapped}${fold('vdots','What the neck shows',legend)}</div>`;
   return `<div class="ex-card"><div class="ex-head"><b class="ex-name">${esc(sel)}</b><span class="rn">${esc(c.roman)}</span><span class="ex-tag${outs.length?' out':''}">${outs.length?'Outside the key':'In the key'}</span></div>
     <p>${exRole(E,c)}${c.bass!==undefined?` ${N(c.bass)} is its lowest note: ${c.rel.slice(0,c.core).includes((c.bass-c.root+12)%12)?`the chord's own ${exDeg(E,c.bass)[1]}, moved to the bottom`:'an extra note under the chord'}.`:''}</p><div class="exns">${notes}</div><p>${over}</p>${next}
     <div class="row ex-play">${f?`<code>${fretText(f)}</code><button class="btn" data-act="exhear">Hear it</button>`:''}</div>${legend}</div>`;
@@ -3724,10 +3806,12 @@ function exploreSongHTML(E){
   const cp=sk.capo?`<p class="ex-sum">Played with a capo on fret ${sk.capo}: everything here is in the shapes you play, in ${kname}. It sounds ${sk.capo} half step${sk.capo>1?'s':''} higher, in ${songKey({key:(key+sk.capo)%12,minor:E.minor})}.</p>`:'';
   const sum=`${cp}<p class="ex-sum"><b>${esc(sk.name)}</b> is in <b>${kname}</b>${homeC?`, so ${esc(homeC)} is home`:''}. Over the whole song, play ${kname} pentatonic (${pent}): the same notes as ${rel} ${E.minor?'major':'minor'} pentatonic${E.minor?'':', so your minor pentatonic shapes work with '+rel+' as the root'}.</p>`;
   const chips=E.names.map(n=>{const c=chordIn(n,key,letterOf(E.sp(key))), out=!exInKey(E,c);
-    return `<button class="cchip ex-ch${out?' outk':''}" data-act="exch" data-n="${esc(n)}" aria-pressed="${n===E.sel}"><b>${esc(n)}</b><small>${esc(c.roman)}${out?' · outside':''}</small></button>`;}).join('');
+    return wide?`<button class="cchip ex-ch ctile${out?' outk':''}" data-act="exch" data-n="${esc(n)}" aria-pressed="${n===E.sel}">${ctileHTML(c,n,exVoicing(E,n),esc(c.roman),out?'<small class="ct-out">Outside the key</small>':'')}</button>`
+      :`<button class="cchip ex-ch${out?' outk':''}" data-act="exch" data-n="${esc(n)}" aria-pressed="${n===E.sel}"><b>${esc(n)}</b><small>${esc(c.roman)}${out?' · outside':''}</small></button>`;}).join('');
   const parts=E.parts.filter(p=>p.chords.length).map(p=>`<div class="ex-part"><span class="seglab">${esc(p.name)}</span><div class="sh-bars ex-bars">${p.chords.map(n=>`<button class="bar" data-act="exch" data-n="${esc(n)}" aria-pressed="${n===E.sel}"><span class="nm">${esc(n)}</span><span class="rn">${esc(chordIn(n,key,letterOf(E.sp(key))).roman)}</span></button>`).join('')}</div></div>`).join('');
-  return `<div class="ex-song">${sum}<div class="cchips">${chips}</div>${exCard(E)}<div class="ex-parts">${parts}</div>
-    <div class="row">${seg('Labels','exlab',[['chord','From the chord'],['key','From the key'],['notes','Notes']],saved.exlab||'chord')}</div></div>`;
+  return `<div class="toolbar"><div class="tl">${seg('Labels','exlab',[['chord','From the chord'],['key','From the key'],['notes','Notes']],saved.exlab||'chord')}</div></div>
+    <div class="ex-song">${sum}${wide?`<div class="xch"><b>Chords in ${esc(sk.name)}</b><div class="cchips ctiles">${chips}</div><p class="hint">Click a chord to hear it and see what it does; the card beside the neck explains it.</p></div>`
+      :`<div class="cchips">${chips}</div>${exCard(E)}`}<div class="ex-parts">${parts}</div></div>`;
 }
 function saveParts(id,parts){
   const sk=LOG.skills[id]; if(!sk) return;
@@ -3765,6 +3849,7 @@ function voicingChoices(name,key){
 function chordChips(sk,k,text){
   const key=sk.key??0, names=[...new Set(parseChords(text).chords)];
   return names.map(n=>{const own=sk.voicings&&sk.voicings[n], f=own?parseFrets(own):autoVoicing(n,key), on=!!(st.vpick&&st.vpick.n===n&&st.vpick.part===k);
+    if(wide){const c=chordIn(n,key); return `<button class="cchip ctile${own?' own':''}" data-act="vpick" data-n="${esc(n)}" data-part="${k}" aria-pressed="${on}">${ctileHTML(c,n,f)}</button>`;}
     return `<button class="cchip${own?' own':''}" data-act="vpick" data-n="${esc(n)}" data-part="${k}" aria-pressed="${on}"><b>${esc(n)}</b><small>${f?fretText(f):'no shape'}</small></button>`;}).join('');
 }
 function vpickHTML(sk,n){
@@ -3868,7 +3953,9 @@ function renderSheet(){
   const S=songProg(D.prog), sk=S&&LOG.skills[D.prog], n=cur.nbars;
   const sub=S?`${sk.artist?esc(sk.artist)+' · ':''}${S.part?esc(S.part)+' · ':''}${n} bar${n>1?'s':''}`:`${progRomans(D.prog).join(' ')} · ${n} bar${n>1?'s':''}`;
   const part=p=>p.to-p.from<1?` <span class="bt">${beatsText(p.to-p.from)}</span>`:'';
-  const tiles=cur.prog.map((p,i)=>`<button class="bar${p.voicing&&p.voicing.own?' own':''}${p.to-p.from<1?' split'+(p.from>0?' cont':''):''}" data-pci="${i}" aria-pressed="${i===cur.pci}"><span class="nm">${esc(p.ch.name)}</span><span class="rn">${p.ch.roman}${part(p)}</span><span class="fr${p.voicing&&p.voicing.frets.some(x=>x>9)?' long':''}">${p.voicing?fretText(p.voicing.frets):'picked'}</span></button>`).join('');
+  const tiles=cur.prog.map((p,i)=>`<button class="bar${p.voicing&&p.voicing.own?' own':''}${p.to-p.from<1?' split'+(p.from>0?' cont':''):''}${wide?' ctile':''}" data-pci="${i}" aria-pressed="${i===cur.pci}">${wide
+    ?ctileHTML(p.ch,p.ch.name,p.voicing?p.voicing.frets:null,p.ch.roman+part(p),p.voicing?'':'<small class="ct-out">Picked: no shape fits here</small>')
+    :`<span class="nm">${esc(p.ch.name)}</span><span class="rn">${p.ch.roman}${part(p)}</span><span class="fr${p.voicing&&p.voicing.frets.some(x=>x>9)?' long':''}">${p.voicing?fretText(p.voicing.frets):'picked'}</span>`}</button>`).join('');
   const missing=[...new Set(cur.prog.filter(p=>!p.voicing).map(p=>p.ch.name))];
   const and=l=>l.length>1?l.slice(0,-1).join(', ')+' and '+l[l.length-1]:l[0]||'', nm=l=>and(l.map(iv=>noteName((cur.key+iv)%12)));
   const B=cur.borrow, fo=`${keyName()} ${esc(modeName()).replace(/^[A-Z](?=[a-z]+ (pentatonic|blues))/,c=>c.toLowerCase())}`;
@@ -3934,6 +4021,7 @@ function updateLive(){
   const P=curPat(), L=countLabels(P.res);
   el.innerHTML=P.steps.split('').map((c,k)=>n&&k===n.k?`<b class="on">${L[k]}</b>`:c==='.'?`<span class="gh">(${L[k]})</span>`:k%(P.res/4)===0?`<b>${L[k]}</b>`:L[k]).join(' ');
 }
+const lblSeg=label=>seg(label,'lbl',[['key','Key'],['chord','Chord'],['notes','Notes']].concat(chordPlay()?[['fing','Fingers']]:[]),chordPlay()&&saved.fing!==false?'fing':saved.labels==='notes'?'notes':D.ref);
 function setsHTML(){
   // Drill settings, grouped by what they change
   if(!st.sheet) return '';
@@ -3945,7 +4033,7 @@ function setsHTML(){
     :[line('Notes per beat',`<select data-set="sub" aria-label="Notes per beat">${opts(SUBS,D.sub)}</select>`),
       sw('tog','pad',D.pad,'Strum the chord each bar'),line('Start and end on',seg('','resolve',[['key','Key root'],['chord','Chord root']],D.resolve))];
   const hear=[sw('tog','click',D.click,'Click'),sw('tog','notes',D.notes,'Play the notes'),prog?sw('rtog','swing',R.swing,'Shuffle feel'):''];
-  const neck=[line('Dot labels',seg('','lbl',[['key','Key'],['chord','Chord'],['notes','Notes']].concat(chordPlay()?[['fing','Fingers']]:[]),chordPlay()&&saved.fing!==false?'fing':saved.labels==='notes'?'notes':D.ref)),
+  const neck=[wide?'':line('Dot labels',lblSeg('')), // on a desktop, Labels sits in the toolbar under the neck
     line('While playing',`<select data-set="guide" aria-label="While playing">${opts(GUIDES,D.guide)}</select>`)];
   const fast=[line('Tempo ramp',`<select data-set="ramp" aria-label="Tempo ramp">${opts(RAMPS,D.ramp)}</select>`)];
   const grp=(h,list)=>`<section><h4>${h}</h4>${list.join('')}</section>`;
@@ -3963,6 +4051,11 @@ function renderPanel(){
         ${!cur.whole?'<div class="actions"><button class="btn" data-act="keepbox">Keep '+cur.posLabel.split(',')[0]+'</button></div>':''}`;
       return;
     }
+    if(wide){ // on a desktop the toolbar sits under the neck: dot labels and settings on the left, tempo and Play on the right
+      const tb=`<div class="toolbar"><div class="tl">${lblSeg('Labels')}<button class="chip gear" data-act="sheet" aria-haspopup="dialog" data-tip="More settings: notes per beat, the click, what the neck shows while playing, and the tempo ramp.">⚙ More</button></div><div class="tr">${pbarHTML()}</div></div>`;
+      panel.innerHTML=D.line==='prog'&&cur.prog?`${tb}${strumCard()}<div class="tab" id="tab"></div>${setsHTML()}`:`${tb}${D.line==='prog'?'':'<div class="tab" id="tab"></div>'}${setsHTML()}`;
+      renderTab(); if(D.line==='prog'&&cur.prog) updateRGrid(); return;
+    }
     if(D.line==='prog'&&cur.prog){panel.innerHTML=`${strumCard()}<div class="tab" id="tab"></div>${pbarHTML()}${setsHTML()}`; renderTab(); updateRGrid(); return;}
     panel.innerHTML=`${D.line==='prog'?'':'<div class="tab" id="tab"></div>'}${pbarHTML()}${setsHTML()}`;
     renderTab();
@@ -3970,20 +4063,23 @@ function renderPanel(){
   }
   if(st.mode==='explore'&&exSong()){panel.innerHTML=exploreSongHTML(exSong()); return;}
   if(st.mode==='explore'){
+    // one toolbar under the neck: how the neck looks on the left, what a click does on the right; then the degrees shown
     const ivs=cur.allowed.map(i=>`<button class="ivchip" style="--c:${COL[i]}" data-act="iv" data-i="${i}" aria-pressed="${st.visible.has(i)}" aria-label="${lab(i)[1]}">${lab(i)[0]}</button>`).join('');
-    panel.innerHTML=`<div class="row">${ivs}</div>
-      <div class="row">${seg('Show','show',[['all','Whole scale'],['chord','Chord tones']],showChord()?'chord':'all')}
-      ${seg('Labels','labels',[['iv','Degrees'],['notes','Notes']],saved.labels==='notes'?'notes':'iv')}</div>${wide?'':`<div class="xkey">${lkSel()!==null?lkNoteHTML(lkSel()):exploreKey()}</div>`}${lkChordsHTML()}`;
+    panel.innerHTML=`<div class="toolbar"><div class="tl">${seg('Show','show',[['all','Whole scale'],['chord','Chord tones']],showChord()?'chord':'all')}
+      ${seg('Labels','labels',[['iv','Degrees'],['notes','Notes']],saved.labels==='notes'?'notes':'iv')}</div>
+      <div class="tr">${seg('Click a note','lock',[['on','Explain it'],['off','Make it the key']],saved.lkLock===false?'off':'on')}</div></div>
+      <div class="row degrow"><span class="seglab">Degrees</span><button class="ivchip" style="--c:${COL[0]}" aria-pressed="true" disabled aria-label="root, always shown" data-tip="R, the root, always shows.">R</button>${ivs}</div>${wide?'':`<div class="xkey">${lkSel()!==null?lkNoteHTML(lkSel()):exploreKey()}</div>`}${lkChordsHTML()}`;
   }else if(st.mode==='name'){
     const n=cur.allowed.length+1, cols=Math.min(n,n>8?6:n);
     const btns=cur.allowed.map(i=>{let cls='ans';
-      if(q.answered){if(i===q.iv)cls+=' right';else if(i===q.picked)cls+=' wrong';}
-      return `<button class="${cls}" data-act="answer" data-i="${i}" ${q.answered?'disabled':''} aria-label="${lab(i)[1]}">${lab(i)[0]}</button>`;}).join('');
-    panel.innerHTML=`${quizSeg()}<div class="answers" style="grid-template-columns:repeat(${cols},1fr)">${btns}<button class="ans" data-act="hear" aria-label="Hear it again">🔁</button></div>
-      <div class="actions"><button class="btn" data-act="reset">Reset score</button><button class="btn primary" data-act="next">${q.answered?'Next':'Skip'}</button></div>${wide?'':`<div class="howto">${quizKey()}${howtoHTML()}</div>`}`;
+      if(q.answered) cls+=i===q.iv?' right':i===q.picked?' wrong':' dim';
+      return `<button class="${cls}" style="--c:${COL[i]}" data-act="answer" data-i="${i}" ${q.answered?'disabled':''} aria-label="${lab(i)[1]}">${q.answered&&i===q.iv?'✓ ':''}${lab(i)[0]}</button>`;}).join('');
+    const hear=`<button class="ans hear" data-act="hear" aria-label="Hear it again">${ICONS.sound}<span>Hear it</span></button>`;
+    panel.innerHTML=wide?`${quizBar()}<div class="answers" style="--n:${n-1}">${btns}${hear}${quizNext()}</div>`
+      :`${quizBar()}<div class="answers" style="grid-template-columns:repeat(${cols},1fr)">${btns}${hear}</div>
+      <div class="actions">${quizNext()}</div><div class="howto">${quizKey()}${howtoHTML()}</div>`;
   }else{
-    panel.innerHTML=`${quizSeg()}<p class="hint">Tap the fretboard. Any octave counts${cur.whole?'':', as long as it’s inside the lit frets'}.</p>
-      <div class="actions"><button class="btn" data-act="reset">Reset score</button><button class="btn primary" data-act="next">${q.answered?'Next':'Skip'}</button></div>${wide?'':`<div class="howto">${quizKey()}${howtoHTML()}</div>`}`;
+    panel.innerHTML=`${quizBar()}<div class="qfind"><p class="hint">${tapWord()} the fretboard. Any octave counts${cur.whole?'':', as long as it’s inside the lit frets'}.</p>${quizNext()}</div>${wide?'':`<div class="howto">${quizKey()}${howtoHTML()}</div>`}`;
   }
 }
 
@@ -4010,7 +4106,7 @@ neck.addEventListener('click',e=>{
     return;
   }
   play(p);
-  if(st.mode==='explore'&&exSong()){st.exTap=pc(p.s,p.f); renderPrompt(); return;} // a song keeps its key: the tap just says what the note is
+  if(st.mode==='explore'&&exSong()){st.exTap=pc(p.s,p.f); renderPrompt(); renderVoice(); return;} // a song keeps its key: the tap just says what the note is
   if(st.mode==='explore'&&lkLocked()){ // locked: the click explains the note; click it again to clear it
     if(!cur.set.has(ivOf(p,cur.key))) return;
     const q=pc(p.s,p.f), same=lkSel()===q&&(!cur.whole||(st.lkAt&&st.lkAt.s===p.s&&st.lkAt.f===p.f));
@@ -4018,7 +4114,7 @@ neck.addEventListener('click',e=>{
   if(st.mode==='explore'){F.key=pc(p.s,p.f);refresh();fillSelects();save();render();return;}
   if(st.mode==='find'){
     const q=st.q; if(q.answered) return;
-    if(!cur.whole&&!inWin(p.f)){promptEl.classList.remove('flash');void promptEl.offsetWidth;promptEl.classList.add('flash');return;}
+    if(!cur.whole&&!inWin(p.f)){const fl=wide?document.getElementById('howto'):promptEl; fl.classList.remove('flash');void fl.offsetWidth;fl.classList.add('flash');return;}
     if(p.s===q.root.s&&p.f===q.root.f) return;
     q.picked=p; q.answered=true; record(ivOf(p,q.key)===q.iv); render();
   }
@@ -4244,6 +4340,7 @@ const onClick=e=>{
     case 'iv': st.visible.has(i)?st.visible.delete(i):st.visible.add(i); break;
     case 'show': st.visible=new Set(b.dataset.v==='chord'?chordTones():cur.allowed); break;
     case 'labels': saved.labels=b.dataset.v; break;
+    case 'lock': saved.lkLock=b.dataset.v==='on'; st.lkSel=null; st.lkAt=null; st.lkPin=null; st.lkHov=null; break;
     case 'answer':{const q=st.q;if(q.answered)return;q.picked=i;q.answered=true;record(i===q.iv);play(q.root);play(q.target,.45);break;}
     case 'hear': play(st.q.root);play(st.q.target,.5); return;
     case 'quiz': if(b.dataset.v!==st.mode) setMode(b.dataset.v); return;
@@ -4469,14 +4566,15 @@ const TIPS=[
  ['[data-tip]',el=>el.dataset.tip],
  ['.cell',cellTip],
  ['.tcol',tabTip],
- ['#modes [data-mode="explore"]',()=>focusSong()?'<b>Explore</b>: what each chord of your song does in its key, and what to play over it. (1)':`<b>Explore</b>: see every degree of the scale around the key. ${saved.lkLock===false?'Click a note to make it the key.':'Click a note to see how it fits the key and the chords that use it.'} (1)`],
- ['#lockBtn',()=>saved.lkLock===false?'<b>Lock</b> the key and position, so clicking a note explains it and shows the chords that use it, instead of making it the key.':'<b>Locked</b>: clicking a note explains it and shows the chords that use it. The Key menu and the arrows still change the key and position. Click to unlock, and a click makes that note the key.'],
+ ['#modes [data-mode="explore"]',()=>focusSong()?'<b>Explore</b>: what each chord of your song does in its key, and what to play over it. Shortcut: 1.':`<b>Explore</b>: see every degree of the scale around the key. ${saved.lkLock===false?'Click a note to make it the key.':'Click a note to see how it fits the key and the chords that use it.'} Shortcut: 1.`],
+ ['[data-act="lock"][data-v="on"]',()=>'<b>Explain it</b>: clicking a note keeps the key and position, explains the note against the root, and shows the chords that use it.'],
+ ['[data-act="lock"][data-v="off"]',()=>'<b>Make it the key</b>: clicking a note makes it the new key, keeping the scale and mode.'],
  ['[data-act="lksev"]',()=>`<b>Add 7ths</b>: also show the 4-note 7th chords that use the note. Currently ${saved.lkSev?'on':'off (triads)'}.`],
  ['[data-act="lkch"]',el=>`<b>${esc(el.dataset.k)}</b>: ${wide?'hover to see it on the neck, click to hear it and keep it there':'tap to hear it and see it on the neck'}.`],
- ['#modes [data-mode="quiz"]',()=>'<b>Quiz</b>: Name it asks which degree a note is; Find it asks you to click where a degree sits. (2)'],
+ ['#modes [data-mode="quiz"]',()=>'<b>Quiz</b>: Name it asks which degree a note is; Find it asks you to click where a degree sits. Shortcut: 2.'],
  ['[data-act="quiz"][data-v="name"]',()=>'<b>Name it</b>: say which degree the ? note is, counted up from the root.'],
  ['[data-act="quiz"][data-v="find"]',()=>'<b>Find it</b>: click where a given degree sits inside the lit frets.'],
- ['#modes [data-mode="drill"]',()=>'<b>Drill</b>: pick a box, then play scale lines over a chord, or strum and arpeggiate a chord progression, with the metronome. (3)'],
+ ['#modes [data-mode="drill"]',()=>'<b>Drill</b>: pick a box, then play scale lines over a chord, or strum and arpeggiate a chord progression, with the metronome. Shortcut: 3.'],
  ['[data-act="spown"]',()=>{const id=songNow(), S=id&&songProg(id); return S&&strumKey()!==id?`${esc(S.part)} has its own strum pattern, saved with it. Click to go back to the song's pattern.`:`Give ${S?esc(S.part):'this part'} its own strum pattern, starting from the song's. The rest of the song keeps the song's pattern.`;}],
  ['[data-act="pown"]',el=>{const sk=LOG.skills[st.song], p=sk&&songParts(sk)[+el.dataset.part]; return p&&p.strum?`${esc(p.name)} has its own strum pattern. Click to use the song's pattern instead.`:`Give ${p?esc(p.name):'this part'} its own strum pattern, starting from the song's. Every other part keeps the song's pattern.`;}],
  ['[data-act="line"][data-v="scale"]',()=>'Play scale patterns through the box over one chord.'],
@@ -4490,7 +4588,7 @@ const TIPS=[
  ['[data-act="sheet"]',()=>'Drill settings: what you play, what you hear, what the neck shows, and the tempo ramp.'],
  ['[data-act="sheetclose"]',()=>'Close the settings. Esc does it too.'],
  ['[data-pci]',el=>{const p=cur.prog&&cur.prog[+el.dataset.pci]; if(!p) return ''; return `<b>${p.ch.name}</b> (${p.ch.roman}): ${formulaText(p.ch)}${p.voicing?', played '+p.voicing.frets.map(f=>f===null?'x':f).join(' '):''}.${p.voicing&&p.voicing.own?' Your own voicing.':''}${st.playing?'':' Click to hear it and see it on the neck.'}`;}],
- ['#modes [data-mode="practice"]',()=>'<b>Exercises</b>: your practice sessions and the library of exercises. Each exercise opens Drill with its choices as chips, so you can switch between them as you play. (4)'],
+ ['#modes [data-mode="practice"]',()=>'<b>Exercises</b>: your practice sessions and the library of exercises. Each exercise opens Drill with its choices as chips, so you can switch between them as you play. Shortcut: 4.'],
  ['[data-act="clean"]',()=>lg.last&&lg.last.clean?`Marked clean at ${lg.last.clean} bpm. Click to unmark it.`:`If that run was ${term('clean','clean')}, mark it at ${lg.last?lg.last.bpm[1]:saved.bpm} bpm. An exercise’s chip gets a ✓ when a run of it is marked clean at the goal tempo.`],
  ['[data-act="songform"]',()=>'Add a song you’re learning, with its chords, in the Songs tab.'],
  ['[data-act="songadd"]',()=>'Add this song. It shows up in Drill’s progression menu and in the Your songs exercise.'],
@@ -4498,7 +4596,7 @@ const TIPS=[
  ['[data-act="rate"]',el=>`Rate how well you play it: ${el.dataset.v} of 5. Click your current rating again to lower it.`],
  ['[data-act="songplay"]',el=>{const sk=LOG.skills[el.dataset.id]; return sk?`Practice: open Drill on ${esc(sk.name)}’s ${sk.chords&&sk.chords.length?'chords':'key and progression'}, in open position: strum each chord, then arpeggiate it.`:'';}],
  ['[data-act="songopen"]',el=>{const sk=LOG.skills[el.dataset.id]; return sk?`Open ${esc(sk.name)} in the Songs tab to change its chords, voicings and strum pattern.`:'';}],
- ['#modes [data-mode="songs"]',()=>'<b>Songs</b>: your songs, with their chords in parts, a voicing for each chord, and a strum pattern. Practice takes one straight to Drill. (5)'],
+ ['#modes [data-mode="songs"]',()=>'<b>Songs</b>: your songs, with their chords in parts, a voicing for each chord, and a strum pattern. Practice takes one straight to Drill. Shortcut: 5.'],
  ['[data-act="partadd"]',()=>'Add another part, like a chorus or bridge. Parts play one after another when you practice.'],
  ['[data-act="partdel"]',()=>'Remove this part and its chords from the song.'],
  ['[data-act="vpick"]',el=>`Pick how to play <b>${esc(el.dataset.n)}</b> in this song.${el.classList.contains('own')?' Gold frets mean it’s your own choice.':''}`],
@@ -4559,7 +4657,7 @@ const TIPS=[
  ['[data-set="guide"]',()=>GUIDE_TIP[D.guide]],
  ['[data-act="slower"]',()=>'4 bpm slower.'],
  ['[data-act="faster"]',()=>'4 bpm faster.'],
- ['[data-act="tap"]',()=>'Tap this a few times in rhythm to set the tempo.'],
+ ['[data-act="tap"]',()=>`${tapWord()} this a few times in rhythm to set the tempo.`],
  ['[data-set="sub"]',()=>D.line==='prog'?'How many arpeggio notes to play per beat.':'How many drill notes to play per beat.'],
  ['[data-act="play"]',()=>st.playing?'Pause. Shortcut: space':st.paused?'Resume with a one-bar count-in, repeating the bar you paused in. Shortcut: space':'Start, with a one-bar count-in. Shortcut: space'],
  ['[data-act="restart"]',()=>'Start over from the beginning of the drill.'],
