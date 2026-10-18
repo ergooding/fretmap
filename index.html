@@ -785,9 +785,18 @@ const PROG_FIX={
  blues:{maj:{0:[0,'','7'],3:[5,'','7'],4:[7,'','7']},min:{0:[0,'m','m7'],3:[5,'m','m7'],4:[7,'','7']}},
  '251':{maj:{1:[2,'m','m7'],4:[7,'','7'],0:[0,'','maj7']},min:{1:[2,'°','m7♭5'],4:[7,'','7'],0:[0,'m','m7']}}
 };
+function progHome(id,A){ // the mode a progression named for its own chords lives in, seen from a focus with 7 notes A: [steps, name, 'min' or 'maj']
+  const fx=PROG_FIX[id], m=A.includes(3)&&!A.includes(4), v=fx[m?'min':'maj']?(m?'min':'maj'):fx.maj?'maj':'min';
+  return v==='min'?(id==='251'?[[0,2,3,5,7,8,11],'harmonic minor',v]:[[0,2,3,5,7,8,10],'minor',v]):id==='flat7'?[[0,2,4,5,7,9,10],'Mixolydian',v]:[[0,2,4,5,7,9,11],'major',v];
+}
+function homeLetter(key,A,H,id){ // a borrowed mode keeps the focus key's letter, unless that needs double sharps or flats (C♯ minor, not D♭ minor)
+  const l=letterOf(spellIn(key,A)(key)), lt=H[2]===3&&H[6]===10?[[6,11]]:id==='blues'?[[6,10],[2,3]]:[]; // a minor mode's V takes the raised 7th; a blues's 7th chords, ♭7 and ♭3
+  return H.map((x,i)=>[i,x]).concat(lt).every(([i,x])=>Math.abs(accOf(l+i,(key+x)%12))<2)?l:tonicLetter(key,H);
+}
+function spellAt(key,A,tl){const k=key+':'+A.join()+':'+tl; return SPELL[k]||(SPELL[k]=speller(key,A,tl));}
 function progChords(id,k,sev){ // a common progression's chords, bar by bar, in a key and 7-note mode k ({key,fam,mode})
-  const P=PROG_BY[id]||PROG_BY.pop, A=steps7(k.fam,k.mode), sp=spellIn(k.key,A), fx=PROG_FIX[P.id];
-  const at=(p,suf)=>chordIn(parseChord(sp(p)+suf)?sp(p)+suf:NOTES[p]+suf,k.key,letterOf(sp(k.key)));
+  const P=PROG_BY[id]||PROG_BY.pop, A=steps7(k.fam,k.mode), fx=PROG_FIX[P.id], H=fx&&progHome(P.id,A)[0], hl=fx?homeLetter(k.key,A,H,P.id):null, sp=fx?spellAt(k.key,H,hl):spellIn(k.key,A); // a borrowed chord is spelled from the mode it comes from
+  const tl=hl??letterOf(sp(k.key)), at=(p,suf)=>chordIn(parseChord(sp(p)+suf)?sp(p)+suf:NOTES[p]+suf,k.key,tl); // numerals count letters from the tonic as spelled
   if(fx){const set=fx[A.includes(3)&&!A.includes(4)?'min':'maj']||fx.maj||fx.min; return P.degs.map(d=>at((k.key+set[d][0])%12,set[d][sev?2:1]));}
   return P.degs.map(d=>{const r=A[d], q=QUAL[[2,4].concat(sev?[6]:[]).map(j=>(A[(d+j)%7]-r+12)%12).join(',')]; return q!==undefined?at((k.key+r)%12,q):{name:sp((k.key+r)%12)+'*',roman:ROMAN[d]};});
 }
@@ -834,7 +843,7 @@ function speller(key,A,tl){ // pitch -> name, seen from a key and its 7-note sca
 }
 const SPELL={};
 function spellIn(key,A){const k=key+':'+A.join(); return SPELL[k]||(SPELL[k]=speller(key,A));}
-function noteName(p,key=cur.key){return spellIn(key,cur.A7)(p);} // a note's name in the focus key
+function noteName(p,key=cur.key){const o=key===cur.key&&cur.oname&&cur.oname.get(p); return o||spellIn(key,cur.A7)(p);} // a note's name in the focus key (a borrowed note, as the chord that borrows it spells it)
 function keyName(key=cur.key){return noteName(key,key);}
 function songSpell(sk){ // a song's notes, spelled from its key the way its home chord is written
   const key=sk.key??0, home=(sk.chords||[]).find(n=>{const c=parseChord(n); return c&&c.root===key;});
@@ -1088,20 +1097,49 @@ function refresh(){
     cur.nbars=items.length?items[items.length-1].bar+1:0;
     setProgChord(0);
   }
-  cur.pset=null; cur.borrow=null;
-  if(cur.prog&&!song&&PROG_FIX[D.prog]&&cur.set.size===7&&F.fam!=='chrom'){
+  cur.pset=null; cur.borrow=null; cur.cnote=''; cur.oname=null;
+  if(cur.prog&&!song&&PROG_FIX[D.prog]&&F.fam!=='chrom'){
     // a progression named for its own chords can borrow from another mode; while it plays, the neck and the lines use
-    // that mode's notes (Minor epic in A major: A minor), and the notes outside your focus are marked
-    const out=new Set(); cur.prog.forEach(p=>p.pcs.forEach(x=>{const iv=(x-cur.key+12)%12; if(!cur.set.has(iv)) out.add(iv);}));
-    const fk=followKey(), A=steps7(fk.fam,fk.mode), fx=PROG_FIX[D.prog], v=fx[A.includes(3)&&!A.includes(4)?'min':'maj']?(A.includes(3)&&!A.includes(4)?'min':'maj'):fx.maj?'maj':'min';
-    const home=D.prog==='blues'?null:v==='min'?[[0,2,3,5,7,8,10],'minor']:D.prog==='flat7'?[[0,2,4,5,7,9,10],'Mixolydian']:[[0,2,4,5,7,9,11],'major'];
-    if(out.size&&home&&home[0].some(x=>!cur.set.has(x))){
-      cur.pset=new Set(home[0]);
-      cur.borrow={name:`${keyName()} ${home[1]}`,out:home[0].filter(x=>!cur.set.has(x)),was:[...cur.set].filter(x=>!cur.pset.has(x))};
+    // that mode's notes (Minor epic in A major: A minor), and the notes outside your focus are marked. A scale with fewer
+    // than 7 notes borrows the whole mode. While a chord with a note of its own sounds, that note takes the place of the
+    // scale's note of the same degree: E in A minor takes G♯ (A harmonic minor), and in a blues each 7th chord takes its own Mixolydian
+    const fk=followKey(), A=steps7(fk.fam,fk.mode), [H,hn,v]=progHome(D.prog,A), tl=homeLetter(cur.key,A,H,D.prog), hsp=spellAt(cur.key,H,tl), kn=hsp(cur.key);
+    const inF=x=>cur.set.has(x), small=cur.set.size!==7, tones=new Set(); cur.prog.forEach(p=>p.ch.tones.forEach(t=>tones.add(t)));
+    const isDom=p=>D.prog==='blues'&&v==='maj'&&p.ch.rel.includes(4)&&p.ch.rel.includes(10), allDom=cur.prog.every(isDom); // a blues of 7th chords: each takes its own scale
+    const out=[...tones].filter(t=>!inF(t)).sort((a,b)=>a-b), whole=out.length>0&&(small||!allDom&&H.some(x=>!inF(x)));
+    const base=whole?H:small?null:[...cur.set].sort((a,b)=>a-b);
+    if(base){
+      const bs=new Set(base), names=new Map(), harm=[], mix=[], own=[], and=l=>l.length>1?l.slice(0,-1).join(', ')+' and '+l[l.length-1]:l[0]||'';
+      const modeOf=St=>{const j=St.join(); for(const f of ['major','harm','mel']) for(let m=0;m<7;m++) if(steps7(f,m).join()===j)
+        return `${kn} ${f==='major'&&m===0?'major':f==='major'&&m===5?'minor':m===0?FAMS[f].name.toLowerCase():FAMS[f].modes[m][0].replace(/ \(.*\)/,'')}`; return '';};
+      cur.prog.forEach(p=>{
+        const T=p.ch.tones, r=(p.ch.root-cur.key+12)%12, dom=isDom(p);
+        let S=new Set(bs);
+        if(dom) S=new Set([0,2,4,5,7,9,10].map(x=>(r+x)%12));
+        else T.forEach(t=>{if(S.has(t)) return; const o=base[+/\d/.exec(labIn(t,bs)[0])[0]-1]; if(o!==undefined&&!T.includes(o)&&[1,11].includes((t-o+12)%12)) S.delete(o); S.add(t);});
+        const St=[...S].sort((a,b)=>a-b), sp=S.size===7?spellAt(cur.key,St,tl):hsp, adds=St.filter(x=>!bs.has(x)), an=adds.map(x=>sp((cur.key+x)%12));
+        T.concat(adds).forEach(t=>{if(!inF(t)&&!names.has((cur.key+t)%12)) names.set((cur.key+t)%12,sp((cur.key+t)%12));});
+        if(adds.length){
+          p.pset=S; p.src=dom?`${sp(p.ch.root)} Mixolydian`:modeOf(St);
+          const list=dom?mix:St.join()==='0,2,3,5,7,8,11'&&adds.join()==='11'?harm:own, said=`${an.join()}|${p.ch.name}`;
+          if(!list.some(x=>x.said===said)) list.push({said,name:p.ch.name,an});
+        }else if(whole&&T.some(t=>!inF(t))) p.src=`${kn} ${hn}`;
+      });
+      cur.oname=names;
+      const lt=harm.length?harm[0].an[0]:'';
+      cur.cnote=[harm.length?`Over ${and(harm.map(x=>x.name))} the neck takes ${lt}, the raised 7th of ${kn} harmonic minor.`:'',
+        mix.length?`Each 7th chord takes its own Mixolydian: the neck takes ${and(mix.map(x=>`${and(x.an)} over ${x.name}`))}.`:'',
+        ...own.map(x=>`Over ${x.name} the neck takes ${and(x.an)}, from the chord itself.`)].filter(Boolean).join(' ');
+      if(whole){
+        cur.pset=bs;
+        const near=x=>out.some(t=>bs.has(t)&&[1,11].includes((t-x+12)%12));
+        cur.borrow={name:`${kn} ${hn}`,out:out.filter(t=>bs.has(t)),was:[...cur.set].sort((a,b)=>a-b).filter(x=>!bs.has(x)&&!tones.has(x)&&near(x))};
+      }
     }
   }
 }
-function dset(){return cur.pset||cur.set;} // the notes Drill draws and plays: the focus scale, or the mode a progression borrows from
+function dset(){const p=!dset.flat&&cur.prog&&cur.prog[cur.pci]; return p&&p.pset||cur.pset||cur.set;} // the notes Drill draws and plays: the focus scale, the mode a progression borrows from, or the chord's own while it sounds
+function chordSrc(){const p=cur.prog&&cur.prog[cur.pci]; return p&&p.src||'';} // the scale the sounding chord takes its notes from outside your focus
 function vFrets(v){ // where a voicing sits: its box, or with the whole neck, the frets it actually uses
   if(!cur.whole) return `${cur.lo}–${cur.hi}`;
   const fr=v.frets.filter(f=>f!==null); return `${Math.min(...fr)}–${Math.max(...fr)}`;
@@ -1519,14 +1557,23 @@ function progLine(){
     for(let b=0;b<cur.nbars;b++){ if(!B[b]) continue; let prev=-1, s0=0;
       for(let k=0;k<L;k++){const ci=B[b](k/L); if(ci!==prev) s0=k; const X=lineOf(ci);
         seq.push(X.length?{...X[(k-s0)%X.length],ci,bar:b,k,n:L,sw,head:ci!==prev}:{rest:true,ci,bar:b,k,n:L,head:ci!==prev}); prev=ci;}}
-    return endOnRoot(seq,L);
+    return seq.length?withChord(seq[seq.length-1].ci,()=>endOnRoot(seq,L)):seq;
   }
-  const r=D.resolve; D.resolve='key'; let X; try{X=genLine();}finally{D.resolve=r;}
+  const r=D.resolve; D.resolve='key'; dset.flat=true; let X; try{X=genLine();}finally{D.resolve=r; dset.flat=false;} // one line in the progression's scale, fitted to each chord below
   const nb=Math.max(1,Math.ceil(X.length/L)), b0=st.pbar||0;
   for(let b=0;b<nb;b++){ const f=B[(b0+b)%cur.nbars]; let prev=-1;
     for(let k=0;k<L;k++){const ci=f?f(k/L):0, j=b*L+k;
-      seq.push(j<X.length?{...X[j],ci,bar:b,k,n:L,sw,head:ci!==prev}:{rest:true,ci,bar:b,k,n:L,head:ci!==prev}); prev=ci;}}
+      seq.push(j<X.length?{...fitNote(X[j],ci),ci,bar:b,k,n:L,sw,head:ci!==prev}:{rest:true,ci,bar:b,k,n:L,head:ci!==prev}); prev=ci;}}
   return seq;
+}
+function fitNote(n,ci){
+  // a note of the line over a chord that brings a note of its own: the scale's note of that degree moves a half step to it
+  // (B♭ to B over G in C minor), on the same string when it can
+  const S=cur.prog[ci]&&cur.prog[ci].pset, iv=((n.m-capo()-cur.key)%12+12)%12, B=cur.pset||cur.set;
+  if(!S||S.has(iv)) return n;
+  const d=[1,-1].find(x=>S.has((iv+x+12)%12)&&!B.has((iv+x+12)%12))??[1,-1].find(x=>S.has((iv+x+12)%12)); if(d===undefined) return n;
+  let best=null; for(const s of [n.s,n.s-1,n.s+1]){const f=n.m+d-capo()-MIDI[s]; if(s<0||s>5||f<0||f>Math.max(12,cur.hi)) continue; const c=Math.abs(f-n.f)+(s===n.s?0:3); if(!best||c<best.c) best={c,s,f};}
+  return best?{...n,s:best.s,f:best.f,m:n.m+d}:n;
 }
 function endOnRoot(seq,L){
   // the loop's last bar: as much of its pattern as fits, then step through the box to the nearest key root
@@ -1565,11 +1612,11 @@ function progTones(){
   // chord's lowest root; every later one starts on the tone of its chord closest to the last note, so the line moves
   // smoothly instead of jumping back to each root. Arpeggio runs on through the tones and turns at the box's edges;
   // enclose and the walk pass through the scale's notes on the way.
-  const P=boxNotes(), L=4*D.sub, B=barChords(), sw=patFor(-1).swing, seq=[];
-  if(P.length<2) return [];
+  const P0=boxNotes(), L=4*D.sub, B=barChords(), sw=patFor(-1).swing, seq=[], PB={}, Pof=ci=>PB[ci]||(PB[ci]=withChord(ci,boxNotes));
+  if(P0.length<2) return [];
   let last=null, dir=1;
-  const segment=(ci,len)=>{ // one chord's share of a bar
-    const T=chordBox(cur.prog[ci].pcs,P); if(!T.length) return Array(len).fill(null);
+  const segment=(ci,len)=>{ // one chord's share of a bar, through the scale it takes while it sounds
+    const P=Pof(ci), T=chordBox(cur.prog[ci].pcs,P); if(!T.length) return Array(len).fill(null);
     const ti=n=>T.findIndex(t=>t.m===n.m);
     let j;
     if(!last){j=T.findIndex(t=>pc(t.s,t.f)===cur.prog[ci].ch.root); if(j<0) j=0;}
@@ -1632,19 +1679,19 @@ function genProg(){
     const P=patFor(cur.prog[idx[0]].part), voiced=idx.every(i=>cur.prog[i].voicing);
     // a bar split between chords falls back to the strum pattern or the arpeggio
     const one=voiced&&idx.length===1, i=idx[0], nx=cur.prog.find(q=>q.bar===(b+1)%cur.nbars), nxt=D.plan==='strum'&&nx&&nx.ch.name!==cur.prog[i].ch.name?nx:null;
-    if(strums(D)&&D.sbg==='boom'&&one){seq.push(...bgBar('boom',cur.prog[i],nxt,bar,i,true)); bar++;} // in Strum, then pick the next bar is the same chord, so no walk
+    if(strums(D)&&D.sbg==='boom'&&one){seq.push(...withChord(i,()=>bgBar('boom',cur.prog[i],nxt,bar,i,true))); bar++;} // in Strum, then pick the next bar is the same chord, so no walk
     else if(strums(D)&&voiced){ let prev=-1;
       for(let k=0;k<P.res;k++){const ci=at(k/P.res); seq.push({chord:true,strum:P.steps[k],ci,bar,k,n:P.res,sw:P.swing,live:!!P.live,head:ci!==prev}); prev=ci;} bar++; }
-    if(picks(D)&&D.pick!=='arp'&&one){seq.push(...bgBar(D.pick,cur.prog[i],null,bar,i,true)); bar++; continue;}
+    if(picks(D)&&D.pick!=='arp'&&one){seq.push(...withChord(i,()=>bgBar(D.pick,cur.prog[i],null,bar,i,true))); bar++; continue;}
     if(picks(D)||!voiced){
-      const A={}, L=4*D.sub; idx.forEach(i=>A[i]=arpNotes(cur.prog[i]));
+      const A={}, L=4*D.sub; idx.forEach(i=>A[i]=withChord(i,()=>arpNotes(cur.prog[i])));
       if(!idx.some(i=>A[i].length)) continue;
       let prev=-1, s0=0;
       for(let k=0;k<L;k++){const ci=at(k/L); if(ci!==prev) s0=k; const a=A[ci];
         seq.push(a.length?{...a[(k-s0)%a.length],ci,bar,k,n:L,sw:P.swing,head:ci!==prev}:{rest:true,ci,bar,k,n:L,head:ci!==prev}); prev=ci;}
       bar++; }
     if(D.plan==='mix'&&voiced){ // then a bar of scale run over the same chord, leading into the next one
-      const nci=cur.prog.findIndex(q=>q.bar===(b+1)%cur.nbars), L=4*D.sub, R=runBar(i,nci<0?i:nci,L);
+      const nci=cur.prog.findIndex(q=>q.bar===(b+1)%cur.nbars), L=4*D.sub, R=withChord(i,()=>runBar(i,nci<0?i:nci,L));
       let prev=-1; for(let k=0;k<L;k++){const ci=at(k/L); seq.push(R[k]?{...R[k],run:true,ci,bar,k,n:L,sw:P.swing,head:ci!==prev}:{rest:true,ci,bar,k,n:L,head:ci!==prev}); prev=ci;}
       bar++; }
   }
@@ -2579,7 +2626,7 @@ function followKey(){
   const seven=FAMS[F.fam].steps.length===7;
   return {key:cur.key,fam:seven?F.fam:'major',mode:seven?F.mode:(TO_DIATONIC[F.fam]||[0])[F.mode]||0};
 }
-function progNames(k,prog){return progChords(prog,k,false).map(c=>c.name);} // chord names of a progression in a key, without touching the current focus
+function progNames(k,prog){return !PROG_FIX[prog]&&cur.pchords?(PROG_BY[prog]||PROG_BY.pop).degs.map(d=>cur.pchords[d].name):progChords(prog,k,D.sev).map(c=>c.name);} // chord names of a progression, as Add 7ths builds them and its numerals read
 function setupSkill(s){
   const wh=s.where==='cycle'?'c':s.pos, line=s.line||(isLinePlan(s.plan)&&s.prog==='one'?'scale':'prog');
   return line==='prog'?`prog:${s.key}:${s.fam}:${s.mode}:${wh}:${s.prog==='one'&&+s.chord?'one-'+s.chord:s.prog}:${s.plan}:${isLinePlan(s.plan)?lineId(s):playId(s,s.rpat)}`
@@ -2610,13 +2657,13 @@ function dotsFold(){ // the key for a scale line, folded until you open it
   const root=all.filter(d=>has(d,'root')), tones=all.filter(d=>!has(d,'root')&&!has(d,'pass')), pass=all.filter(d=>has(d,'pass'));
   const ring=all.filter(d=>has(d,'home')), out=all.filter(d=>has(d,'outk')), hn=noteName(home);
   const ends=root.some(d=>d.p===home)?`, where each pass starts and ends`:'';
-  const scale=F.fam==='chrom'?'the chromatic scale':cur.pset?'the scale':`${keyName()} ${modeName()}`;
+  const scale=F.fam==='chrom'?'the chromatic scale':dset()!==cur.set?'the scale':`${keyName()} ${modeName()}`;
   return fold('vdots','What the neck shows',`<div class="nkey">
     ${row(root,`${noteName(root[0]?root[0].p:home)}, ${D.ref==='chord'?'the root of '+cur.chord.name:'the root of the key'}${ends}.`)}
     ${row(tones,`${root.length?'The other':'The'} ${term('chordtone','chord tones')} of ${cur.chord.name}, each degree in its own color.`)}
     ${row(pass,`${term('passing','Passing tones')}: the rest of ${scale}, in pearl.`)}
     ${row(ring.slice(0,1),`The gold ring marks ${hn}, where each pass starts and ends.`)}
-    ${row(out.slice(0,1),`A dashed edge marks a note from outside ${scale}.`)}
+    ${row(out.slice(0,1),`A dashed edge marks a note from outside ${keyName()} ${modeName()}.`)}
     </div><p class="hint">${saved.labels==='notes'?'The dots show note names.':`The labels count from ${D.ref==='chord'?`${rootName(cur.chord)}, the root of ${cur.chord.name}`:`${keyName()}, the key`}.`}${cur.whole?'':` Notes on each string, low E to high e: ${per.join(' ')}.`}${D.pad&&!cur.voicing?' No voicing fits this box, so the chord step is skipped.':''}${wide?'':' Tap the chord in the Over row again to hear it.'}</p>`);
 }
 function fingKey(){ // the key for a strummed or picked chord with Fingers on, from the dots the neck draws
@@ -3000,16 +3047,16 @@ function bNow(k,V,live){
 }
 function scaleRun(n){const A=[...cur.set].sort((a,b)=>a-b); return Array.from({length:n},(_,i)=>noteName((cur.key+A[i%A.length])%12));}
 const PROG_TIP={one:'Stay on a single chord the whole time, picked in the Over row. The easiest way to learn a box.',
- two:'Two chords back and forth, I and IV: the simplest change to hear and to play over.',
- '145':'I, IV and V, the three chords of early rock and roll, folk and country.',
- pop:'The four chords behind hundreds of songs, I V vi IV.',
- sad:'The pop chords starting on vi, so they sound sadder: vi IV I V.',
- '50s':'The doo-wop changes of 1950s ballads, I vi IV V.',
- '251':'ii V I, the most common move in jazz: two chords that lead home.',
+ two:'Two chords back and forth, I and IV in a major key: the simplest change to hear and to play over.',
+ '145':'I, IV and V in a major key, the three chords of early rock and roll, folk and country.',
+ pop:'The four chords behind hundreds of songs, I V vi IV in a major key.',
+ sad:'The pop chords starting on vi, so they sound sadder: vi IV I V in a major key.',
+ '50s':'The doo-wop changes of 1950s ballads, I vi IV V in a major key.',
+ '251':'ii V I in a major key, ii° V i in a minor one: the most common move in jazz, two chords that lead home.',
  flat7:'I ♭VII IV I, a rock sound: the ♭VII chord comes from the Mixolydian mode.',
  epic:'i ♭VI ♭III ♭VII, a minor-key sound from film scores and power ballads.',
  andalusian:'i ♭VII ♭VI V, four chords stepping down, heard in flamenco and many rock songs.',
- blues:'Twelve bars of I, IV and V: the form behind most blues and early rock and roll.'};
+ blues:'Twelve bars of I, IV and V (i, iv and V in a minor key): the form behind most blues and early rock and roll.'};
 const PLAN_TIP={strum:'Strum each chord, in the pattern picked in the Strum row.',both:'A bar of strumming, then a bar picking the same shape. The Strum and Pick rows choose each one, so any strum pairs with any pick.',
  mix:'A bar of strumming, then a bar running up or down the scale from the chord’s root to a note of the next chord, so the run leads into the change.',
  arp:'Hold the chord shape and pick it, in the style picked in the Pick row.'};
@@ -3626,9 +3673,11 @@ function renderSheet(){
   const tiles=cur.prog.map((p,i)=>`<button class="bar${p.voicing&&p.voicing.own?' own':''}${p.to-p.from<1?' split'+(p.from>0?' cont':''):''}" data-pci="${i}" aria-pressed="${i===cur.pci}"><span class="nm">${esc(p.ch.name)}</span><span class="rn">${p.ch.roman}${part(p)}</span><span class="fr">${p.voicing?fretText(p.voicing.frets):'picked'}</span></button>`).join('');
   const missing=[...new Set(cur.prog.filter(p=>!p.voicing).map(p=>p.ch.name))];
   const and=l=>l.length>1?l.slice(0,-1).join(', ')+' and '+l[l.length-1]:l[0]||'', nm=l=>and(l.map(iv=>noteName((cur.key+iv)%12)));
-  const B=cur.borrow, borrow=B?`Borrowed from ${B.name}: these chords use ${nm(B.out)} where ${keyName()} ${esc(modeName())} has ${nm(B.was)}, so the neck shows ${B.name}'s notes. Dashed dots are outside your focus.`:'';
+  const B=cur.borrow, fo=`${keyName()} ${esc(modeName()).replace(/^[A-Z](?=[a-z]+ (pentatonic|blues))/,c=>c.toLowerCase())}`;
+  const borrow=[B?`Borrowed from ${B.name}: ${B.out.length?`these chords use ${nm(B.out)}${B.was.length?` where ${fo} has ${nm(B.was)}`:`, which ${fo} doesn’t have`}, so `:''}the neck shows ${B.name}'s notes.`:'',
+    cur.cnote,B||cur.cnote?'Dashed dots are outside your focus.':''].filter(Boolean).join(' ');
   const notes=[borrow,missing.length&&D.plan!=='arp'&&!isLinePlan(D.plan)?`No voicing of ${missing.map(esc).join(', ')} fits this box, so ${missing.length===1?'it is':'they are'} picked instead.`:'',
-    cur.chords.length!==7&&!S?`${esc(modeName())} has too few notes to build these chords, so they come from ${keyName()} ${FAMS.major.modes[TO_DIATONIC[F.fam][F.mode]||0][0]}, the nearest 7-note mode${F.fam==='blues'?' (the blue note sits outside it)':''}.`:''].filter(Boolean).join(' ');
+    cur.chords.length!==7&&!S&&!PROG_FIX[D.prog]?`${esc(modeName())} has too few notes to build these chords, so they come from ${keyName()} ${FAMS.major.modes[TO_DIATONIC[F.fam][F.mode]||0][0]}, the nearest 7-note mode${F.fam==='blues'?' (the blue note sits outside it)':''}.`:''].filter(Boolean).join(' ');
   const title=`<b class="sh-title sh-static">${S?esc(S.name):D.prog==='one'?`${esc(cur.prog[0].ch.name)}, one chord`:esc((PROG_BY[D.prog]||PROG_BY.pop).name)}</b>`;
   el.innerHTML=`${songNote()}
     <div class="sh-top">${title}<span class="sh-sub">${sub}</span><span class="sh-no" id="barNo">bar ${cur.prog[cur.pci].bar+1} of ${n}</span></div>

@@ -552,7 +552,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     Q.mode('drill'); Object.assign(QX.F,{key:0,fam:'major',mode:0,pos:0}); Object.assign(QX.D,{prog:'blues',plan:'strum',sev:true,guide:'full'}); QX.saved.fing=true; QX.saved.bpm=120; QX.refresh(); QX.regen();
     ok(QX.cur.prog[0].ch.name==='C7'&&tag.textContent==='Show next: F7','next-skips-same-stopped',tag.textContent);
     qc(qd.querySelector('[data-act=play]')); Q.w.clearInterval(QX.met.timer); const seen=new Set();
-    for(let i=0;i<240;i++){Q.advance(0.125); await sleep(2); if(!tag.hidden) seen.add(QX.cur.chord.name+'>'+tag.textContent);}
+    for(let i=0;i<480;i++){Q.advance(0.0625); await sleep(2); if(!tag.hidden) seen.add(QX.cur.chord.name+'>'+tag.textContent);}
     qc(qd.querySelector('[data-act=play]'));
     const same=[...seen].filter(x=>x.split('>')[1]==='Next: '+x.split('>')[0]);
     ok(!same.length&&seen.has('C7>Next: F7')&&seen.has('G7>Next: F7'),'next-skips-same-playing',[...seen].join(', ')); }
@@ -621,6 +621,38 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     KX.F.pos=-1; KX.refresh(); K.mode('drill');
     KX.F.pos=KX.cur.pos[1].lo; KX.refresh(); K.mode('explore'); K.mode('drill'); ok(!kd.querySelector('.neck-wrap').classList.contains('roll'),'box-no-roll'); }
 
+  // borrowed chords: spelled from the mode they come from, each chord's own notes on the neck and in the lines, and a note that says so
+  { const T=await device(true), {d:td,X:TX}=T; T.mode('drill');
+    const opc=n=>([4,9,2,7,11,4][n.s]+n.f)%12, hint=()=>[...td.querySelectorAll('#sheet .hint')].map(e=>e.textContent).join(' ');
+    const set=(fam,mode,key,prog,sev,o={})=>{Object.assign(TX.F,{fam,mode,key,pos:0}); Object.assign(TX.D,{line:'prog',prog,sev,plan:'line',over:'through',sbg:''},o); TX.refresh(); TX.regen(); return TX.cur.prog.map(p=>p.ch.name).join(' ');};
+    const over=(ci,passes=3)=>{const s=new Set(); for(let k=0;k<passes;k++){TX.st.pbar=k*4; TX.genSeq().forEach(n=>{if(!n.chord&&!n.rest&&n.s!==undefined&&n.ci===ci) s.add(opc(n));});} TX.st.pbar=0; return s;};
+    const neck=ci=>{TX.setProgChord(ci); T.mode('explore'); T.mode('drill'); TX.setProgChord(ci); TX.regen(); return new Set([...td.querySelectorAll('#neck .cell')].filter(c=>c.querySelector('.dot')).map(c=>opc({s:+c.dataset.s,f:+c.dataset.f})));};
+    let t=set('major',0,1,'epic',false); ok(t==='C♯m A E B'&&/Borrowed from C♯ minor: these chords use E, A and B where D♭ Ionian \(major\) has F, B♭ and C/.test(hint()),'borrow-spell-db',t+' | '+hint());
+    t=set('major',0,3,'epic',false); ok(t==='E♭m C♭ G♭ D♭'&&/use G♭, C♭ and D♭/.test(hint()),'borrow-spell-eb',t+' | '+hint());
+    t=set('major',0,8,'andalusian',false); ok(t==='A♭m G♭ F♭ E♭','borrow-spell-ab',t);
+    t=set('major',1,8,'epic',false); ok(t==='A♭m F♭ C♭ G♭','borrow-spell-ab-dorian',t);
+    t=set('major',2,3,'flat7',false); ok(t==='E♭ D♭ A♭ E♭'&&/Borrowed from E♭ Mixolydian: these chords use F, G and C where D♯ Phrygian has E, F♯ and B/.test(hint()),'borrow-spell-mixo',t+' | '+hint());
+    t=set('harm',4,0,'andalusian',false); ok(/use D and E♭ where C Phrygian dominant has D♭ and E/.test(hint())&&!/D♯/.test(hint()),'borrow-spell-phrdom',hint());
+    // a major V in a minor progression takes harmonic minor's raised 7th: in its lines, its walk and on the neck
+    t=set('major',0,0,'andalusian',false);
+    ok(over(3).has(11)&&!over(3).has(10)&&over(0).has(10)&&/these chords use E♭, A♭ and B♭ where C Ionian \(major\) has E and A, so/.test(hint())&&/Over G the neck takes B, the raised 7th of C harmonic minor/.test(hint()),'borrow-v-harmonic',[...over(3)].join()+' | '+hint());
+    ok(neck(3).has(11)&&!neck(3).has(10)&&neck(0).has(10)&&TX.cur.prog[3].src==='C harmonic minor'&&TX.cur.prog[0].src==='C minor','borrow-v-neck',[...neck(3)].join());
+    set('major',0,0,'andalusian',false,{plan:'strum',sbg:'boom'}); {const w=TX.genSeq().filter(n=>n.walk&&n.ci===3).map(opc); ok(w.length&&!w.includes(10),'borrow-v-walk',w.join());}
+    set('major',0,0,'andalusian',false,{over:'restart'}); ok(over(3).has(11)&&!over(3).has(10),'borrow-v-restart',[...over(3)].join());
+    set('major',5,9,'andalusian',false); ok(over(3).has(8)&&!over(3).has(7)&&!TX.cur.borrow,'borrow-v-aeolian',[...over(3)].join());
+    set('harm',0,9,'251',true); ok(over(1).has(8)&&!over(1).has(7)&&neck(1).has(8)&&over(2).has(7)&&/Over Am7 the neck takes G/.test(hint()),'borrow-251-harmonic',[...over(1)].join()+' | '+hint());
+    set('major',1,9,'andalusian',false); ok(TX.cur.prog[3].src==='A harmonic minor'&&TX.cur.prog[2].src==='A minor','borrow-src-names',TX.cur.prog.map(p=>p.src).join());
+    // a blues of 7th chords: each takes its own Mixolydian
+    set('major',0,0,'blues',true); ok(!over(0).has(11)&&over(0).has(10)&&!over(4).has(4)&&over(4).has(3)&&over(8).has(11)&&/Each 7th chord takes its own Mixolydian: the neck takes B♭ over C7 and E♭ and B♭ over F7/.test(hint()),'borrow-blues-mixo',[...over(0)].join()+' / '+[...over(4)].join()+' | '+hint());
+    // a scale with fewer than 7 notes borrows the whole mode the chords come from, and says which
+    set('pent',0,9,'epic',false); ok(!over(0).has(1)&&!over(1).has(6)&&/Borrowed from A minor: these chords use C, D, F and G where A major pentatonic has C♯ and F♯/.test(hint())&&!/nearest 7-note mode|Ionian/.test(hint()),'borrow-pent-epic',[...over(0)].join()+' | '+hint());
+    set('pent',1,9,'flat7',false); ok(!over(0).has(0)&&over(0).has(1)&&/Borrowed from A Mixolydian/.test(hint())&&!/Aeolian/.test(hint()),'borrow-pent-flat7',hint());
+    set('blues',0,9,'blues',false); ok(/Borrowed from A minor/.test(hint())&&/Over E the neck takes G♯/.test(hint())&&!/nearest 7-note mode/.test(hint()),'borrow-blues-scale',hint());
+    // the progression tips: names and numerals built the same way, and numerals that don't contradict the focus
+    const tip=v=>{const m=td.querySelector('#exhead [data-act=pmenu][data-m=prog]'); if(m) T.click(m); const el=td.querySelector(`#exhead [data-row=prog][data-v="${v}"]`), s=el?TX.tipFor(el):''; if(m) T.click(m); return s||'';};
+    set('major',0,9,'pop',true); ok(/In A: Amaj7 Dmaj7 \(Imaj7 IVmaj7\)/.test(tip('two')),'prog-tip-sevenths',tip('two'));
+    set('major',5,9,'pop',false); ok(/I V vi IV in a major key/.test(tip('pop'))&&/\(i v ♭VI iv\)/.test(tip('pop')),'prog-tip-minor',tip('pop'));
+  }
   // phone layout text
   B.mode('practice'); ok(!/undefined|NaN|\[object/.test(B.d.querySelector('.app').textContent),'phone-text-path');
   console.log('log checks done, bad',bad); process.exit(bad?1:0);
