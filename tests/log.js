@@ -653,6 +653,14 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     set('major',0,9,'pop',true); ok(/In A: Amaj7 Dmaj7 \(Imaj7 IVmaj7\)/.test(tip('two')),'prog-tip-sevenths',tip('two'));
     set('major',5,9,'pop',false); ok(/I V vi IV in a major key/.test(tip('pop'))&&/\(i v ♭VI iv\)/.test(tip('pop')),'prog-tip-minor',tip('pop'));
   }
+  // notes per beat changes nothing a strum plays, so a strum's best is its fastest clean bpm; a line's is still notes per minute;
+  // a song's changes are done when any clean run reaches the goal
+  {const sid='prog:0:major:0:0:pop:strum:faithful', bid='box:3:major:0:5', E=(id,n,bpm,sub)=>({id:'bx'+n,skill:id,t:n,secs:60,bpm:[bpm,bpm],sub,clean:bpm});
+   X.LOG.sessions.push({id:'sbest',start:0,end:0,entries:[E(sid,1,100,2),E(sid,2,60,4),E(bid,3,100,2),E(bid,4,60,4)]});
+   const sb=X.bestOf(sid), lb=X.bestOf(bid), ss=X.stepState({key:0,fam:'major',mode:0,pos:0,line:'prog',prog:'pop',plan:'strum',rpat:'faithful',sbg:'',pick:'arp',goal:80});
+   ok(X.setupSkill({key:0,fam:'major',mode:0,pos:0,line:'prog',prog:'pop',plan:'strum',rpat:'faithful',sbg:'',pick:'arp'})===sid&&sb&&sb.bpm===100&&ss.done&&ss.best.bpm===100,'best-strum-bpm',JSON.stringify([sb,ss]));
+   ok(lb&&lb.bpm===60&&lb.sub===4,'best-line-notes',JSON.stringify(lb));
+   X.LOG.sessions.pop();}
   // phone layout text
   B.mode('practice'); ok(!/undefined|NaN|\[object/.test(B.d.querySelector('.app').textContent),'phone-text-path');
   console.log('log checks done, bad',bad); process.exit(bad?1:0);

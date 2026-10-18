@@ -180,6 +180,69 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
     // back to scale lines brings the old controls back
     bc('prog','one'); bc('plan','line');
     if(!d.querySelector('#exhead [data-row=lpat]')||X.D.line!=='scale'||X.cur.prog) fail('scale','scale lines not restored');
+    if(wide){
+      const tip=el=>el?X.tipFor(el).replace(/<[^>]+>/g,''):'';
+      // every scale-line pass fills whole bars, rests after the last root, so each pass starts on beat 1 and strict
+      // alternate picking stays down on the beat across passes
+      bc('tech','altpick');
+      for(const sub of [1,2,3,4]) for(const pat of ['updown','thirds','g3','g4','strings']){
+        X.D.sub=sub; X.D.pattern=pat; X.regen(); const s=X.st.seq, tag=`sub=${sub} ${pat}`, notes=s.filter(n=>!n.rest);
+        if(s.length%(4*sub)) fail('pass-bars',`${tag} ${s.length}`);
+        if(s.findIndex(n=>n.rest)>=0&&s.slice(s.findIndex(n=>n.rest)).some(n=>!n.rest)) fail('pass-rests',tag);
+        if(pcOf(notes[0].s,notes[0].f)!==X.cur.key||pcOf(notes[notes.length-1].s,notes[notes.length-1].f)!==X.cur.key) fail('pass-root',tag);
+        if(s.some((n,j)=>!n.rest&&n.pk!==(j%2?'↑':'↓'))) fail('altpick-marks',tag);
+      }
+      {X.D.sub=2; X.D.pattern='updown'; X.regen(); Object.assign(X.D,{click:true,notes:true,ramp:0}); X.saved.bpm=60; log.length=0; w.__now=0;
+       click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer);
+       const len=X.st.seq.length, t0=X.met.next+4, stop=t0+len*0.5*2.2; while(w.__now<stop){w.__now+=0.01; X.schedule();}
+       click(d.querySelector('[data-act=play]'));
+       const acc=log.filter(e=>e.type==='sine'&&e.f===1760).map(e=>e.t), steps=log.filter(e=>e.type==='triangle').map(e=>Math.round((e.t-t0)/0.5));
+       if(acc.length<5||acc.some((t,i)=>i&&Math.abs(t-acc[i-1]-4)>1e-6)) fail('pass-accents',acc.join(' '));
+       if(!steps.includes(len)||!acc.some(t=>Math.abs(t-(t0+len*0.5))<1e-6)) fail('pass2-downbeat',`${len} ${t0}`);
+       const last=d.querySelector(`#tab .tcol[data-j="${len-1}"]`);
+       if(X.st.seq[len-1].rest&&!/line has finished/.test(tip(last))) fail('rest-tip-line',tip(last));}
+      // the strict alternate picking tip is right for every notes per beat
+      {const t=tip(d.querySelector('#exhead [data-row=tech][data-v=altpick]'));
+       if(!/in 16ths down on 1 and &, up on e and a/.test(t)||!/quarter notes down on 1 and 3, up on 2 and 4/.test(t)||!/1↓ trip↑ let↓, 2↑ trip↓ let↑/.test(t)) fail('altpick-tip',t);}
+      bc('tech','any');
+      // Strum the chord each bar: the rest after the strum lets the chord ring
+      X.D.pad=true; X.D.sub=2; X.regen();
+      {const t=tip(d.querySelector('#tab .tcol[data-j="1"]')); if(!X.st.seq[0].chord||!X.st.seq[1].rest||!/let the chord ring/.test(t)||/finished/.test(t)) fail('rest-tip-chord',t);}
+      X.D.pad=false; X.regen();
+      // constant motion: down on the beats (and the & in 16ths), up in between
+      {const g=d.createElement('span'); g.dataset.term='motion'; const t=tip(g); if(!/down on the beats \(and on the & in 16ths\), up on the steps in between: the & in 8ths, the e and a in 16ths/.test(t)) fail('motion-gloss',t);}
+      if(X.RPAT.oneand.name!=='Down on 1, then the ands of 2, 3 and 4'||X.RPAT.oneand.steps!=='x..x.x.x') fail('oneand-name',X.RPAT.oneand.name);
+      // a shuffle pattern's & lands two thirds of the way to the next beat, a straight one's halfway
+      bc('prog','pop'); bc('plan','strum'); strum('eighths');
+      {const sh=tip(d.querySelector('#exhead [data-row=rpat][data-v=shuffle]')), st8=tip(d.querySelector('#exhead [data-row=rpat][data-v=eighths]'));
+       if(!/two thirds of the way to the next beat/.test(sh)||/halfway/.test(sh)) fail('shuffle-tip',sh);
+       if(!/halfway to the next beat/.test(st8)) fail('straight-tip',st8);}
+      // boom-chuck chucks are downstrokes: the tab arrow, the sound and the tooltip all say down
+      strum('boom');
+      {const j=X.st.seq.findIndex(n=>n.chord&&n.k%2===1), c=d.querySelector(`#tab .tcol[data-j="${j}"]`), t=tip(c);
+       if(j<0||!X.st.seq[j].down||c.querySelector('.dg').textContent!=='↓'||!/, down\./.test(t)||/\bup\b/.test(t)) fail('boom-chuck-tip',`${j} ${t}`);}
+      // an arpeggio goes low to high and back down, as its tip says
+      bc('plan','arp'); bc('pick','arp');
+      {const t=tip(d.querySelector('#exhead [data-row=pick][data-v=arp]')), b0=X.st.seq.filter(n=>n.bar===0).map(n=>n.s), top=b0.indexOf(Math.max(...b0));
+       if(!/low to high and back down/.test(t)||top<1||top>=b0.length-1||b0.slice(0,top+1).some((s,i)=>i&&s<=b0[i-1])||b0[top+1]>=b0[top]) fail('arp-tip',`${t} ${b0}`);}
+      // the alternating bass is a second chord tone on a bass string whenever the shape can reach one, never the root again
+      {const alt={};
+       for(const sev of [false,true]) for(const key of [0,7,2,9,4,5,10]){ X.D.sev=sev; change('#selKey',key);
+         for(const [pid] of X.PROGS){ bc('prog',pid);
+           for(const how of ['thumb','boom']){
+             if(how==='thumb'){bc('plan','arp'); bc('pick','thumb');} else {bc('plan','strum'); strum('boom');}
+             const s=X.st.seq;
+             for(const n of s){ if(n.k!==0||n.bg!==how) continue; const p=X.cur.prog[n.ci], a=s.find(m=>m.bar===n.bar&&m.k===2&&!m.chord);
+               if(!a||a.walk) continue; const nm=p.ch.name+' '+p.voicing.frets.map(f=>f??'x').join('');
+               if(pcOf(a.s,a.f)===pcOf(n.s,n.f)||!p.pcs.has(pcOf(a.s,a.f))||a.s>2) fail('alt-bass',`${how} ${nm} root s${n.s}f${n.f} alt s${a.s}f${a.f}`);
+               alt[nm]=a.s+':'+a.f;}
+           }}}
+       X.D.sev=false; change('#selKey',7);
+       const want={'G7 323003':'1:2','Fmaj7 1x221x':'1:3','Gmaj7 3x443x':'1:5','Emaj7 0x110x':'1:2','C x32010':'0:3','Am x02210':'0:0','Bm x24432':'0:2','G 320003':'2:0'};
+       for(const [nm,v] of Object.entries(want)) if(alt[nm]&&alt[nm]!==v) fail('alt-bass-known',`${nm} ${alt[nm]} want ${v}`);
+       if(!alt['C x32010']||!alt['G 320003']) fail('alt-bass-coverage',Object.keys(alt).length);}
+      bc('plan','both'); bc('pick','arp'); strum('faithful'); bc('prog','one'); bc('plan','line');
+    }
   }
   console.log('progression combos checked',checked,'played',played,'bad',bad);
   process.exit(bad?1:0);

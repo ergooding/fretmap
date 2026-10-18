@@ -1499,14 +1499,24 @@ const TECH={altpick:'alternate picking',slurs:'hammer-ons and pull-offs'};
 const nOf=(s,f)=>({s,f,m:MIDI[s]+capo()+f});
 function bassOf(v){const s=v.frets.findIndex(f=>f!==null); return nOf(s,v.frets[s]);}
 function altOf(p){
-  // the alternating bass note: the chord's 5th (or, in a chord without one, its other lowest-sounding tone), on the string
-  // below the root when a fretting finger can reach it (C: low E 3rd fret), otherwise where the shape already has it (G: open D)
+  // the alternating bass note: the chord's 5th, or failing that its ♭5, ♯5, 3rd or ♭3, on a bass string (low E, A or D) so the
+  // thumb stays below the fingers: on the string below the root when a fretting finger can reach it (C: low E 3rd fret), where
+  // the shape already has it (G: open D; G7 323003: B on the A string), on a muted bass string a finger can reach with the
+  // shape held (Fmaj7 1x221x: C on the A string 3rd fret), or lower down. Only when none works does the root repeat.
   const v=p.voicing, b=bassOf(v), R=p.ch.root, rel=p.ch.rel.slice(0,p.ch.core||p.ch.rel.length);
-  const want=[7,6,8,4,3].map(i=>rel.includes(i)?(R+i)%12:null).find(x=>x!==null&&x!==pc(b.s,b.f));
-  if(want===undefined) return b;
+  const want=[7,6,8,4,3].filter(i=>rel.includes(i)).map(i=>(R+i)%12).filter(x=>x!==pc(b.s,b.f));
   const top=Math.max(3,...v.frets.filter(f=>f!==null));
-  if(b.s>0) for(let f=0;f<=top;f++) if(pc(b.s-1,f)===want) return nOf(b.s-1,f);
-  for(let s=b.s+1;s<=Math.min(5,b.s+2);s++) if(v.frets[s]!==null&&pc(s,v.frets[s])===want) return nOf(s,v.frets[s]);
+  const fits=F=>{const fr=F.filter(x=>x); return !fr.length||Math.max(...fr)-Math.min(...fr)<=3&&!!fingering(F);}; // four frets, four fingers
+  const reach=(s,f)=>{if(f===0) return true; const F=v.frets.slice(); F[s]=f; if(fits(F)) return true;
+    if(!b.f) return false; F[b.s]=null; return fits(F);}; // the root's finger can move there, as C's does to the low E
+  const find=(s,x)=>{for(let f=0;f<=top+2;f++) if(pc(s,f)===x&&reach(s,f)) return nOf(s,f); return null;};
+  for(const x of want){
+    if(b.s>0){const n=find(b.s-1,x); if(n) return n;}
+    for(let s=b.s+1;s<=2;s++) if(v.frets[s]!==null&&pc(s,v.frets[s])===x) return nOf(s,v.frets[s]);
+    for(let s=b.s+1;s<=2;s++) if(v.frets[s]===null){const n=find(s,x); if(n) return n;}
+    for(let s=b.s-2;s>=0;s--){const n=find(s,x); if(n) return n;}
+  }
+  for(const x of want) for(let s=b.s+1;s<=Math.min(5,b.s+2);s++) if(v.frets[s]!==null&&pc(s,v.frets[s])===x) return nOf(s,v.frets[s]);
   return b;
 }
 function walkTo(from,to){
@@ -1730,7 +1740,8 @@ function runBar(ci,nci,L){
 function genSeq(){
   if(D.line==='prog') return genProg();
   let seq=techMarks(genLine());
-  if(!D.pad||!cur.voicing||!seq.length) return seq;
+  if(!D.pad||!cur.voicing||!seq.length){ // rests after the last root fill out its bar, so every pass starts on beat 1
+    while(seq.length%(4*D.sub)) seq.push({rest:true}); return seq;}
   // Chord each bar: every bar opens with the chord on beat 1, and the line fills beats 2 to 4
   const out=[], per=3*D.sub; let i=0;
   while(i<seq.length){
@@ -1931,7 +1942,7 @@ const RPATS=[
   ['faithful','Down, down-up, up-down-up',8,'x.xx.xxx'],
   ['dddu','Down, down-up, down, down-up',8,'x.xxx.xx'],
   ['push','Down, down-up, up-down',8,'x.xx.xx.'],
-  ['oneand','Down on 1, then the ands',8,'x..x.x.x'],
+  ['oneand','Down on 1, then the ands of 2, 3 and 4',8,'x..x.x.x'],
   ['skank','Upstrokes on the ands only',8,'.x.x.x.x']]],
  ['16ths',[
   ['sixteenths','Straight 16ths',16,'xxxxxxxxxxxxxxxx'],
@@ -2055,9 +2066,14 @@ function logAnswer(iv,ok){
   saveLog();
 }
 function findEntry(id){for(let i=LOG.sessions.length-1;i>=0;i--){const e=LOG.sessions[i].entries.find(e=>e.id===id); if(e) return e;} return null;}
-const score=b=>b?b.bpm*b.sub:0; // notes per minute, so 80 bpm in 16ths beats 120 bpm in 8ths
-function bestOf(id){ // fastest run marked clean, in notes per minute
-  let b=null; LOG.sessions.forEach(s=>s.entries.forEach(e=>{ if(e.skill===id&&e.clean){const x={bpm:e.clean,sub:e.sub,t:e.t}; if(score(x)>score(b)) b=x;} }));
+const score=(b,per=true)=>b?b.bpm*(per?b.sub||1:1):0; // notes per minute, so 80 bpm in 16ths beats 120 bpm in 8ths
+function subCounts(id){ // does notes per beat change what a skill plays? Lines and arpeggios, yes; strums, boom-chuck, crosspicking and Travis, no
+  const p=id.split(':'); if(p[0]!=='prog') return true; const x=skillPlay(p);
+  return isLinePlan(x.plan)||x.plan==='mix'||(x.plan==='arp'||x.plan==='both')&&x.pick==='arp';
+}
+function bestOf(id){ // fastest run marked clean, in notes per minute (in bpm when notes per beat changes nothing)
+  const per=subCounts(id); let b=null;
+  LOG.sessions.forEach(s=>s.entries.forEach(e=>{ if(e.skill===id&&e.clean){const x={bpm:e.clean,sub:e.sub,t:e.t}; if(score(x,per)>score(b,per)) b=x;} }));
   return b;
 }
 function toggleClean(){ const e=lg.last; if(!e) return; if(e.clean) delete e.clean; else e.clean=e.bpm[1]; saveLog(); render(); }
@@ -2632,7 +2648,8 @@ function setupSkill(s){
   return line==='prog'?`prog:${s.key}:${s.fam}:${s.mode}:${wh}:${s.prog==='one'&&+s.chord?'one-'+s.chord:s.prog}:${s.plan}:${isLinePlan(s.plan)?lineId(s):playId(s,s.rpat)}`
     :`box:${s.key}:${s.fam}:${s.mode}:${wh}${TECH[s.tech]?':'+s.tech:TECH[s.pattern]?':'+s.pattern:''}`;
 }
-function stepState(s){ const b=bestOf(setupSkill(s)); return {best:b,done:!!b&&b.bpm>=s.goal}; } // a song's changes, clean at its goal
+function stepState(s){ const id=setupSkill(s); // a song's changes, clean at its goal: any clean run at the goal or faster
+  return {best:bestOf(id),done:LOG.sessions.some(x=>x.entries.some(e=>e.skill===id&&e.clean>=s.goal))}; }
 function songSteps(){
   return Object.entries(LOG.skills).filter(([id,s])=>s.kind==='song'&&!s.gone).sort((a,b)=>(a[1].added||0)-(b[1].added||0)).map(([id,s])=>({id,s}));
 }
@@ -3060,7 +3077,7 @@ const PROG_TIP={one:'Stay on a single chord the whole time, picked in the Over r
 const PLAN_TIP={strum:'Strum each chord, in the pattern picked in the Strum row.',both:'A bar of strumming, then a bar picking the same shape. The Strum and Pick rows choose each one, so any strum pairs with any pick.',
  mix:'A bar of strumming, then a bar running up or down the scale from the chord’s root to a note of the next chord, so the run leads into the change.',
  arp:'Hold the chord shape and pick it, in the style picked in the Pick row.'};
-const PICK_TIP={arp:'Pick the chord’s notes one string at a time, low to high.',roll:'Bluegrass crosspicking. Roll across three strings with strict alternate picking, in groups of 3, 3 and 2, so it sounds like a banjo roll.',
+const PICK_TIP={arp:'Pick the chord’s notes one string at a time, low to high and back down.',roll:'Bluegrass crosspicking. Roll across three strings with strict alternate picking, in groups of 3, 3 and 2, so it sounds like a banjo roll.',
  thumb:'Travis picking. Your thumb swaps between two bass notes on every beat while your fingers pick the high strings in between.'};
 const BOOM_TIP='Bluegrass rhythm. A bass note on beats 1 and 3, a short strum of the high strings on 2 and 4, and the bass walks into each new chord.';
 const LINE_TIP={updown:'Every note of the scale in this box, from the root to the highest note, down to the lowest, and back to the root.',
@@ -3071,7 +3088,7 @@ const LINE_TIP={updown:'Every note of the scale in this box, from the root to th
  enclose:'Sneak up on each chord note: play the scale note just above it, then the one just below, then land on it.',
  walk:'A new made-up line every pass. Any scale note can pass by, but every beat lands on a note of the chord. The closest thing here to improvising.'};
 const TECH_TIP={any:'Pick however feels natural.',
- altpick:'Down, up, down, up, with no exceptions, even when you change strings: down on the beat, up on the “and”. It builds speed and even timing, and it’s the core of bluegrass flatpicking.',
+ altpick:'Down, up, down, up, with no exceptions, even when you change strings. In 8ths that’s down on the beat, up on the “and”; in 16ths down on 1 and &, up on e and a; in quarter notes down on 1 and 3, up on 2 and 4; in triplets the stroke flips each beat: 1↓ trip↑ let↓, 2↑ trip↓ let↑. It builds speed and even timing, and it’s the core of bluegrass flatpicking.',
  slurs:'Pick only the first of each pair of notes on a string. Going up, hammer a finger down for the next note (h). Coming down, pull it off (p).'};
 const WHERE_TIP={focus:'Use the position picked in the bar at the top.',open:'The first few frets, using open strings, where the first chords you learned live.',
  cycle:'One pass in each CAGED shape, moving up the neck. CAGED names the shapes of the C, A, G, E and D chords, which fit together to cover the neck.',
@@ -3101,7 +3118,7 @@ function bTip(k,v,l,done,goal){
   else if(k==='over') t=v==='restart'?'Start the pattern again from each new chord’s root. It’s easier to hear each chord change.':'One long pass of the pattern while the chords go round underneath. It sounds the most like a solo.';
   else if(k==='rpat'){
     if(v==='boom') t=BOOM_TIP+ex('Boom, chuck, boom, chuck');
-    else{const P=v==='custom'?(R.pat==='custom'?curPat():{...R.custom,id:'custom'}):RPAT[v]; t=`${v==='custom'?'The pattern you make by clicking the steps in the strum card. ':''}${counting(P)}. A number is a strum on the beat${P.res===16?', e, & and a split the beat in four':', & is the strum halfway to the next beat'}, and a count in brackets is a miss: the hand keeps moving but skips the strings.${songNow()?' It’s saved with the song.':''}`;}}
+    else{const P=v==='custom'?(R.pat==='custom'?curPat():{...R.custom,id:'custom'}):RPAT[v], sw=v==='custom'||v===R.pat?!!R.swing:!!P.swing; t=`${v==='custom'?'The pattern you make by clicking the steps in the strum card. ':''}${counting(P)}. A number is a strum on the beat${P.res===16?(sw?', e, & and a split the beat, shuffled: the e lands late, two thirds of the way from the beat to the &, and the a two thirds of the way from the & to the next beat':', e, & and a split the beat in four'):(sw?', & is the strum between beats, shuffled: it lands late, two thirds of the way to the next beat':', & is the strum halfway to the next beat')}, and a count in brackets is a miss: the hand keeps moving but skips the strings.${songNow()?' It’s saved with the song.':''}`;}}
   else if(k==='pick') t=PICK_TIP[v];
   else if(k==='where') t=WHERE_TIP[v]+(v==='cycle'&&cur.pos.some(p=>p.shape)?ex(`In ${key}: ${cur.pos.map(p=>p.shape+' shape').join(', ')}`):'');
   else if(k==='pos'){const p=cur.pos.find(p=>p.lo===+v); t=`${p?`frets ${p.lo}–${p.hi}`:''}: the pass in this shape.${+v===F.pos?' It’s the one playing now.':' Click to jump to it.'}`;}
@@ -3695,9 +3712,9 @@ function strumOwnerHTML(){
 }
 function beatsText(f){const b=Math.round(f*4*1000)/1000; return Number.isInteger(b)?`${b} beat${b===1?'':'s'}`:`${b} beats`;}
 const BG_HOW={
-  boom:`<b>Boom-chuck.</b> Pick the chord's root on beat 1 and its 5th on beat 3, and strum just the treble strings on 2 and 4, all with downstrokes. In the bar before a new chord, the bass walks to that chord's root on beats 3 and 4.`,
+  boom:`<b>Boom-chuck.</b> Pick the chord's root on beat 1 and its 5th on beat 3 (the 3rd when the shape can't reach a 5th on a bass string), and strum just the treble strings on 2 and 4, all with downstrokes. In the bar before a new chord, the bass walks to that chord's root on beats 3 and 4.`,
   roll:`<b>Crosspicking.</b> Roll across the top three strings of each shape, low to high, in 8ths: two rolls of three and one of two fill the bar. Keep the pick strict: down on every beat, up on every and.`,
-  thumb:`<b>Travis picking.</b> The thumb (p) alternates the root and the 5th on every beat. The index finger (i) picks the G string and the middle finger (m) the B string, on the ands.`};
+  thumb:`<b>Travis picking.</b> The thumb (p) alternates the root and the 5th on every beat (the 3rd when the shape can't reach a 5th on a bass string). The index finger (i) picks the G string and the middle finger (m) the B string, on the ands.`};
 function strumCard(){
   const pk=picks(D)&&D.pick!=='arp'?BG_HOW[D.pick]:'', boom=strums(D)&&D.sbg==='boom';
   const how=list=>`<div class="strum-card"><p class="hint">${list.filter(Boolean).join(' ')} The tab shows the ${D.pick==='thumb'&&pk?'finger':'pick stroke'} for each ${D.plan==='mix'?'boom-chuck ':''}note.</p></div>`;
@@ -4137,7 +4154,7 @@ const GLOSS_GROUPS=[
   ['countin','Count-in','A bar of clicks before the drill starts so you can feel the tempo.'],
   ['tab','Tab','Guitar notation: six lines for the strings, high E on top, with fret numbers showing where to play.'],
   ['strum','Strumming pattern','Which beats and in-between beats you strike the strings on, and in which direction. Here a pattern sits on a grid of 8ths or 16ths.'],
-  ['motion','Constant motion','The strumming hand never stops: down on the beats and the &s, up on the steps in between (the & in 8ths, the e and a in 16ths), even when it misses the strings. It keeps your time steady and makes the direction of every strum automatic.'],
+  ['motion','Constant motion','The strumming hand never stops: down on the beats (and on the & in 16ths), up on the steps in between: the & in 8ths, the e and a in 16ths, even when it misses the strings. It keeps your time steady and makes the direction of every strum automatic.'],
   ['counting','Counting 8ths and 16ths','Say the beat number on each beat. 8ths add “and” (&) between beats: 1 & 2 &. 16ths add “e” and “a” as well: 1 e & a 2 e & a.'],
   ['ghost','Ghost strum','The hand keeps moving through the strum but misses the strings, so the motion stays even. Faded in the grid and in brackets when counted.'],
   ['chuck','Chuck (muted strum)','A percussive strum with the fretting hand resting on the strings so they don’t ring. Shown as × in the grid.'],
@@ -4219,7 +4236,7 @@ const PAT_TIP={updown:'Every scale note in the box: from the root up to the top,
  thirdsX:'Skip every other note of the scale. Only a 7-note scale makes every skip a 3rd: here some skips are bigger or smaller, such as the 3rds and 4ths of a pentatonic.',
  g3:'Runs of three notes from the root, moving up one note each time to the top, then the same coming down, and back up to the root.',
  g4:'Runs of four notes from the root, moving up one note each time to the top, then the same coming down, and back up to the root.',
- altpick:'Up and down the scale from the root with strict alternate picking: a downstroke on every beat and an upstroke on every and, even across strings. The tab shows each stroke.',
+ altpick:'Up and down the scale from the root with strict alternate picking: down, up, down, up on every note, even across strings. The tab shows each stroke.',
  slurs:'Up and down the scale from the root, picking only the first of each pair of notes on a string: going up, hammer on the next one (h); coming down, pull off to it (p).',
  arp:'Only the chord tones in the box, from the root up to the top, down to the bottom, and back to the root.',
  enclose:'Approach each chord tone from the scale note above, then below, then land on it.',
@@ -4245,10 +4262,12 @@ function cellTip(el){
 }
 function tabTip(el){
   const n=st.seq[+el.dataset.j]; if(!n) return '';
-  if(n.rest) return '<b>Rest</b>: the line has finished, so let the last note ring to the end of the bar.';
+  if(n.rest){let i=+el.dataset.j-1; while(i>=0&&st.seq[i].rest) i--; // a rest right after a strum lets the chord ring
+    if(st.seq[i]&&st.seq[i].chord) return `<b>Rest</b>: let the chord ring${!cur.prog&&D.pad?' until the line comes in on beat 2':''}.`;
+    return '<b>Rest</b>: the line has finished, so let the last note ring to the end of the bar.';}
   if(cur.prog&&n.ci!==undefined){
     const keep=cur.pci; setProgChord(n.ci); let t;
-    if(n.chord){const L=countLabels(n.n)[n.k], dir=n.k%2?'up':'down';
+    if(n.chord){const L=countLabels(n.n)[n.k], dir=(n.down??n.k%2===0)?'down':'up';
       t=`<b>${cur.chord.name}</b> (${cur.chord.roman}), ${n.strum==='.'?`(${L})`:L}: ${n.strum==='.'?`ghost, the hand moves ${dir} past the strings`:`${STEP_NAME[n.strum]}, ${dir}`}.`+(n.head?` Voicing ${cur.voicing.frets.map(f=>f===null?'x':f).join(' ')}, low to high.`:'');}
     else t=`${degreeText(n)}<br>${STR_NAME[n.s]} string, fret ${n.f}, finger ${finger(n)}.`;
     setProgChord(keep); return t;
