@@ -299,6 +299,15 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     ok(/D♯ instead of D and F♯ instead of F/.test(card()),'audit-explore-b7',card().slice(0,400));
     click(d.querySelector('.cchips [data-act=exch][data-n="F"]'));
     ok(/F Lydian, and its ♯4 \(B\)/.test(card()),'audit-explore-lydian',card().slice(0,400));
+    // a 2nd over a 3rd is a 9th; a secondary dominant is a dominant chord; the home chord's shared notes are counted
+    X.saveParts('song:here-pavement',[{name:'Verse',text:'C Cadd9 Cm9 Csus2 Am7 Esus4 Dmaj7 Gb D7'}]); sk.minor=false; sk.key=0; mode('drill'); mode('explore');
+    const pick=n=>{click(d.querySelector(`.cchips [data-act=exch][data-n="${n}"]`)); return card();};
+    ok(/D9 of C/.test(pick('Cadd9'))&&/D9 of C/.test(pick('Cm9'))&&/D2 of C/.test(pick('Csus2')),'audit-explore-ninth',pick('Cadd9').slice(0,200));
+    ok(!/secondary dominant/.test(pick('Dmaj7'))&&!/secondary dominant/.test(pick('G♭'))&&/the V of G\b/.test(pick('D7')),'audit-explore-secdom',pick('G♭').slice(0,200));
+    ok(/shares three notes with C \(C, E and G\)/.test(pick('Am7'))&&/shares one note with C \(E\)/.test(pick('Esus4')),'audit-explore-shares',pick('Am7').slice(0,200));
+    sk.voicings={...(sk.voicings||{}),D7:'5x4775'}; X.D.prog='song:here-pavement'; X.D.plan='strum'; X.refresh();
+    const ov=X.cur.prog.find(p=>p.ch.name==='D7'); ok(ov&&ov.voicing.own&&ov.voicing.frets.join()==='5,,4,7,7,5','audit-own-voicing-kept',ov&&JSON.stringify(ov.voicing));
+    delete sk.voicings.D7;
     Object.assign(sk,keep); X.saveParts('song:here-pavement',[{name:'Verse',text:'A/C#, D, A'}]); mode('drill'); mode('explore'); }
   { const f0={...X.F}, sev=X.D.sev, plan=X.D.plan, prog=X.D.prog, fm=X.saved.fmode;
     X.saved.fmode='key'; X.D.sev=false;
@@ -312,6 +321,17 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     ok(pr('blues',0,'major',0,true).split(' ').every(n=>/^[CFG]7$/.test(n)),'audit-blues7',pr('blues',0,'major',0,true));
     ok(pr('251',9,'major',5,true)==='Bm7♭5 E7 Am7 Am7','audit-minor-251',pr('251',9,'major',5,true));
     ok(['Bdim','Bm7b5','Gdim7','Caug'].map(n=>X.chordIn(n,0).roman).join(' ')==='vii° viiø7 v°7 I+','audit-romans',['Bdim','Bm7b5','Gdim7','Caug'].map(n=>X.chordIn(n,0).roman).join(' '));
+    // numerals count letters from the key's tonic letter: G♯° is ♯v° in C, not ♭vi°, and the bass the same way
+    { const rn=['G#dim','C#dim','Gb7','E/G#','B7/D#','Ab/Gb'].map(n=>X.chordIn(n,0).roman).join(' ');
+      ok(rn==='♯v° ♯i° ♭V7 III/♯5 VII7/♯2 ♭VI/♭5'&&X.chordIn('G#',1,0).roman==='V'&&X.chordIn('Ab',1).roman==='V','audit-romans-letters',rn); }
+    // every voicing Fretmap picks can be fingered with four fingers, in Drill and for typed chords; the aug E shape stays in open position
+    { let bad=[]; const fz=v=>v.frets.map(f=>f===null?'x':f).join(' ');
+      for(const [key,fam] of [[4,'major'],[3,'major'],[0,'major'],[6,'major'],[2,'harm']]) for(const pos of [-1,...(Object.assign(X.F,{key,fam,mode:0,pos:-1}),X.refresh(),X.cur.pos.map(p=>p.lo))]) for(const sev of [false,true]){
+        Object.assign(X.F,{key,fam,mode:0,pos}); X.D.sev=sev; X.D.prog='one'; X.D.plan='line';
+        for(let c=0;c<7;c++){X.D.chord=c; X.refresh(); const v=X.cur.voicing; if(!v||!X.fingering(v.frets)) bad.push(`${key}/${fam}/${pos} ${X.cur.chord.name} ${v?fz(v):'none'}`);} }
+      X.D.chord=0;
+      const typed=['G7sus4','Gm9','Fsus2','F5','Abmaj7','Abm7','Faug','F#add9'].filter(n=>{const v=X.autoVoicing(n,0); return !v||!X.fingering(v);});
+      ok(!bad.length&&!typed.length&&X.autoVoicing('E+',0).join()==='0,3,2,1,1,0','audit-voicings-fingered',bad.slice(0,4).join(' | ')+' typed: '+typed.join(' ')); }
     // the Drill neck matches its text: no dot the scale line skips, chord tones solid, the start and end note ringed
     Object.assign(X.F,{key:0,fam:'major',mode:0,pos:0}); Object.assign(X.D,{prog:'one',plan:'line',chord:1,resolve:'key',pattern:'updown',tech:'any',sev:false}); X.saved.fmode='key'; X.refresh(); mode('drill');
     const dt=(s,f)=>d.querySelector(`.cell[data-s="${s}"][data-f="${f}"] .dot`), per=(/Notes on each string, low E to high e: ([\d ]+)\./.exec(d.getElementById('sheet').textContent+d.getElementById('voiceCard').textContent)||[])[1]; // on desktop the chord card holds the neck key
@@ -471,7 +491,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   // Fingers: a strummed chord numbers its shape by finger; the next chord previews on the neck (in the last beat, or held with the Next button)
   { const Q=await device(true), {d:qd,X:QX}=Q, qc=Q.click, cell=(s,f)=>qd.querySelector(`.cell[data-s="${s}"][data-f="${f}"] .dot`);
     const fs=t=>{const r=QX.fingering([...t].map(c=>c==='x'?null:+c)); return r?r.fing.map(x=>x===null?'x':x).join('')+(r.barre?' b'+r.barre.f:''):'none';};
-    const want={x32010:'x32010','320003':'210003',xx0232:'xx0132',x02210:'x02310',x32310:'x32410','133211':'134211 b1',x24432:'x13421 b2',x24232:'x13121 b2',x32000:'x32000','123456':'none'};
+    const want={x32010:'x32010','320003':'210003',xx0232:'xx0132',x02210:'x02310',x32310:'x32410','133211':'134211 b1',x24432:'x13421 b2',x24232:'x13121 b2',x32000:'x32000','123456':'none','3x443x':'2x341x','1x221x':'2x341x'};
     const got=Object.keys(want).map(k=>fs(k)); ok(got.join()===Object.values(want).join(),'fing-shapes',got.join(' '));
     Q.mode('drill'); QX.D.sev=false; Object.assign(QX.F,{key:0,fam:'major',mode:0,pos:0}); QX.refresh();
     qc(qd.querySelector('#exhead [data-act=bchip][data-row=prog][data-v="pop"]')); qc(qd.querySelector('#exhead [data-act=bchip][data-row=plan][data-v="strum"]'));
@@ -527,6 +547,15 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     // a scale line keeps degree labels
     qc(qd.querySelector('#exhead [data-act=bchip][data-row=plan][data-v="line"]'));
     ok(!qd.querySelector('.dot.fing')&&qd.getElementById('nextTag').hidden&&br.style.display==='none','fing-not-on-lines',[QX.D.plan,!!qd.querySelector('.dot.fing'),br.style.display].join()); }
+  // the next-chord preview skips more bars of the same chord: the 12-bar blues in C never says "Next: C7" over C7
+  { const Q=await device(true), {d:qd,X:QX}=Q, qc=Q.click, tag=qd.getElementById('nextTag');
+    Q.mode('drill'); Object.assign(QX.F,{key:0,fam:'major',mode:0,pos:0}); Object.assign(QX.D,{prog:'blues',plan:'strum',sev:true,guide:'full'}); QX.saved.fing=true; QX.saved.bpm=120; QX.refresh(); QX.regen();
+    ok(QX.cur.prog[0].ch.name==='C7'&&tag.textContent==='Show next: F7','next-skips-same-stopped',tag.textContent);
+    qc(qd.querySelector('[data-act=play]')); Q.w.clearInterval(QX.met.timer); const seen=new Set();
+    for(let i=0;i<240;i++){Q.advance(0.125); await sleep(2); if(!tag.hidden) seen.add(QX.cur.chord.name+'>'+tag.textContent);}
+    qc(qd.querySelector('[data-act=play]'));
+    const same=[...seen].filter(x=>x.split('>')[1]==='Next: '+x.split('>')[0]);
+    ok(!same.length&&seen.has('C7>Next: F7')&&seen.has('G7>Next: F7'),'next-skips-same-playing',[...seen].join(', ')); }
 
   // a phone: each builder row is one dropdown, the builder starts folded, and the neck lies sideways
   { const P=await device(false), {d:pd,X:PX}=P, pc=P.click, opt=(row,v)=>pd.querySelector(`#exhead option[data-row=${row}][data-v="${v}"]`);

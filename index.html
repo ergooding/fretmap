@@ -724,7 +724,7 @@ const KEY_OPTS=['C','C♯/D♭','D','E♭/D♯','E','F','F♯/G♭','G','A♭/G�
 const IV=[
  ['R','root'],['♭2','minor 2nd'],['2','major 2nd'],['♭3','minor 3rd'],['3','major 3rd'],['4','perfect 4th'],
  ['♭5','diminished 5th'],['5','perfect 5th'],['♭6','minor 6th'],['6','major 6th'],['♭7','minor 7th'],['7','major 7th']];
-const IV_ALT={'♯2':'augmented 2nd','♯4':'augmented 4th','♯5':'augmented 5th','♭4':'diminished 4th','♭♭7':'diminished 7th'};
+const IV_ALT={'9':'major 9th','♯2':'augmented 2nd','♯4':'augmented 4th','♯5':'augmented 5th','♭4':'diminished 4th','♭♭7':'diminished 7th'};
 const COL=['#E9A93A','#A79BD6','#C9B8F0','#3FA7B8','#7FD3E3','#8CC56F','#E0677A','#F08F5E','#B07CC6','#E0A8EE','#5B8FD0','#98BDF2'];
 const FAMS={
  major:{name:'Major (diatonic)',steps:[0,2,4,5,7,9,11],modes:[['Ionian (major)',0],['Dorian',1],['Phrygian',2],['Lydian',3],['Mixolydian',4],['Aeolian (natural minor)',5],['Locrian',6]]},
@@ -742,11 +742,12 @@ const QUAL={'4,7':'','3,7':'m','3,6':'°','4,8':'+','4,7,11':'maj7','4,7,10':'7'
 const FIXED=[['',[0,4,7]],['m',[0,3,7]],['7',[0,4,7,10]],['m7',[0,3,7,10]],['maj7',[0,4,7,11]],['sus4',[0,5,7]],['sus2',[0,2,7]],['m6',[0,3,7,9]]];
 const X=null;
 // Common movable shapes, as fret offsets from the root on the lowest played string (low E to high E). Listed most common first.
+// 'open' marks a shape that only works in open position (barred higher up it needs five fingers).
 const SHAPES={
  '4,7':[['E shape',[0,2,2,1,0,0]],['A shape',[X,0,2,2,2,0]],['C shape',[X,0,-1,-3,-2,-3]],['D shape',[X,X,0,2,3,2]],['G shape',[0,-1,-3,-3,-3,0]]],
  '3,7':[['Em shape',[0,2,2,0,0,0]],['Am shape',[X,0,2,2,1,0]],['Dm shape',[X,X,0,2,3,1]]],
  '3,6':[['A shape',[X,0,1,2,1,X]],['D shape',[X,X,0,1,3,1]]],
- '4,8':[['E shape',[0,3,2,1,1,0]],['A shape',[X,0,3,2,2,X]],['D shape',[X,X,0,3,3,2]]],
+ '4,8':[['E shape',[0,3,2,1,1,0],'open'],['A shape',[X,0,3,2,2,X]],['D shape',[X,X,0,3,3,2]]],
  '4,7,11':[['Drop 3, root on E',[0,X,1,1,0,X]],['A shape',[X,0,2,1,2,0]],['D shape',[X,X,0,2,2,2]]],
  '4,7,10':[['E7 shape',[0,2,0,1,0,0]],['A7 shape',[X,0,2,0,2,0]],['D7 shape',[X,X,0,2,1,2]]],
  '3,7,10':[['Em7 shape',[0,2,0,0,0,0]],['Am7 shape',[X,0,2,0,1,0]],['Dm7 shape',[X,X,0,2,1,1]]],
@@ -757,6 +758,7 @@ const SHAPES={
  '5,7':[['E shape',[0,2,2,2,0,0]],['A shape',[X,0,2,2,3,0]],['D shape',[X,X,0,2,3,3]]],
  '2,7':[['A shape',[X,0,2,2,0,0]],['D shape',[X,X,0,2,3,0]]]
 };
+const FTAB={'x32000':[null,3,2,0,0,0],'022000':[0,2,3,0,0,0],'x02000':[null,0,2,0,0,0]}; // open shapes books finger differently
 const PATTERNS=[['updown','Up and down'],['strings','Two strings'],['thirds','3rds'],['g3','Groups of 3'],['g4','Groups of 4'],['altpick','Alternate picking'],['slurs','Hammer-ons and pull-offs'],
  ['arp','Arpeggio'],['enclose','Enclose chord tones'],['walk','Chord-tone walk']];
 // Common progressions as scale degrees (0 = the tonic), so each one follows the key and mode and is labeled with that mode's numerals.
@@ -785,7 +787,7 @@ const PROG_FIX={
 };
 function progChords(id,k,sev){ // a common progression's chords, bar by bar, in a key and 7-note mode k ({key,fam,mode})
   const P=PROG_BY[id]||PROG_BY.pop, A=steps7(k.fam,k.mode), sp=spellIn(k.key,A), fx=PROG_FIX[P.id];
-  const at=(p,suf)=>chordIn(parseChord(sp(p)+suf)?sp(p)+suf:NOTES[p]+suf,k.key);
+  const at=(p,suf)=>chordIn(parseChord(sp(p)+suf)?sp(p)+suf:NOTES[p]+suf,k.key,letterOf(sp(k.key)));
   if(fx){const set=fx[A.includes(3)&&!A.includes(4)?'min':'maj']||fx.maj||fx.min; return P.degs.map(d=>at((k.key+set[d][0])%12,set[d][sev?2:1]));}
   return P.degs.map(d=>{const r=A[d], q=QUAL[[2,4].concat(sev?[6]:[]).map(j=>(A[(d+j)%7]-r+12)%12).join(',')]; return q!==undefined?at((k.key+r)%12,q):{name:sp((k.key+r)%12)+'*',roman:ROMAN[d]};});
 }
@@ -839,15 +841,15 @@ function songSpell(sk){ // a song's notes, spelled from its key the way its home
   return speller(key,sk.minor?steps7('major',5):MAJ,home?letterOf(home):undefined);
 }
 function songKey(sk){return `${songSpell(sk)(sk.key??0)} ${sk.minor?'minor':'major'}`;}
-function chordDeg(r,rel){ // which degree of its chord a note is (1 to 7), from its distance above the root
+function chordDeg(r,rel){ // which degree of its chord a note is (1 to 7, or 9), from its distance above the root
   const h=x=>rel.includes(x);
-  return [1,2,2,h(4)?2:3,3,4,h(7)?4:5,5,h(4)&&!h(7)?5:6,h(3)&&h(6)&&!h(10)&&!h(11)?7:6,7,7][r];
+  return [1,2,h(3)||h(4)?9:2,h(4)?2:3,3,4,h(7)?4:5,5,h(4)&&!h(7)?5:6,h(3)&&h(6)&&!h(10)&&!h(11)?7:6,7,7][r];
 }
 function chordIv(c,r){ // a note's degree in a chord, from its formula: ♯5 in an augmented chord, ♭♭7 in a diminished 7th
   const y=degSym(r,chordDeg(r,c.rel.slice(0,c.core??c.rel.length)));
   return y==='R'?IV[0]:[y,y===IV[r][0]?IV[r][1]:IV_ALT[y]||IV[r][1]];
 }
-function degSym(r,deg){const a=((r-MAJ[deg-1])%12+18)%12-6; return deg===1&&!a?'R':(a>0?'♯'.repeat(a):'♭'.repeat(-a))+deg;}
+function degSym(r,deg){const a=((r-MAJ[(deg-1)%7])%12+18)%12-6; return deg===1&&!a?'R':(a>0?'♯'.repeat(a):'♭'.repeat(-a))+deg;}
 function chordSpell(c){ // each note of a chord with its name and degree, spelled from the chord's root letter
   const L=letterOf(c.name), core=c.core??c.rel.length, base=c.rel.slice(0,core), bl=c.bass!==undefined?letterOf(c.name.split('/')[1]):-1;
   return c.rel.map((r,k)=>{
@@ -885,13 +887,15 @@ function parseChords(text){
 }
 const RN12=['I','♭II','II','♭III','III','IV','♯IV','V','♭VI','VI','♭VII','VII'];
 const DEG12=['1','♭2','2','♭3','3','4','♯4','5','♭6','6','♭7','7'];
-function chordIn(name,key){ // a typed chord as a chord of this key, with its roman numeral
+function chordIn(name,key,tl=tonicLetter(key,MAJ)){ // a typed chord as a chord of this key, with its roman numeral
+  // the numeral counts letters up from the key's tonic letter (tl), with a sharp or flat against the major scale: in C, G♯° is ♯v° and G♭7 is ♭V7
   const c=parseChord(name), d=(c.root-key+12)%12, rel=[...c.rel], suf=c.name.replace(/^[A-G][♯♭]?/,'').replace(/\/.*/,'');
-  const rn=RN12[d], minor=rel.includes(3)&&!rel.includes(4), q=QUAL[rel.slice(1).join(',')]; // dim, aug and half-diminished get °, + and ø
+  const deg=(n,p,tab)=>{const i=((letterOf(n)-tl)%7+7)%7, a=((p-key-MAJ[i])%12+18)%12-6; return Math.abs(a)>1?tab[(p-key+12)%12]:(a>0?'♯':a<0?'♭':'')+tab[MAJ[i]];};
+  const rn=deg(c.name,c.root,RN12), minor=rel.includes(3)&&!rel.includes(4), q=QUAL[rel.slice(1).join(',')]; // dim, aug and half-diminished get °, + and ø
   const out={root:c.root,rel,name:c.name,roman:(minor?rn.toLowerCase():rn)+(q!==undefined?RN_SUF[q]??q:suf.replace(/^(m|min|-)(?!aj)/,''))};
   if(c.bass!==undefined){ // over another bass note: C/G is C with G lowest; C/B adds the B
     const b=(c.bass-c.root+12)%12; out.bass=c.bass; out.core=rel.length; if(!rel.includes(b)) rel.push(b);
-    out.roman+='/'+DEG12[(c.bass-key+12)%12];
+    out.roman+='/'+deg(c.name.split('/')[1],c.bass,DEG12);
   }
   out.tones=rel.map(x=>(d+x)%12); return out;
 }
@@ -1071,7 +1075,8 @@ function refresh(){
   if(D.line==='prog'&&(cur.pchords||song)){
     // each chord of the progression, voiced inside the box (frets 0–4 gives open chords); a song brings its own chords
     // a bar split between chords gives each chord its own entry, with the part of the bar it covers (from and to, 0 to 1)
-    const items=song?song.bars.flatMap((b,bar)=>b.segs.map(x=>({ch:chordIn(x.name,cur.key),bar,from:x.from,to:x.to,part:b.part})))
+    const stl=song&&LOG.skills[song.id]?letterOf(songSpell(LOG.skills[song.id])(cur.key)):undefined; // the song's chords count up from its key as the song spells it
+    const items=song?song.bars.flatMap((b,bar)=>b.segs.map(x=>({ch:chordIn(x.name,cur.key,stl),bar,from:x.from,to:x.to,part:b.part})))
       :D.prog==='one'?[{ch:overList()[D.chord],bar:0,from:0,to:1,part:-1}] // one chord: the one picked in the Over row
       :PROG_FIX[D.prog]?progChords(D.prog,followKey(),D.sev).map((ch,bar)=>({ch,bar,from:0,to:1,part:-1}))
       :(PROG_BY[D.prog]||PROG_BY.pop).degs.map((d,bar)=>({ch:cur.pchords[d],bar,from:0,to:1,part:-1}));
@@ -1156,15 +1161,16 @@ function findVoicing(){
     for(let s=s0+1;s<6;s++) if(frets[s]!==null&&pc(s,frets[s])===B){if(frets.slice(s).filter(f=>f!==null).length>=4) out.push(frets.map((f,i)=>i<s?null:f)); break;}
     return out;
   };
-  (SHAPES[ch.rel.slice(1,ch.core).join(',')]||[]).forEach(([name,off],pri)=>{
+  (SHAPES[ch.rel.slice(1,ch.core).join(',')]||[]).forEach(([name,off,open],pri)=>{
     const rs=off.findIndex(o=>o!==null);
     for(let rf=0;rf<=12;rf++){
-      if(pc(rs,rf)!==R) continue;
+      if(pc(rs,rf)!==R||open&&rf) continue;
       const base=off.map(o=>o===null?null:rf+o);
       if(base.some(f=>f!==null&&(f<0||f>12||!inPos(f)))) continue;
       withBass(base).forEach((frets,k)=>{
         if(!voicingOK(frets,B,want,fifths)) return;
         const fr=frets.filter(f=>f!==null&&f>0); if(fr.length&&Math.max(...fr)-Math.min(...fr)>4) return;
+        if(!fingering(frets)) return; // four fingers can't hold it
         const score=pri*10+k+frets.filter(f=>f!==null&&f>0&&f<lo).length*3;
         if(!best||score<best.score) best={name,frets,score};
       });
@@ -1184,8 +1190,7 @@ function findVoicing(){
       if(!voicingOK(frets,B,want,fifths)) return;
       const fr=frets.filter(f=>f!==null&&f>0);
       const span=fr.length?Math.max(...fr)-Math.min(...fr):0; if(span>3) return;
-      const mn=Math.min(...fr), atMin=fr.filter(f=>f===mn).length;
-      if(fr.length-(atMin>1?atMin-1:0)>4) return;
+      if(!fingering(frets)) return; // four fingers can't hold it (a barre can't lie over an open or muted string)
       const pcs=frets.map((f,i)=>f===null?null:pc(i,f)).filter(x=>x!==null);
       const dup=pcs.length-new Set(pcs).size;
       const score=100-idx.length*6+span*2+gaps*4+first*2+dup;
@@ -2343,7 +2348,6 @@ function chordTones(){ // the chord on the key, as Drill builds its I chord: sta
 }
 // which finger frets each note of a voicing (1 index to 4 pinky): 1 takes the lowest fret and lies flat as a barre when it
 // must hold several strings there; the others follow fret by fret, skipping a finger over a two-fret stretch when one is spare
-const FTAB={'x32000':[null,3,2,0,0,0],'022000':[0,2,3,0,0,0],'x02000':[null,0,2,0,0,0]}; // open shapes books finger differently
 function fingering(frets){
   const key=frets.map(f=>f===null?'x':f).join('');
   if(FTAB[key]) return {fing:FTAB[key].slice(),barre:null};
@@ -2364,6 +2368,9 @@ function fingering(frets){
     if(i||barre){const df=n.f-(i?rest[i-1].f:mn); if(df>=2&&spare>0){next++; spare--;}}
     fing[n.s]=next++;
   });
+  if(!barre&&atMin.length===2&&fr.length===4&&atMin[1].s===top&&fr.every(n=>n.f===mn||n.s>atMin[0].s&&n.s<atMin[1].s)){
+    const a=atMin[0].s, b=atMin[1].s; [fing[a],fing[b]]=[fing[b],fing[a]]; // a drop-3 shape such as 3x443x: the index takes the higher string (2x341x)
+  }
   return {fing,barre};
 }
 // what each finger does going from one voicing to the next
@@ -2382,7 +2389,12 @@ function fingerMoves(v1,v2){
 }
 const chordPlay=()=>st.mode==='drill'&&D.line==='prog'&&!!cur.prog&&['strum','arp','both','mix'].includes(D.plan);
 const fingOn=()=>chordPlay()&&saved.fing!==false&&!!cur.voicing&&!picking();
-const nextProg=()=>cur.prog&&cur.prog.length>1?cur.prog[(cur.pci+1)%cur.prog.length]:null;
+const progSame=(a,b)=>!!a&&!!b&&a.ch.name===b.ch.name&&(a.voicing?a.voicing.frets.join():'')===(b.voicing?b.voicing.frets.join():''); // the same chord in the same shape
+const nextProg=()=>{ // the next chord that differs from the one you hold (another bar of the same chord is no change)
+  if(!cur.prog||cur.prog.length<2) return null;
+  for(let i=1;i<cur.prog.length;i++){const p=cur.prog[(cur.pci+i)%cur.prog.length]; if(!progSame(p,cur.prog[cur.pci])) return p;}
+  return null;
+};
 // the next chord previews on the neck in the last beat before a change (stopped, the Next button holds it): it shows as
 // dark dots with its fingers and dark rings on its open strings, while the chord you hold fades back
 function previewNow(){
@@ -2391,7 +2403,7 @@ function previewNow(){
   const n=st.seq[st.idx]; if(!n) return false;
   const k0=st.seq.findIndex(x=>x.bar===n.bar), len=st.seq.filter(x=>x.bar===n.bar).length;
   const after=st.seq.find((x,i)=>i>st.idx&&x.bar!==n.bar)||st.seq[0];
-  if(after&&after.ci===n.ci) return false; // another bar of this chord comes first
+  if(after&&progSame(cur.prog[after.ci],cur.prog[n.ci])) return false; // another bar of this chord comes first
   return st.idx-k0>=len-Math.max(1,Math.round(len/4));
 }
 function updNextTag(on){
@@ -2439,7 +2451,7 @@ function chordFormula(v){
   const rel=cur.chord.rel, sym=r=>chordIv(cur.chord,r)[0];
   const played=v?new Set(v.frets.map((f,s)=>f===null?null:(pc(s,f)-cur.chord.root+12)%12)):null;
   const chips=rel.map(r=>{const off=played&&!played.has(r);
-    return `<span class="fchip${off?' off':''}" style="--c:${COL[r]}" data-tip="<b>${sym(r)}</b>: ${r?chordIv(cur.chord,r)[1]+', '+r+' half step'+(r===1?'':'s')+' above the root':'the root'}${off?'. This voicing leaves it out.':''}">${sym(r)}</span>`;}).join('');
+    return `<span class="fchip${off?' off':''}" style="--c:${COL[r]}" data-tip="<b>${sym(r)}</b>: ${r?chordIv(cur.chord,r)[1]+', '+(/9$/.test(sym(r))?r+12:r)+' half step'+(r===1?'':'s')+' above the root':'the root'}${off?'. This voicing leaves it out.':''}">${sym(r)}</span>`;}).join('');
   const STEP={1:'m2',2:'M2',3:'m3',4:'M3',5:'P4',6:'TT',7:'P5'};
   const ladder=rel.map((r,i)=>{
     const deg=`<span class="st-deg" style="color:${COL[r]}">${sym(r)}</span>`;
@@ -3367,7 +3379,7 @@ function exSong(){
   if(!parts.some(p=>p.chords.length)&&sk.chords&&sk.chords.length) parts.splice(0,parts.length,{name:'Chords',chords:sk.chords});
   const seq=parts.flatMap(p=>p.chords), names=[...new Set(seq)];
   const scale=minor?[0,2,3,5,7,8,10]:MAJ;
-  const sel=names.includes(st.exName)?st.exName:names[0]||null, c=sel?chordIn(sel,key):null;
+  const sel=names.includes(st.exName)?st.exName:names[0]||null, c=sel?chordIn(sel,key,letterOf(songSpell(sk)(key))):null;
   // the notes to play over the chosen chord: the key, with each chord note from outside it replacing the key's note
   // of the same letter (E in A minor turns G into G♯; B♭ in C turns B into B♭)
   const sp=songSpell(sk), cs=c?chordSpell(c):null, kl=letterOf(sp(key));
@@ -3408,20 +3420,25 @@ function exInKey(E,c){return c.tones.every(t=>E.scale.includes(t));}
 function exRole(E,c){ // what the chord does in the song's key
   const d=(c.root-E.key+12)%12, home=E.sp(E.key)+(E.minor?'m':''), hm=c.rel.includes(3)&&!c.rel.includes(4);
   if(exInKey(E,c)){
+    const sh=c.tones.filter(t=>[0,E.minor?3:4,7].includes(t)).map(t=>E.sp((E.key+t)%12)); // the notes it has in common with the home chord
+    const shares=`it shares ${['no notes','one note','two notes','three notes'][sh.length]} with ${home}${sh.length?` (${sh.length>1?sh.slice(0,-1).join(', ')+' and '+sh[sh.length-1]:sh[0]})`:''}`;
     const M={0:'Home. The song rests here, and lines feel finished when they land on its root.',
-      2:'Moves away from home, and usually sets up the V chord.',4:`A soft stand-in for home: it shares two notes with ${home}.`,
+      2:'Moves away from home, and usually sets up the V chord.',4:`A soft stand-in for home: ${shares}.`,
       5:'Moves away from home: a lift that wants to come back.',7:`The tension chord. It pulls back home to ${home}.`,
-      9:`Home's minor cousin: it shares two notes with ${home}, with a sadder sound.`,11:`Tense and unstable. It pulls hard to ${home}.`};
-    const m={0:M[0],2:'Tense and unstable. It usually leads to the v or V chord.',3:`The relative major: brighter, and it shares two notes with ${home}.`,
+      9:`Home's minor cousin: ${shares}, with a sadder sound.`,11:`Tense and unstable. It pulls hard to ${home}.`};
+    const m={0:M[0],2:'Tense and unstable. It usually leads to the v or V chord.',3:`The relative major: brighter, and ${shares}.`,
       5:'Moves away from home, darker.',7:`Leans back toward home, ${home}, more gently than a major V.`,
-      8:`A lift away from home that shares two notes with ${home}.`,10:`One step below home. It rocks back to ${home}.`};
+      8:`A lift away from home, and ${shares}.`,10:`One step below home. It rocks back to ${home}.`};
     return (E.minor?m:M)[d];
   }
   const par=E.minor?MAJ:[0,2,3,5,7,8,10];
   if(E.minor&&d===7&&!hm) return `The major V, borrowed from harmonic minor. Its raised note, ${E.sp((E.key+11)%12)}, pulls hard to ${home}.`;
   if(c.tones.every(t=>par.includes(t))) return `Borrowed from ${E.sp(E.key)} ${E.minor?'major':'minor'}, the key with the same root. A common way to add color.`;
-  const tgt=(d+5)%12;
-  if(!hm&&tgt!==0&&E.scale.includes(tgt)) return `A secondary dominant: the V of ${E.sp((E.key+tgt)%12)}, so it pulls toward that chord.`;
+  // a secondary dominant is a major triad or dominant 7th (no major 7th) a 5th above a major or minor chord of the key,
+  // spelled a 4th up from its root letter: D7 in C is the V of G, but G♭ (whose target would be C♭) is not
+  const core=c.rel.slice(0,c.core??c.rel.length), has=x=>core.includes(x), tgt=(d+5)%12;
+  const dom=has(4)&&has(7)&&!has(11)&&(has(10)||core.length===3), tn=nm(letterOf(c.name)+3,(c.root+5)%12);
+  if(dom&&tgt!==0&&E.scale.includes(tgt)&&E.scale.includes((tgt+7)%12)&&tn===E.sp((E.key+tgt)%12)) return `A secondary dominant: the V of ${tn}, so it pulls toward that chord.`;
   return 'From outside the key. It adds a color the key on its own doesn\'t have.';
 }
 function exCard(E){
@@ -3443,7 +3460,7 @@ function exCard(E){
   const at=E.seq.indexOf(sel), nx=E.seq.slice(at+1).find(n=>n!==sel)||E.seq.find(n=>n!==sel);
   let next='';
   if(nx){
-    const C2=chordIn(nx,key), ns=chordSpell(C2), npcs=ns.map(x=>x.p), keep=pcs.filter(p=>npcs.includes(p)), N2=p=>ns.find(x=>x.p===p).name;
+    const C2=chordIn(nx,key,letterOf(E.sp(key))), ns=chordSpell(C2), npcs=ns.map(x=>x.p), keep=pcs.filter(p=>npcs.includes(p)), N2=p=>ns.find(x=>x.p===p).name;
     const moves=pcs.filter(p=>!npcs.includes(p)).map(p=>{let b=null; npcs.forEach(q=>{const dd=((q-p+18)%12)-6; if(!b||Math.abs(dd)<Math.abs(b.d)) b={q,d:dd};}); return b&&Math.abs(b.d)<=2?`${N(p)} to ${N2(b.q)}`:null;}).filter(Boolean);
     next=`<p>Next comes <b>${esc(nx)}</b> (${esc(C2.roman)}). ${keep.length?`They share ${keep.map(N).join(' and ')}, so ${keep.length>1?'those notes':'that note'} can ring across the change`:'They share no notes'}${moves.length?`, and ${moves.join(', ')} ${moves.length>1?'are':'is'} a step away`:''}.</p>`;
   }
@@ -3458,12 +3475,12 @@ function exploreSongHTML(E){
   const sk=E.sk, key=E.key, kname=songKey(sk);
   if(!E.names.length) return `<p class="hint">${esc(sk.name)} has no chords yet. Add them in the Songs tab, and Explore will show what each one does in ${kname} and what to play over it.</p><div class="actions"><button class="btn" data-act="songopen" data-id="${esc(E.id)}">Open in Songs</button></div>`;
   const pent=(E.minor?[0,3,5,7,10]:[0,2,4,7,9]).map(x=>E.sp((key+x)%12)).join(' '), rel=E.sp((key+(E.minor?3:9))%12);
-  const homeC=E.names.find(n=>chordIn(n,key).roman.replace(/[^IViv♭♯]/g,'')===(E.minor?'i':'I'));
+  const homeC=E.names.find(n=>chordIn(n,key,letterOf(E.sp(key))).roman.replace(/[^IViv♭♯]/g,'')===(E.minor?'i':'I'));
   const cp=sk.capo?`<p class="ex-sum">Played with a capo on fret ${sk.capo}: everything here is in the shapes you play, in ${kname}. It sounds ${sk.capo} half step${sk.capo>1?'s':''} higher, in ${songKey({key:(key+sk.capo)%12,minor:E.minor})}.</p>`:'';
   const sum=`${cp}<p class="ex-sum"><b>${esc(sk.name)}</b> is in <b>${kname}</b>${homeC?`, so ${esc(homeC)} is home`:''}. Over the whole song, play ${kname} pentatonic (${pent}): the same notes as ${rel} ${E.minor?'major':'minor'} pentatonic${E.minor?'':', so your minor pentatonic shapes work with '+rel+' as the root'}.</p>`;
-  const chips=E.names.map(n=>{const c=chordIn(n,key), out=!exInKey(E,c);
+  const chips=E.names.map(n=>{const c=chordIn(n,key,letterOf(E.sp(key))), out=!exInKey(E,c);
     return `<button class="cchip ex-ch${out?' outk':''}" data-act="exch" data-n="${esc(n)}" aria-pressed="${n===E.sel}"><b>${esc(n)}</b><small>${esc(c.roman)}${out?' · outside':''}</small></button>`;}).join('');
-  const parts=E.parts.filter(p=>p.chords.length).map(p=>`<div class="ex-part"><span class="seglab">${esc(p.name)}</span><div class="sh-bars ex-bars">${p.chords.map(n=>`<button class="bar" data-act="exch" data-n="${esc(n)}" aria-pressed="${n===E.sel}"><span class="nm">${esc(n)}</span><span class="rn">${esc(chordIn(n,key).roman)}</span></button>`).join('')}</div></div>`).join('');
+  const parts=E.parts.filter(p=>p.chords.length).map(p=>`<div class="ex-part"><span class="seglab">${esc(p.name)}</span><div class="sh-bars ex-bars">${p.chords.map(n=>`<button class="bar" data-act="exch" data-n="${esc(n)}" aria-pressed="${n===E.sel}"><span class="nm">${esc(n)}</span><span class="rn">${esc(chordIn(n,key,letterOf(E.sp(key))).roman)}</span></button>`).join('')}</div></div>`).join('');
   return `<div class="ex-song">${sum}<div class="cchips">${chips}</div>${exCard(E)}<div class="ex-parts">${parts}</div>
     <div class="row">${seg('Labels','exlab',[['chord','From the chord'],['key','From the key'],['notes','Notes']],saved.exlab||'chord')}</div></div>`;
 }
@@ -4264,7 +4281,7 @@ const TIPS=[
  ['#stats',()=>'Your quiz score and streak from Name it and Find it, and your practice time today.'],
  ['#layoutBtn',()=>`Layout: ${{auto:'automatic, based on the window shape',wide:'always desktop',compact:'always phone (sideways phones get a horizontal neck)'}[saved.layout]}. Click to switch.`],
  ['#soundBtn',()=>`Note sounds are ${saved.sound?'on':'off'} for tapping and quizzes. The drill has its own Click and Notes switches.`],
- ['[data-act="exch"]',el=>{const E=exSong(), n=el.dataset.n, c=chordIn(n,E?E.key:cur.key);return `<b>${esc(n)}</b> (${esc(c.roman)}): ${chordSpell(c).map(x=>x.name).join(' ')}. Click to see it on the neck${saved.sound?' and hear it':''}.`;}],
+ ['[data-act="exch"]',el=>{const E=exSong(), n=el.dataset.n, c=E?chordIn(n,E.key,letterOf(E.sp(E.key))):chordIn(n,cur.key);return `<b>${esc(n)}</b> (${esc(c.roman)}): ${chordSpell(c).map(x=>x.name).join(' ')}. Click to see it on the neck${saved.sound?' and hear it':''}.`;}],
  ['[data-act="exhear"]',()=>'Hear the shape ringed on the neck. Set your own shape for a chord in the Songs tab.'],
  ['[data-act="exlab"][data-v="chord"]',()=>'Count every dot from the chord\'s root, so you see its 3rd, 5th and 7th, and the 2, 4 and 6 around them.'],
  ['[data-act="exlab"][data-v="key"]',()=>'Count every dot from the key\'s root, the way the scale is numbered.'],
