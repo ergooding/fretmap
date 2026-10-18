@@ -2704,7 +2704,7 @@ function fingKey(){ // the key for a strummed or picked chord with Fingers on, f
     ${nkRow(first(open),'An open string: let it ring without fretting it.')}
     ${mute?nkRow([{t:'×',cls:'mute'}],'Don’t play this string.'):''}
     ${FA.barre?`<div class="nk"><span class="nk-d"><span class="nk-bar"></span></span><span>A ${term('barre','barre')}: finger 1 lies flat across these strings at fret ${FA.barre.f}.</span></div>`:''}
-    ${nkRow(first(out),`A dashed edge marks a note from outside ${scale}: ${and(outNames)}${B?`, which ${ch.name} borrows from ${B.name}`:''}.`)}
+    ${nkRow(first(out),`A dashed edge marks a note from outside ${scale}: ${and(outNames)}${chordSrc()?`, which ${ch.name} borrows from ${chordSrc()}`:''}.`)}
     ${nxOn?`<div class="nk"><span class="nk-d"><span class="dot nextv" style="--c:var(--pearl)">${nfin}</span><span class="dot blank nexto"></span></span><span>${esc(nx.ch.name)}, the next chord: dark dots show its fingers and dark rings its open strings. They show in the last beat before the change, while ${ch.name} fades back. Show next in the neck’s corner holds them.</span></div>`:''}
     </div><p class="hint">${D.ref==='chord'?`Colors count from each chord’s root.`:`Colors count from ${keyName()}, the key.`}${D.plan==='mix'?' In the scale-run bar the dots show degrees instead of fingers.':''}</p>`);
 }
@@ -4004,7 +4004,7 @@ const onClick=e=>{
     case 'vset': case 'vtype': case 'vclear':{
       const sk=LOG.skills[st.song], n=b.dataset.n; if(!sk) return;
       let f=act==='vset'?parseFrets(b.dataset.f):act==='vtype'?parseFrets((document.getElementById('vType')||{}).value):null;
-      if(act==='vtype'&&!f){const m=document.getElementById('vMsg'); if(m){m.textContent='That needs six strings, low E to high E, such as 000220 or x02220.'; m.style.color='var(--bad)';} return;}
+      if(act==='vtype'&&!f){const m=document.getElementById('vMsg'); if(m){m.textContent='That needs six strings, low E to high E, such as x32010 or x02220.'; m.style.color='var(--bad)';} return;}
       const vs={...(sk.voicings||{})}; if(f) vs[n]=fretText(f); else delete vs[n];
       setSong(st.song,{voicings:vs}); if(D.line==='prog'&&D.prog===st.song) refresh();
       if(f) hearFrets(f); render(); return;}
