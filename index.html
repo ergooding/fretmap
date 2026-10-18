@@ -52,13 +52,13 @@ h1{font-size:1.05rem;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
 .prompt[hidden]{display:none}
 @keyframes flash{50%{color:var(--bad)}}
 
+.neck-box{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
 .neck-wrap{flex:1;min-height:0;display:flex;justify-content:center}
 /* phone portrait: the neck keeps a usable height and a long panel scrolls instead of squashing it */
+.app:not(.wide):not(.land) .neck-box{flex:0 0 auto}
 .app:not(.wide):not(.land) .neck-wrap{flex:0 0 auto;display:block;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;overscroll-behavior-x:contain}
 .app:not(.wide):not(.land) .neck{max-width:none;height:clamp(210px,32vh,280px)}
 /* a phone's dots are small: the faded chord tones and the next chord's rings stay readable */
-.app:not(.wide) .dot.dimx{opacity:.55;transform:scale(.74)}
-.app:not(.wide) .dot.nextf{border-width:2.5px;background:rgba(0,0,0,.38)}
 .app:not(.wide):not(.land):not(.m-practice) .panel{flex:0 1 auto;min-height:0;overflow:auto}
 .app:not(.wide):not(.land):not(.m-practice) .panel>*{flex-shrink:0}
 .neck{position:relative;height:100%;width:100%;max-width:380px;display:grid;
@@ -176,7 +176,7 @@ html.wide{font-size:19px}
 .app.wide .focus-grid{flex:1;grid-template-columns:repeat(4,minmax(0,1fr));max-width:1100px;padding:6px 10px 8px}
 .app.wide .prompt{font-size:1rem;align-items:flex-start}
 .app.wide .prompt .big{font-size:2.1rem}
-.app.wide .neck-wrap{grid-area:neck;flex:none;height:clamp(240px,42vh,620px)}
+.app.wide .neck-box{grid-area:neck;flex:none;height:clamp(240px,42vh,620px)}
 .app.wide .neck{max-width:none;height:100%}
 .neck-wrap.roll{overflow-x:auto;overflow-y:hidden;display:block;scrollbar-width:thin;overscroll-behavior-x:contain}
 .neck-wrap.roll .neck{max-width:none}
@@ -223,21 +223,19 @@ html.wide{font-size:19px}
 
 .dot.outk{border:2px dashed #14110d}
 .dot.fing{font-size:calc(var(--dot,30px)*.5);font-weight:800}
-.dot.dimx{opacity:.32;transform:scale(.62)}
 .dot.openv{background:transparent;box-shadow:inset 0 0 0 3px var(--c);color:var(--ink)}
 .dot.openv.now{box-shadow:inset 0 0 0 3px var(--c),0 0 16px 2px var(--c)}
 .dot.mute{background:transparent;box-shadow:none;color:var(--ink);font-size:calc(var(--dot,30px)*.62);font-weight:400;opacity:.8}
-.dot.nextf{background:rgba(255,255,255,.1);box-shadow:none;border:3px dashed var(--pearl);color:var(--pearl);transform:scale(.9)}
-.cell.out .dot.nextf{border-color:var(--ink);color:var(--ink)}
-.dot.nextshape{outline:3px dashed var(--pearl);outline-offset:2px}
-.dot.stay{box-shadow:0 0 0 3px var(--bg),0 0 0 6px var(--good)}
+.dot.fadeprev,.barre.fadeprev{opacity:.35}
+.dot.nextv{background:#2a1d12;color:var(--pearl);box-shadow:0 0 0 3px var(--pearl)}
+.dot.nexto{outline:2.5px dashed var(--ink);outline-offset:2px}
+.dot.blank{background:transparent;box-shadow:none}
+.nexttag{position:absolute;top:8px;right:10px;z-index:6;border:0;border-radius:999px;padding:5px 14px;font:inherit;font-weight:700;font-size:.85rem;background:var(--pearl);color:#14110d;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.nexttag[aria-pressed="false"]{background:rgba(239,231,214,.82);font-weight:600}
 .barre{z-index:2;pointer-events:none;display:grid;place-items:center}
 .barre i{display:block;border-radius:999px;background:#2a1d12;box-shadow:0 0 0 2px var(--pearl);opacity:.9}
 .neck.h .barre i{width:calc(var(--dot,30px)*.62);height:calc(100% - var(--dot,30px)*.3)}
 .neck:not(.h) .barre i{height:calc(var(--dot,30px)*.62);width:calc(100% - var(--dot,30px)*.3)}
-.fhint{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:6px 12px;font-size:.86rem;line-height:1.45;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
-.fhint .seglab{flex:none}
-.fhint b.k{color:var(--good)}
 .ex-song{display:flex;flex-direction:column;gap:10px}
 .ex-song p{margin:0;font-size:.86rem;line-height:1.45}
 .ex-sum{color:var(--muted)}.ex-sum b{color:var(--ink)}
@@ -325,7 +323,7 @@ html.wide{font-size:19px}
 .modes button{white-space:nowrap}
 .app:not(.wide) .modes button{font-size:.8rem;padding:8px 3px}
 /* practice mode: the log takes the neck's place */
-.app.m-practice .neck-wrap{display:none!important}
+.app.m-practice .neck-box{display:none!important}
 .app.m-practice .panel{flex:1;min-height:0;overflow:auto}
 .app.wide.m-practice{grid-template-areas:"head head" "goal goal" "side panel" "side panel"}
 .app.land.m-practice{grid-template-areas:"modes head" "goal goal" "prompt prompt" "panel panel"}
@@ -389,7 +387,7 @@ html.land{font-size:15px}
 .app.land .prompt{grid-area:prompt;font-size:.8rem;min-height:0}
 .app.land .prompt .big{font-size:1.15rem}
 .app.land .prompt .sub{font-size:.72rem}
-.app.land .neck-wrap{grid-area:neck;min-height:0}
+.app.land .neck-box{grid-area:neck;min-height:0}
 .app.land .neck{max-width:none;height:100%}
 .app.land .panel{grid-area:panel;min-height:0;overflow:auto;gap:6px;padding-bottom:4px}
 .app.land .panel>*{flex-shrink:0}
@@ -707,7 +705,7 @@ span.blab::before{content:none}
   <div class="voice-card" id="voiceCard" hidden></div>
   <div class="voice-card howto" id="howto" hidden></div>
   </aside>
-  <div class="neck-wrap"><div class="neck" id="neck"></div></div>
+  <div class="neck-box"><div class="neck-wrap"><div class="neck" id="neck"></div></div><button class="nexttag" id="nextTag" hidden></button></div>
   <div class="panel" id="panel"></div>
 </div>
 
@@ -1858,7 +1856,7 @@ function draw(){
   }
   if(newShape){fillSelects(); render(); updateTab(); met.raf=requestAnimationFrame(draw); return;} // the next shape: everything that names the box
   if(changed){ if(newTab) renderTab(); renderBoard(); renderPrompt(); updateTab(); updateRGrid();
-    if(newChord){renderVoice(); markProgChord(); updFHint();} }
+    if(newChord){renderVoice(); markProgChord();} }
   met.raf=requestAnimationFrame(draw);
 }
 
@@ -2099,6 +2097,8 @@ const startOfDay=t=>{const d=new Date(t); d.setHours(0,0,0,0); return d.getTime(
 const mins=list=>Math.round(list.reduce((a,e)=>a+(e.secs||0),0)/60);
 
 // ---------- render ----------
+const nextTagEl=document.getElementById('nextTag');
+nextTagEl.addEventListener('click',()=>{st.showNext=!st.showNext; renderBoard();});
 const promptEl=document.getElementById('prompt'), panel=document.getElementById('panel'), sheetEl=document.getElementById('sheet');
 function renderStats(){
   const m=mins(entriesSince(startOfDay(now())));
@@ -2186,6 +2186,7 @@ function keepInView(){
 function drawBoard(){
   const q=st.q, cp=capo();
   fnums[0].textContent=cp?`capo ${cp}`:'open';
+  if(st.mode!=='drill') nextTagEl.hidden=true;
   if(st.mode==='practice'||st.mode==='songs') return; // the neck is hidden
   if(st.mode==='drill'&&!picking()&&!wide) setZoom(Math.max(0,cur.lo-1),Math.min(12,cur.hi+1)); else setZoom(0,12);
   rollNeck();
@@ -2198,9 +2199,9 @@ function drawBoard(){
   // Fingers: the voicing's dots show which finger frets them, the rest of the chord fades, and the next chord's fingers show as dashed rings
   // in Strum, then scale the run bar shows degrees, since a run moves through every finger; the next chord's fingers ring the neck
   const nowRun=!!(nowN&&nowN.run), FA=st.mode==='drill'&&fingOn()&&!nowRun?fingering(cur.voicing.frets):null;
-  const rx=st.mode==='drill'&&nowRun&&fingOn()&&ringsNow()?nextProg():null, RM=rx&&rx.voicing?fingerMoves(cur.voicing,rx.voicing):null;
   const hideAll=FA&&st.playing&&st.idx>=0&&D.guide==='blind';
-  const nx=FA&&!hideAll&&ringsNow()?nextProg():null, NM=nx&&nx.voicing?fingerMoves(cur.voicing,nx.voicing):null;
+  const PV=st.mode==='drill'&&D.guide!=='blind'&&previewNow()?nextProg():null, PF=PV?fingering(PV.voicing.frets):null;
+  updNextTag(!!PV); barreEl.classList.toggle('fadeprev',!!PV);
   barreEl.style.display=FA&&FA.barre&&!hideAll?'':'none';
   if(FA&&FA.barre){const B=FA.barre; if(horiz) place(barreEl,String(B.f+1),`${6-B.b}/${7-B.a}`); else place(barreEl,`${B.a+2}/${B.b+3}`,String(B.f+1));}
   for(let s=0;s<6;s++)for(let f=0;f<=12;f++){
@@ -2223,25 +2224,23 @@ function drawBoard(){
     }else if(st.mode==='drill'){
       const out=!inWin(f); c.classList.toggle('out',out);
       const inV=cur.voicing&&cur.voicing.frets[s]===f;
+      if(PV&&PV.voicing.frets[s]===f){ // the next chord's preview sits on top
+        dot(c,f>0?{t:PF?PF.fing[s]:'',c:COL[(pc(s,f)-(D.ref==='chord'?PV.ch.root:cur.key)+12)%12],cls:'nextv'}:inV&&FA?{t:'',c:COL[drillLabel({s,f}).ref],cls:'openv nexto'}:{t:'',cls:'blank nexto'});
+        continue;}
+      const put=(c,d)=>dot(c,d&&PV?{...d,cls:(d.cls||'')+' fadeprev'}:d);
       const isNow=same(nowN,s,f)||(nowN&&nowN.chord&&inV), isNext=same(nextN,s,f)||(nextN&&nextN.chord&&inV);
       const ivK=ivOf({s,f},cur.key), isC=cur.chordPcs.has(pc(s,f)), inS=dset().has(ivK)||(D.line==='prog'&&isC);
       if(FA){
         if(hideAll){dot(c,null);continue;}
         const {ref,t}=drillLabel({s,f}), ok=F.fam!=='chrom'&&!cur.set.has(ivK)?' outk':'';
-        const nf=NM&&nx.voicing.frets[s]===f&&f>0?NM.B.fing[s]:null;
-        if(inV){
-          const more=(isNow?' now':'')+(nf!=null&&FA.fing[s]===nf?' stay':'')+(st.flashUntil>Date.now()?' vc':'')+ok;
-          dot(c,f===0?{t:'',c:COL[ref],cls:'openv'+more}:{t:FA.fing[s],c:COL[ref],cls:'fing'+(ref===0?' root':'')+more});
+        if(inV){ // the neck holds only the chord you play
+          const more=(isNow?' now':'')+(st.flashUntil>Date.now()?' vc':'')+ok;
+          put(c,f===0?{t:'',c:COL[ref],cls:'openv'+more}:{t:FA.fing[s],c:COL[ref],cls:'fing'+(ref===0?' root':'')+more});
           continue;
         }
-        if(nf!=null){dot(c,{t:nf,cls:'nextf'});continue;}
-        if(f===zoom[0]&&cur.voicing.frets[s]===null){dot(c,{t:'×',cls:'mute'});continue;}
-        if(out||!isC||(st.playing&&st.idx>=0&&D.guide==='next')){dot(c,null);continue;}
-        dot(c,{t,c:COL[ref],cls:'dimx'+(ref===0?' root':'')+ok});
+        put(c,f===zoom[0]&&cur.voicing.frets[s]===null?{t:'×',cls:'mute'}:null);
         continue;
       }
-      const rf=RM&&rx.voicing.frets[s]===f&&f>0?RM.B.fing[s]:null;
-      if(rf!=null&&!isNow&&!isNext){dot(c,{t:rf,cls:'nextf'});continue;}
       if(!isNow&&!isNext&&(out||!inS||(played&&!(inV&&D.pad)&&!played.has(s+':'+f)))){dot(c,null);continue;}
       const {t,c:col,cls:look}=lineDot(s,f);
       let show=true;
@@ -2252,9 +2251,8 @@ function drawBoard(){
       if(!show){dot(c,null);continue;}
       let cls=look;
       if(isNow) cls+=' now'; else if(isNext&&D.guide!=='full') cls+=' nextup';
-      if(rf!=null) cls+=' nextshape';
       if(st.flashUntil>Date.now()&&cur.voicing&&cur.voicing.frets[s]===f) cls+=' vc';
-      dot(c,{t,c:col,cls});
+      put(c,{t,c:col,cls});
     }else{ // the quiz: shade the frets outside the position, as Explore and Drill do
       c.classList.toggle('out',!cur.whole&&!inWin(f));
       dot(c,quizDot(s,f));
@@ -2373,34 +2371,23 @@ function fingerMoves(v1,v2){
 const chordPlay=()=>st.mode==='drill'&&D.line==='prog'&&!!cur.prog&&['strum','arp','both','mix'].includes(D.plan);
 const fingOn=()=>chordPlay()&&saved.fing!==false&&!!cur.voicing&&!picking();
 const nextProg=()=>cur.prog&&cur.prog.length>1?cur.prog[(cur.pci+1)%cur.prog.length]:null;
-function fingHint(){
-  const str=s=>STR_NAME[s].replace('high E','high e');
-  const where=q=>q.length>1?`a barre at fret ${q[0].f}`:`the ${str(q[0].s)} string, fret ${q[0].f}`;
-  const list=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
-  const nx=nextProg(), m=nx&&nx.voicing?fingerMoves(cur.voicing,nx.voicing):null;
-  let change='';
-  if(m){
-    const parts=[];
-    if(m.keep.length) parts.push(`<b class="k">Keep ${list(m.keep)} down.</b>`);
-    m.move.forEach(([k,p,q])=>parts.push(q.length>1&&p.every(x=>q.some(y=>y.s===x.s&&y.f===x.f))?`Lay ${k} flat across fret ${q[0].f} for the barre.`
-      :p.length===1&&q.length===1&&p[0].s===q[0].s?`Slide ${k} along the ${str(q[0].s)} string to fret ${q[0].f}.`:`Move ${k} to ${where(q)}.`));
-    m.put.forEach(([k,q])=>parts.push(`Put ${k} on ${where(q)}.`));
-    if(m.lift.length) parts.push(`Lift ${list(m.lift)}.`);
-    change=` <b>${esc(cur.chord.name)} → ${esc(nx.ch.name)}</b>: ${parts.join(' ')} Dashed rings show where fingers go next${m.keep.length?', and a green ring marks a finger that stays':''}.`;
-  }
-  const key='1 index, 2 middle, 3 ring, 4 pinky. × means don’t play that string.';
-  return `<span class="seglab" data-tip="<b>Fingers</b>: ${key}">Fingers</span><span>${change.trim()||key}</span>`;
-}
-function updFHint(){const el=document.getElementById('fhint'); if(!el) return; const on=fingOn()&&!!fingering(cur.voicing.frets); el.hidden=!on; el.innerHTML=on?fingHint():'';}
-// while playing, the next chord's fingers show in the last bar before the change: the whole pick bar, or the second half of a strummed bar
-function ringsNow(){
-  if(!nextProg()) return false;
-  if(!(st.playing||st.paused)||st.idx<0) return true;
-  const n=st.seq[st.idx]; if(!n) return true;
+// the next chord previews on the neck in the last beat before a change (stopped, the Next button holds it): it shows as
+// dark dots with its fingers and dashed rings on its open strings, while the chord you hold fades back
+function previewNow(){
+  const nx=nextProg(); if(!nx||!nx.voicing||!fingOn()) return false;
+  if(!(st.playing||st.paused)||st.idx<0) return !!st.showNext;
+  const n=st.seq[st.idx]; if(!n) return false;
   const k0=st.seq.findIndex(x=>x.bar===n.bar), len=st.seq.filter(x=>x.bar===n.bar).length;
   const after=st.seq.find((x,i)=>i>st.idx&&x.bar!==n.bar)||st.seq[0];
   if(after&&after.ci===n.ci) return false; // another bar of this chord comes first
-  return D.plan==='both'||D.plan==='mix'||st.idx-k0>=len/2;
+  return st.idx-k0>=len-Math.max(1,Math.round(len/4));
+}
+function updNextTag(on){
+  const nx=st.mode==='drill'&&fingOn()&&D.guide!=='blind'?nextProg():null, stopped=!(st.playing||st.paused)||st.idx<0;
+  const show=!!(nx&&nx.voicing)&&(stopped||on);
+  nextTagEl.hidden=!show; if(!show) return;
+  nextTagEl.textContent=on?`Next: ${nx.ch.name}`:`Show next: ${nx.ch.name}`; nextTagEl.setAttribute('aria-pressed',String(!!on));
+  nextTagEl.dataset.tip=on?`<b>${esc(nx.ch.name)}</b> comes next: dark dots show its fingers, dashed rings its open strings.${stopped?' Click to hide it.':''}`:`Show where your fingers go for <b>${esc(nx.ch.name)}</b>, the next chord. While you play it shows in the last beat before the change.`;
 }
 function voiceSVG(v,root=cur.chord.root,ch=cur.chord,lab=null){ // lab(s,f) gives {ref,t} so the diagram can label and color its dots like the neck
   // a small sideways neck drawn like the big one: high e on top, the open column left of the nut, × for a string you don't play,
@@ -3672,7 +3659,7 @@ function renderPanel(){
         ${!cur.whole?'<div class="actions"><button class="btn" data-act="keepbox">Keep '+cur.posLabel.split(',')[0]+'</button></div>':''}`;
       return;
     }
-    if(D.line==='prog'&&cur.prog){panel.innerHTML=`<div class="fhint" id="fhint" hidden></div>${strumCard()}<div class="tab" id="tab"></div>${pbarHTML()}${setsHTML()}`; updFHint(); renderTab(); updateRGrid(); return;}
+    if(D.line==='prog'&&cur.prog){panel.innerHTML=`${strumCard()}<div class="tab" id="tab"></div>${pbarHTML()}${setsHTML()}`; renderTab(); updateRGrid(); return;}
     panel.innerHTML=`${D.line==='prog'?'':'<div class="tab" id="tab"></div>'}${pbarHTML()}${setsHTML()}`;
     renderTab();
     return;

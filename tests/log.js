@@ -468,7 +468,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     ok(M2.X.D.prog==='50s'&&M2.X.D.plan==='arp'&&M2.X.D.line==='prog','migrate-prog',JSON.stringify(M2.X.D));
     const M3=await device(true,{drill:{line:'scale',prog:'one',plan:'both',pattern:'enclose'}});
     ok(M3.X.D.plan==='tones'&&M3.X.D.pattern==='enclose','migrate-tones',JSON.stringify(M3.X.D)); }
-  // Fingers: a strummed chord numbers its shape by finger, fades the rest of the chord, and shows the next chord's fingers
+  // Fingers: a strummed chord numbers its shape by finger; the next chord previews on the neck (in the last beat, or held with the Next button)
   { const Q=await device(true), {d:qd,X:QX}=Q, qc=Q.click, cell=(s,f)=>qd.querySelector(`.cell[data-s="${s}"][data-f="${f}"] .dot`);
     const fs=t=>{const r=QX.fingering([...t].map(c=>c==='x'?null:+c)); return r?r.fing.map(x=>x===null?'x':x).join('')+(r.barre?' b'+r.barre.f:''):'none';};
     const want={x32010:'x32010','320003':'210003',xx0232:'xx0132',x02210:'x02310',x32310:'x32410','133211':'134211 b1',x24432:'x13421 b2',x24232:'x13121 b2',x32000:'x32000','123456':'none'};
@@ -478,11 +478,15 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     qc(qd.querySelector('[data-pci="0"]'));
     const fr=QX.cur.voicing.frets.map(f=>f===null?'x':f).join('');
     ok(fr==='x32010'&&cell(1,3).textContent==='3'&&cell(2,2).textContent==='2'&&cell(4,1).textContent==='1'&&cell(0,0).classList.contains('mute')&&cell(3,0).classList.contains('openv'),'fing-neck-C',fr);
-    ok(cell(1,2)&&cell(1,2).classList.contains('nextf')&&cell(1,2).textContent==='1'&&qd.querySelectorAll('.dot.nextf').length===3,'fing-next-rings');
-    const hint=()=>qd.getElementById('fhint').textContent;
-    ok(/C → G: Move 1 to the A string, fret 2\./.test(hint()),'fing-hint',hint());
+    const tag=qd.getElementById('nextTag');
+    ok(qd.querySelectorAll('#neck .dot').length===6&&!qd.querySelector('#neck .dot.nextv,#neck .dot.fadeprev')&&!tag.hidden&&tag.textContent==='Show next: G'&&!qd.getElementById('fhint'),'fing-one-chord',qd.querySelectorAll('#neck .dot').length+' '+tag.textContent);
+    qc(tag); // G 320003: fingers 2 1 . . . 3, the D, G and B strings open; C fades back
+    ok(cell(1,2).classList.contains('nextv')&&cell(1,2).textContent==='1'&&cell(0,3).textContent==='2'&&cell(5,3).textContent==='3'&&qd.querySelectorAll('#neck .dot.nextv').length===3
+      &&qd.querySelectorAll('#neck .dot.nexto').length===3&&cell(4,1).classList.contains('fadeprev')&&tag.textContent==='Next: G'&&tag.getAttribute('aria-pressed')==='true','fing-preview');
+    const hint=()=>[...qd.querySelectorAll('#neck .dot.nextv')].map(e=>e.parentElement.dataset.s+'/'+e.parentElement.dataset.f+':'+e.textContent).join(' ');
     ok(!qd.querySelector('.dot.fing.root')||[...qd.querySelectorAll('.dot.fing')].length===3,'fing-count');
-    qc(qd.querySelector('[data-pci="2"]')); ok(/Lay 1 flat across fret 1 for the barre/.test(hint())&&cell(4,1).classList.contains('stay'),'fing-hint-barre',hint());
+    qc(qd.querySelector('[data-pci="2"]')); ok(hint()==='0/1:1 1/3:3 2/3:4 3/2:2 4/1:1 5/1:1'&&qd.getElementById('nextTag').textContent==='Next: F','fing-preview-barre',hint());
+    qc(qd.getElementById('nextTag')); ok(!qd.querySelector('#neck .dot.nextv')&&qd.getElementById('nextTag').textContent==='Show next: F','fing-preview-off');
     qc(qd.querySelector('[data-pci="3"]')); const br=qd.querySelector('.barre');
     ok(br.style.display!=='none'&&cell(0,1).textContent==='1'&&cell(5,1).textContent==='1'&&cell(2,3).textContent==='4','fing-barre-F');
     // the tab's finger numbers agree with the neck
@@ -491,7 +495,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     ok(tc&&tc.querySelector('.fg').textContent==='4','fing-tab-agrees',tc&&tc.querySelector('.fg').textContent);
     // Dot labels: picking Key turns Fingers off for chords, Fingers turns it back on
     qc(qd.querySelector('[data-act=sheet]')); qc(qd.querySelector('[data-act=lbl][data-v=key]'));
-    ok(QX.saved.fing===false&&!qd.querySelector('.dot.fing')&&qd.getElementById('fhint').hidden&&br.style.display==='none','fing-off');
+    ok(QX.saved.fing===false&&!qd.querySelector('.dot.fing')&&qd.getElementById('nextTag').hidden&&br.style.display==='none','fing-off');
     qc(qd.querySelector('[data-act=lbl][data-v=fing]')); ok(QX.saved.fing===true&&qd.querySelector('.dot.fing'),'fing-on');
     qc(qd.querySelector('[data-act=sheetclose]'));
     // Strum, then scale: a strum bar, then a scale run from the chord's root, one scale step at a time, to a note of the next chord
@@ -515,7 +519,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
       ok(tc&&!/undefined/.test(tc.textContent),'mix-tab'); }
     // a scale line keeps degree labels
     qc(qd.querySelector('#exhead [data-act=bchip][data-row=plan][data-v="line"]'));
-    ok(!qd.querySelector('.dot.fing')&&qd.getElementById('fhint').hidden&&br.style.display==='none','fing-not-on-lines',[QX.D.plan,!!qd.querySelector('.dot.fing'),br.style.display].join()); }
+    ok(!qd.querySelector('.dot.fing')&&qd.getElementById('nextTag').hidden&&br.style.display==='none','fing-not-on-lines',[QX.D.plan,!!qd.querySelector('.dot.fing'),br.style.display].join()); }
 
   // a phone: each builder row is one dropdown, the builder starts folded, and the neck lies sideways
   { const P=await device(false), {d:pd,X:PX}=P, pc=P.click, opt=(row,v)=>pd.querySelector(`#exhead option[data-row=${row}][data-v="${v}"]`);
