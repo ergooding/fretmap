@@ -159,6 +159,7 @@ h1{font-size:1.05rem;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
 .neck.h .fret.nut::after{width:7px;right:-4px;top:0;bottom:0;height:auto}
 .neck.h .strings{flex-direction:column-reverse}
 .neck.h .strings span::after{left:0;right:0;top:50%;bottom:auto;width:auto;height:var(--w);transform:translateY(-50%);background:linear-gradient(180deg,#8d877a,#e4ddcc,#8d877a)}
+.neck .strings span.play::after{background:var(--c,var(--pearl));box-shadow:0 0 6px 2px var(--c,var(--pearl));opacity:.95}
 .neck.h .inlay::after{width:14px;height:14px}
 /* wide layout */
 html.wide{font-size:19px}
@@ -219,6 +220,7 @@ html.wide{font-size:19px}
 .nk{display:contents}
 .nk-d{display:flex;flex-wrap:wrap;gap:5px;align-items:center;max-width:104px}
 .nk .dot{--dot:28px;animation:none;flex:none}
+.nk-bar{display:inline-block;width:12px;height:30px;border-radius:999px;background:#2a1d12;box-shadow:0 0 0 2px var(--pearl);margin:0 8px}
 .voice-card .nkey+p.hint,.nkey+p.hint,.voice-card p.vc-tap{text-align:left;margin-top:2px}
 
 .dot.outk{border:2px dashed #14110d}
@@ -564,6 +566,7 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 .swrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .swrow .seg button{font-size:.78rem;padding:4px 10px}
 .bfoot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:8px}
+.bfoot .gear{margin-left:auto}
 .bnew{display:flex;gap:6px;align-items:center;flex:1;min-width:0}
 .bnew input,input.ename{flex:1;min-width:0;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
 .bnew .btn{flex:none;padding:7px 12px}
@@ -2191,6 +2194,9 @@ function drawBoard(){
   if(st.mode==='drill'&&!picking()&&!wide) setZoom(Math.max(0,cur.lo-1),Math.min(12,cur.hi+1)); else setZoom(0,12);
   rollNeck();
   const nowN=(st.playing||st.paused)&&st.idx>=0?st.seq[st.idx]:null;
+  // a single note lights up its whole string, so you can see which string to pick
+  const lit=st.mode==='drill'&&nowN&&!nowN.chord&&nowN.s!=null&&nowN.f!=null&&D.guide!=='blind'?nowN.s:-1;
+  [...strsEl.children].forEach((sp,s)=>{sp.classList.toggle('play',s===lit); if(s===lit) sp.style.setProperty('--c',COL[drillLabel(nowN).ref]);});
   // a scale line plays each pitch once, so a note it skips (the same pitch on the next string) isn't drawn
   const played=st.mode==='drill'&&D.line!=='prog'?new Set(boxNotes().map(n=>n.s+':'+n.f)):null;
   const nextN=nowN?st.seq[(st.idx+1)%st.seq.length]:null;
@@ -2528,6 +2534,7 @@ function rgridHTML(P,act='rstep',extra=''){
 }
 function markProgChord(){
   document.querySelectorAll('[data-pci]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.pci===cur.pci));
+  const fk=document.getElementById('fkey'); if(fk) fk.innerHTML=fingOn()?fingKey():'';
   const no=document.getElementById('barNo'); if(no&&cur.prog) no.textContent=`bar ${cur.prog[cur.pci].bar+1} of ${cur.nbars}`;
   const strip=document.querySelector('.sh-bars'), b=strip&&strip.querySelector(`[data-pci="${cur.pci}"]`);
   if(b&&strip.scrollWidth>strip.clientWidth+2) strip.scrollLeft=b.offsetLeft-strip.clientWidth/2+b.offsetWidth/2;
@@ -2593,6 +2600,31 @@ function dotsFold(){ // the key for a scale line, folded until you open it
     ${row(ring.slice(0,1),`The gold ring marks ${hn}, where each pass starts and ends.`)}
     ${row(out.slice(0,1),`A dashed edge marks a note from outside ${scale}.`)}
     </div><p class="hint">${saved.labels==='notes'?'The dots show note names.':`The labels count from ${D.ref==='chord'?`${rootName(cur.chord)}, the root of ${cur.chord.name}`:`${keyName()}, the key`}.`}${cur.whole?'':` Notes on each string, low E to high e: ${per.join(' ')}.`}${D.pad&&!cur.voicing?' No voicing fits this box, so the chord step is skipped.':''}${wide?'':' Tap the chord in the Over row again to hear it.'}</p>`);
+}
+function fingKey(){ // the key for a strummed or picked chord with Fingers on, from the dots the neck draws
+  const v=cur.voicing, FA=v&&fingering(v.frets); if(!FA) return '';
+  const ch=cur.chord, root=[], tones=[], open=[], out=[]; let mute=false;
+  v.frets.forEach((f,s)=>{
+    if(f===null){mute=true; return;}
+    const {ref}=drillLabel({s,f}), p=pc(s,f), ok=F.fam!=='chrom'&&!cur.set.has(ivOf({s,f},cur.key))?' outk':'';
+    const d=f===0?{t:'',c:COL[ref],cls:'openv'+ok,p}:{t:FA.fing[s],c:COL[ref],cls:'fing'+(ref===0?' root':'')+ok,p};
+    (f===0?open:ref===0?root:tones).push(d); if(ok&&!out.some(x=>x.p===p)) out.push(d);
+  });
+  const fnum='The number is the finger that frets it: 1 index, 2 middle, 3 ring, 4 pinky.';
+  const first=l=>(l.filter(d=>!/outk/.test(d.cls)).concat(l)).slice(0,1), scale=`${keyName()} ${modeName()}`, B=cur.borrow;
+  const rootTxt=D.ref==='chord'?`the root of ${ch.name}`:'the root of the key';
+  const nx=nextProg(), nxOn=nx&&nx.voicing&&nx.ch.name!==ch.name&&D.guide!=='blind';
+  const nf=nxOn&&fingering(nx.voicing.frets), nfin=nf?nf.fing.find(x=>x>0)||1:1;
+  const outNames=[...new Set(out.map(d=>noteName(d.p)))], and=l=>l.length>1?l.slice(0,-1).join(', ')+' and '+l[l.length-1]:l[0]||'';
+  return fold('vdots','What the neck shows',`<div class="nkey">
+    ${nkRow(first(root),`${noteName(root[0]?root[0].p:ch.root)}, ${rootTxt}. ${fnum}`)}
+    ${nkRow(first(tones),`The ${root.length?'other ':''}notes of ${ch.name}, each degree in its own color.${root.length?'':' '+fnum}`)}
+    ${nkRow(first(open),'An open string: let it ring without fretting it.')}
+    ${mute?nkRow([{t:'×',cls:'mute'}],'Don’t play this string.'):''}
+    ${FA.barre?`<div class="nk"><span class="nk-d"><span class="nk-bar"></span></span><span>A ${term('barre','barre')}: finger 1 lies flat across these strings at fret ${FA.barre.f}.</span></div>`:''}
+    ${nkRow(first(out),`A dashed edge marks a note from outside ${scale}: ${and(outNames)}${B?`, which ${ch.name} borrows from ${B.name}`:''}.`)}
+    ${nxOn?`<div class="nk"><span class="nk-d"><span class="dot nextv" style="--c:var(--pearl)">${nfin}</span><span class="dot blank nexto"></span></span><span>${esc(nx.ch.name)}, the next chord: dark dots show its fingers and dark rings its open strings. They show in the last beat before the change, while ${ch.name} fades back. Show next in the neck’s corner holds them.</span></div>`:''}
+    </div><p class="hint">${D.ref==='chord'?`Colors count from each chord’s root.`:`Colors count from ${keyName()}, the key.`}${D.plan==='mix'?' In the scale-run bar the dots show degrees instead of fingers.':''}</p>`);
 }
 function exploreKey(){ // Explore's key, from the dots it draws
   const seen=new Map(); let ghost=null;
@@ -3087,9 +3119,10 @@ function builderHTML(){
   const E=st.ex&&exOf(st.ex.ex), s=E?{...st.ex.base,goal:st.ex.goal}:null;
   const ctx={V:liveV(),live:true,act:'bchip',E,s,fold:true,edit:!!st.edit,pin:st.edit&&st.edit.pos};
   const rows=rowsHTML(ctx);
+  const gear=wide?`<button class="icon gear" data-act="sheet" aria-label="Drill settings" aria-haspopup="dialog" data-tip="Settings: notes per beat, the click, dot labels, what the neck shows while playing, and the tempo ramp.">⚙</button>`:'';
   if(E&&st.edit){ // Customize: the same rows set where the exercise starts, and the neck plays what you pick
     const w=editWhere(E,st.ex.rid,st.ex.uid);
-    return `<div class="exh-top"><span class="lab">Customize</span></div><div class="exh-title"><b>${esc(E.name)}</b><small>${w.lab}</small></div>
+    return `<div class="exh-top"><span class="lab">Customize</span><span class="sp"></span>${gear}</div><div class="exh-title"><b>${esc(E.name)}</b><small>${w.lab}</small></div>
       ${E.user?`<input id="edName" class="ename" value="${esc(st.edit.name)}" maxlength="60" aria-label="Name" data-tip="The exercise’s name, under Yours in the Exercises tab.">`:''}
       <p class="hint">Tap a chip to start ${esc(E.name)} there. The neck plays what you pick.</p>${rows}
       ${E.id==='songs'?'':keyLine(ctx,st.edit.key)}${goalLine(E,st.ex.goal,'exgoal','edsave','edcancel',w.save,w.tip)}`;
@@ -3097,7 +3130,7 @@ function builderHTML(){
   const nw=st.bnew?`<div class="bnew"><input id="bName" value="${esc(st.bnew.name)}" maxlength="60" aria-label="Name for the new exercise"><button class="btn primary" data-act="bnewok" data-tip="Save this setup under Yours in the Exercises tab.">Save</button><button class="btn" data-act="bnewno" data-tip="Don’t save it.">Cancel</button></div>`
     :`<button class="chip" data-act="bnew" data-tip="Keep this setup as an exercise of your own, under Yours in the Exercises tab, to start it again or add it to a session.">Save as a new exercise</button>`;
   const msg=st.bmsg?`<span class="bmsg">${st.bmsg}</span>`:'';
-  if(!E) return wide?`${rows}<div class="bfoot">${nw}${msg}</div>` // on a phone the whole builder folds away above the neck
+  if(!E) return wide?`${rows}<div class="bfoot">${nw}${msg}${gear}</div>` // on a phone the whole builder folds away above the neck
     :`<details class="bwrap" data-fold="bshut"${saved.fold.bshut?'':' open'}><summary>What to play <span class="hint">· ${buildText(captureBuild())}</span></summary>${rows}<div class="bfoot">${nw}${msg}</div></details>`;
   const pr=exProgress(E,s), ch=exChange(), r=st.ex.rid&&LOG.routines[st.ex.rid];
   const goal=E.id==='songs'?`<span class="hint">Goal: each song’s own tempo</span>`
@@ -3106,7 +3139,7 @@ function builderHTML(){
   const close=st.ex.rid?'':`<button class="icon sm" data-act="exclose" aria-label="Close the exercise" data-tip="Close the exercise. Drill keeps these settings.">✕</button>`;
   return `<div class="exh-top"><span class="lab">Exercise</span><span class="sp"></span><button class="chip" data-act="excust" data-tip="${esc(custTip(E,r))}">Customize</button>${close}</div>
     <div class="exh-title"><b>${esc(E.name)}</b><small>${pr.n} of ${pr.m} clean</small></div>${rows}
-    <div class="exh-goal">${goal}</div>${saveRow}<div class="bfoot">${nw}${msg}</div>`;
+    <div class="exh-goal">${goal}</div>${saveRow}<div class="bfoot">${nw}${msg}${gear}</div>`;
 }
 const custTip=(E,r)=>E.user?`Rename ${E.name}, or change where it starts and its goal. The rows switch to editing in place.`
   :`Change where ${E.name} starts and its goal${r?`, for this exercise in ${r.name}`:', as your default'}. The rows switch to editing in place.`;
@@ -3577,7 +3610,8 @@ function renderSheet(){
   el.innerHTML=`${songNote()}
     <div class="sh-top">${title}<span class="sh-sub">${sub}</span><span class="sh-no" id="barNo">bar ${cur.prog[cur.pci].bar+1} of ${n}</span></div>
     <div class="sh-bars" role="group" aria-label="Bars, one chord each">${tiles}</div>
-    ${notes?`<p class="hint">${notes}</p>`:''}`;
+    ${notes?`<p class="hint">${notes}</p>`:''}
+    <div id="fkey">${fingOn()?fingKey():''}</div>`;
 }
 function strumOwnerHTML(){
   // where the live pattern is saved: the song, or the part being practiced; a part can take its own pattern here
@@ -3615,7 +3649,7 @@ function pbarHTML(){
     <button class="btn primary play" data-act="play">${st.playing?'❚❚ Pause':st.paused?'▶ Resume':'▶ Play'}</button>
     ${st.paused?'<button class="icon" data-act="restart" aria-label="Restart from the top">⏮</button>':''}
     <span class="pcount" id="pcount"></span>${cleanChip()}
-    <button class="icon gear" data-act="sheet" aria-label="Drill settings" aria-haspopup="dialog">⚙</button></div>`;
+    ${wide?'':'<button class="icon gear" data-act="sheet" aria-label="Drill settings" aria-haspopup="dialog">⚙</button>'}</div>`;
 }
 function updateLive(){
   // the count in the practice bar: the count-in, the strum count with the current step lit, or what to pick

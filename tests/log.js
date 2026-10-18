@@ -480,19 +480,26 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     ok(fr==='x32010'&&cell(1,3).textContent==='3'&&cell(2,2).textContent==='2'&&cell(4,1).textContent==='1'&&cell(0,0).classList.contains('mute')&&cell(3,0).classList.contains('openv'),'fing-neck-C',fr);
     const tag=qd.getElementById('nextTag');
     ok(qd.querySelectorAll('#neck .dot').length===6&&!qd.querySelector('#neck .dot.nextv,#neck .dot.fadeprev')&&!tag.hidden&&tag.textContent==='Show next: G'&&!qd.getElementById('fhint'),'fing-one-chord',qd.querySelectorAll('#neck .dot').length+' '+tag.textContent);
+    { const k=qd.getElementById('fkey').textContent; ok(/1 index/.test(k)&&/Don’t play/.test(k)&&/An open string/.test(k)&&/G, the next chord/.test(k)&&!/dashed/.test(k)&&!/barre/.test(k),'fing-key',k); }
     qc(tag); // G 320003: fingers 2 1 . . . 3, the D, G and B strings open; C fades back
     ok(cell(1,2).classList.contains('nextv')&&cell(1,2).textContent==='1'&&cell(0,3).textContent==='2'&&cell(5,3).textContent==='3'&&qd.querySelectorAll('#neck .dot.nextv').length===3
       &&qd.querySelectorAll('#neck .dot.nexto').length===3&&cell(4,1).classList.contains('fadeprev')&&tag.textContent==='Next: G'&&tag.getAttribute('aria-pressed')==='true','fing-preview');
     const hint=()=>[...qd.querySelectorAll('#neck .dot.nextv')].map(e=>e.parentElement.dataset.s+'/'+e.parentElement.dataset.f+':'+e.textContent).join(' ');
-    ok(!qd.querySelector('.dot.fing.root')||[...qd.querySelectorAll('.dot.fing')].length===3,'fing-count');
+    ok(!qd.querySelector('#neck .dot.fing.root')||[...qd.querySelectorAll('#neck .dot.fing')].length===3,'fing-count');
     qc(qd.querySelector('[data-pci="2"]')); ok(hint()==='0/1:1 1/3:3 2/3:4 3/2:2 4/1:1 5/1:1'&&qd.getElementById('nextTag').textContent==='Next: F','fing-preview-barre',hint());
     qc(qd.getElementById('nextTag')); ok(!qd.querySelector('#neck .dot.nextv')&&qd.getElementById('nextTag').textContent==='Show next: F','fing-preview-off');
     qc(qd.querySelector('[data-pci="3"]')); const br=qd.querySelector('.barre');
+    { const k=qd.getElementById('fkey').textContent; ok(/barre: finger 1 lies flat across these strings at fret 1/.test(k)&&!/An open string/.test(k),'fing-key-barre',k); }
     ok(br.style.display!=='none'&&cell(0,1).textContent==='1'&&cell(5,1).textContent==='1'&&cell(2,3).textContent==='4','fing-barre-F');
     // the tab's finger numbers agree with the neck
     qc(qd.querySelector('#exhead [data-act=bchip][data-row=plan][data-v="arp"]')); qc(qd.querySelector('[data-pci="3"]'));
     const tc=[...qd.querySelectorAll('.tcol')].find(e=>/\b3\b/.test(e.querySelector('.ln:nth-child(4)')?.textContent||'')&&QX.st.seq[+e.dataset.j]&&QX.st.seq[+e.dataset.j].s===2);
     ok(tc&&tc.querySelector('.fg').textContent==='4','fing-tab-agrees',tc&&tc.querySelector('.fg').textContent);
+    { // a picked note lights its whole string; a strum lights none
+      const k=QX.st.seq.findIndex(n=>!n.chord&&n.s===2), lit=()=>[...qd.querySelectorAll('.strings span')].map(e=>e.classList.contains('play')?1:0).join('');
+      QX.st.paused=true; QX.st.idx=k; qc(qd.getElementById('nextTag')); qc(qd.getElementById('nextTag')); const a=lit();
+      QX.st.paused=false; QX.st.idx=-1; qc(qd.getElementById('nextTag')); qc(qd.getElementById('nextTag'));
+      ok(k>=0&&a==='001000'&&lit()==='000000','string-lit',k+' '+a+' '+lit()); }
     // Dot labels: picking Key turns Fingers off for chords, Fingers turns it back on
     qc(qd.querySelector('[data-act=sheet]')); qc(qd.querySelector('[data-act=lbl][data-v=key]'));
     ok(QX.saved.fing===false&&!qd.querySelector('.dot.fing')&&qd.getElementById('nextTag').hidden&&br.style.display==='none','fing-off');
