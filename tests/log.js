@@ -619,7 +619,14 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     K.mode('name'); ok(kd.querySelector('.neck-wrap').classList.contains('roll')&&!hw.hidden&&/What the neck shows/.test(hw.textContent)&&kd.querySelector('#neck .dot.ask')&&!qlook(),'quiz-whole-key',qlook());
     KX.F.pos=KX.cur.pos[0].lo; KX.refresh(); K.mode('explore'); K.mode('name'); ok(kd.querySelectorAll('#neck .cell.out').length>20&&!kd.querySelector('.neck-wrap').classList.contains('roll')&&/outside the position/.test(hw.textContent),'quiz-box-shaded');
     KX.F.pos=-1; KX.refresh(); K.mode('drill');
-    KX.F.pos=KX.cur.pos[1].lo; KX.refresh(); K.mode('explore'); K.mode('drill'); ok(!kd.querySelector('.neck-wrap').classList.contains('roll'),'box-no-roll'); }
+    KX.F.pos=KX.cur.pos[1].lo; KX.refresh(); K.mode('explore'); K.mode('drill'); ok(!kd.querySelector('.neck-wrap').classList.contains('roll'),'box-no-roll');
+    // every quiz question can be solved with a shape How to find it lists, in every position
+    { let n=0, bad=[]; Object.assign(KX.F,{key:9,fam:'major',mode:0}); KX.refresh();
+      for(const m of ['name','find']) for(const P of [-1,...KX.cur.pos.map(p=>p.lo)]){ KX.F.pos=P; KX.refresh(); K.mode('explore'); K.mode(m);
+        for(let i=0;i<40;i++){ kc(kd.querySelector('[data-act=next]')); const q=KX.st.q; n++;
+          const fits=m==='name'?KX.shapeFits(q.iv,q.root,q.target):(()=>{for(let s=0;s<6;s++)for(let f=KX.cur.lo;f<=KX.cur.hi;f++) if(KX.shapeFits(q.iv,q.root,{s,f})) return true; return false;})();
+          if(!fits) bad.push(m+' pos'+P+' iv'+q.iv+' R'+q.root.s+'/'+q.root.f+' ?'+q.target.s+'/'+q.target.f);}}
+      ok(n>200&&!bad.length,'quiz-fits-howto',bad.slice(0,5).join(', ')); KX.F.pos=-1; KX.refresh(); K.mode('drill'); } }
 
   // borrowed chords: spelled from the mode they come from, each chord's own notes on the neck and in the lines, and a note that says so
   { const T=await device(true), {d:td,X:TX}=T; T.mode('drill');

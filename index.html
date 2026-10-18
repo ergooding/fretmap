@@ -1436,17 +1436,21 @@ function pickIv(){
 function newQuestion(){
   clearTimeout(st.timer);
   const key=F.key>=0?F.key:rnd(12); cur.lastKey=key;
-  const iv=pickIv(), want=(key+iv)%12;
-  const roots=[],targets=[];
-  for(let s=0;s<6;s++)for(let f=cur.lo;f<=cur.hi;f++){
-    if(pc(s,f)===key) roots.push({s,f});
-    if(pc(s,f)===want) targets.push({s,f});
+  // only ask what How to find it teaches: an R and a ? (or a right answer) one of its listed shapes connects, inside the position
+  let iv, roots, targets, pairs=[];
+  for(let tries=0;tries<12&&!pairs.length;tries++){
+    iv=pickIv(); const want=(key+iv)%12; roots=[]; targets=[];
+    for(let s=0;s<6;s++)for(let f=cur.lo;f<=cur.hi;f++){
+      if(pc(s,f)===key) roots.push({s,f});
+      if(pc(s,f)===want) targets.push({s,f});
+    }
+    roots.forEach(r=>targets.forEach(t=>{if(shapeFits(iv,r,t)) pairs.push([r,t]);}));
   }
-  const root=roots[rnd(roots.length)];
-  let cand=targets;
-  if(st.mode==='name'){
-    const near=targets.filter(c=>Math.abs(c.s-root.s)<=3&&Math.abs(c.f-root.f)<=4);
-    if(near.length) cand=near;
+  let root, cand;
+  if(pairs.length){const [r]=pairs[rnd(pairs.length)]; root=r; cand=st.mode==='name'?pairs.filter(([x])=>x===r).map(([,t])=>t):targets;}
+  else{ // nothing in the position fits a listed shape: the nearest note, as before
+    root=roots[rnd(roots.length)]; cand=targets;
+    if(st.mode==='name'){const near=targets.filter(c=>Math.abs(c.s-root.s)<=3&&Math.abs(c.f-root.f)<=4); if(near.length) cand=near;}
   }
   st.q={key,root,iv,target:cand[rnd(cand.length)],answered:false,picked:null};
   render();
@@ -2378,13 +2382,17 @@ function shapeText(k,d){
   if(!k) return `Same string, ${d<0?`${Math.abs(d)} fret${d===-1?'':'s'} below R`:fr}`;
   return `${Math.abs(k)} string${Math.abs(k)===1?'':'s'} ${k>0?'higher':'lower'}, ${fr}`;
 }
-function ivShapes(n){
+function ivShapeList(n){ // the shapes How to find it lists for an interval: [strings higher, frets up], counting every string pair as a 4th
   const out=[], same=n%12; // same string: up to 5 frets above R, or a 7th just below it
   if(same>=1&&same<=5) out.push([0,same]); else if(same>=10) out.push([0,same-12]);
   const more=[];
   for(const k of [1,-1,2,-2]){let d=((n-5*k)%12+12)%12; if(d>5) d-=12; if(Math.abs(d)<=3) more.push([k,d]);}
   more.sort((a,b)=>Math.abs(a[1])-Math.abs(b[1]));
-  return [...out,...more].slice(0,3).map(([k,d])=>shapeText(k,d));
+  return [...out,...more].slice(0,3);
+}
+function ivShapes(n){return ivShapeList(n).map(([k,d])=>shapeText(k,d));}
+function shapeFits(n,r,t){ // a listed shape takes you from R to this note, with the G–B shift the guide describes
+  return ivShapeList(n).some(([k,d])=>{const gb=k>0&&r.s<=3&&r.s+k>=4?1:k<0&&r.s>=4&&r.s+k<=3?-1:0; return t.s-r.s===k&&t.f===r.f+d+gb;});
 }
 function howtoHTML(){
   const find=st.mode==='find';
@@ -4430,7 +4438,7 @@ document.addEventListener('keydown',e=>{const t=e.target.closest&&e.target.close
 addEventListener('scroll',hideTip,true);
 addEventListener('resize',hideTip);
 
-window.__fretDebug={fingering,fingerMoves,tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,EXS,EX_BY,exStart,exGo,routines,openRoutine,chipDone,exProgress,fillSet,editStart,ceditStart,runOf,setupSkill,stepState,followKey,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule,setWhere,setPlan,passEnd,cycleShapes,techMarks,regen};
+window.__fretDebug={shapeFits,ivShapeList,fingering,fingerMoves,tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,EXS,EX_BY,exStart,exGo,routines,openRoutine,chipDone,exProgress,fillSet,editStart,ceditStart,runOf,setupSkill,stepState,followKey,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule,setWhere,setPlan,passEnd,cycleShapes,techMarks,regen};
 fillSelects();
 render();
 setTimeout(syncNow,300); // does nothing without a token
