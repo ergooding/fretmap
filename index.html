@@ -127,7 +127,7 @@ h1{font-size:1.05rem;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
 .dot.pass{background:var(--pearl);color:#4d453a;font-weight:600;transform:scale(.8)}
 .dot.home{box-shadow:0 0 0 3px var(--gold)}
 .dot.now{transform:scale(1.2);box-shadow:0 0 0 3px var(--ink),0 0 16px 2px var(--c,var(--pearl));z-index:2;position:relative;animation:none}
-.dot.nextup{outline:2px dashed var(--ink);outline-offset:2px;animation:none}
+.dot.nextup{outline:2px solid var(--ink);outline-offset:2px;animation:none}
 .drow{display:flex;gap:6px;align-items:center}
 .drow select,.transport select{font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:6px 4px;min-width:0;flex:1}
 .tab{overflow-x:auto;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:5px 0;scrollbar-width:thin;flex:none}
@@ -228,7 +228,7 @@ html.wide{font-size:19px}
 .dot.mute{background:transparent;box-shadow:none;color:var(--ink);font-size:calc(var(--dot,30px)*.62);font-weight:400;opacity:.8}
 .dot.fadeprev,.barre.fadeprev{opacity:.35}
 .dot.nextv{background:#2a1d12;color:var(--pearl);box-shadow:0 0 0 3px var(--pearl)}
-.dot.nexto{outline:2.5px dashed var(--ink);outline-offset:2px}
+.dot.nexto{outline:3px solid #2a1d12;outline-offset:1px}
 .dot.blank{background:transparent;box-shadow:none}
 .nexttag{position:absolute;top:8px;right:10px;z-index:6;border:0;border-radius:999px;padding:5px 14px;font:inherit;font-weight:700;font-size:.85rem;background:var(--pearl);color:#14110d;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.35)}
 .nexttag[aria-pressed="false"]{background:rgba(239,231,214,.82);font-weight:600}
@@ -2196,7 +2196,7 @@ function drawBoard(){
   const nextN=nowN?st.seq[(st.idx+1)%st.seq.length]:null;
   const same=(a,s,f)=>a&&a.s===s&&a.f===f;
   const E=exSong(), EV=E&&E.c?exVoicing(E,E.sel):null, ERel=E&&E.c?exOverRel(E):null;
-  // Fingers: the voicing's dots show which finger frets them, the rest of the chord fades, and the next chord's fingers show as dashed rings
+  // Fingers: the voicing's dots show which finger frets them, the rest of the chord fades, and the next chord previews as dark dots with pearl rings
   // in Strum, then scale the run bar shows degrees, since a run moves through every finger; the next chord's fingers ring the neck
   const nowRun=!!(nowN&&nowN.run), FA=st.mode==='drill'&&fingOn()&&!nowRun?fingering(cur.voicing.frets):null;
   const hideAll=FA&&st.playing&&st.idx>=0&&D.guide==='blind';
@@ -2372,7 +2372,7 @@ const chordPlay=()=>st.mode==='drill'&&D.line==='prog'&&!!cur.prog&&['strum','ar
 const fingOn=()=>chordPlay()&&saved.fing!==false&&!!cur.voicing&&!picking();
 const nextProg=()=>cur.prog&&cur.prog.length>1?cur.prog[(cur.pci+1)%cur.prog.length]:null;
 // the next chord previews on the neck in the last beat before a change (stopped, the Next button holds it): it shows as
-// dark dots with its fingers and dashed rings on its open strings, while the chord you hold fades back
+// dark dots with its fingers and dark rings on its open strings, while the chord you hold fades back
 function previewNow(){
   const nx=nextProg(); if(!nx||!nx.voicing||!fingOn()) return false;
   if(!(st.playing||st.paused)||st.idx<0) return !!st.showNext;
@@ -2387,7 +2387,7 @@ function updNextTag(on){
   const show=!!(nx&&nx.voicing)&&(stopped||on);
   nextTagEl.hidden=!show; if(!show) return;
   nextTagEl.textContent=on?`Next: ${nx.ch.name}`:`Show next: ${nx.ch.name}`; nextTagEl.setAttribute('aria-pressed',String(!!on));
-  nextTagEl.dataset.tip=on?`<b>${esc(nx.ch.name)}</b> comes next: dark dots show its fingers, dashed rings its open strings.${stopped?' Click to hide it.':''}`:`Show where your fingers go for <b>${esc(nx.ch.name)}</b>, the next chord. While you play it shows in the last beat before the change.`;
+  nextTagEl.dataset.tip=on?`<b>${esc(nx.ch.name)}</b> comes next: dark dots show its fingers, dark rings its open strings.${stopped?' Click to hide it.':''}`:`Show where your fingers go for <b>${esc(nx.ch.name)}</b>, the next chord. While you play it shows in the last beat before the change.`;
 }
 function voiceSVG(v,root=cur.chord.root,ch=cur.chord,lab=null){ // lab(s,f) gives {ref,t} so the diagram can label and color its dots like the neck
   // a small sideways neck drawn like the big one: high e on top, the open column left of the nut, × for a string you don't play,
