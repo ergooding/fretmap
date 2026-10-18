@@ -735,10 +735,10 @@ const FAMS={
  chrom:{name:'All notes',steps:[0,1,2,3,4,5,6,7,8,9,10,11],modes:[['Chromatic',0]]}
 };
 const TO_DIATONIC={pent:[0,5,4,5,0],blues:[5,4],chrom:[0]}; // the 7-note mode each smaller scale sits in
-const RN_SUF={'':'','m':'','°':'°','+':'+','maj7':'maj7','7':'7','m7':'7','m7♭5':'ø7','°7':'°7','m(maj7)':'(maj7)','+maj7':'+maj7','+7':'+7','7♭5':'7♭5','maj7♭5':'maj7♭5','°(maj7)':'°(maj7)','m6':'6','sus4':'sus4','sus2':'sus2'};
+const RN_SUF={'':'','m':'','°':'°','+':'+','maj7':'maj7','7':'7','m7':'7','m7♭5':'ø7','°7':'°7','m(maj7)':'(maj7)','+maj7':'+maj7','+7':'+7','7♭5':'7♭5','maj7♭5':'maj7♭5','°(maj7)':'°(maj7)','m6':'6','6':'6','sus4':'sus4','sus2':'sus2'};
 const MAJ=[0,2,4,5,7,9,11], ROMAN=['I','II','III','IV','V','VI','VII'];
 const QUAL={'4,7':'','3,7':'m','3,6':'°','4,8':'+','4,7,11':'maj7','4,7,10':'7','3,7,10':'m7','3,6,10':'m7♭5','3,6,9':'°7',
- '3,7,11':'m(maj7)','4,8,11':'+maj7','4,8,10':'+7','4,6,10':'7♭5','4,6,11':'maj7♭5','3,6,11':'°(maj7)','3,7,9':'m6'};
+ '5,7':'sus4','2,7':'sus2','4,7,9':'6','3,7,11':'m(maj7)','4,8,11':'+maj7','4,8,10':'+7','4,6,10':'7♭5','4,6,11':'maj7♭5','3,6,11':'°(maj7)','3,7,9':'m6'};
 const FIXED=[['',[0,4,7]],['m',[0,3,7]],['7',[0,4,7,10]],['m7',[0,3,7,10]],['maj7',[0,4,7,11]],['sus4',[0,5,7]],['sus2',[0,2,7]],['m6',[0,3,7,9]]];
 const X=null;
 // Common movable shapes, as fret offsets from the root on the lowest played string (low E to high E). Listed most common first.
@@ -809,8 +809,11 @@ function nm(l,p){const a=accOf(l,p); return LET[((l%7)+7)%7]+(a>0?'♯'.repeat(a
 const letterOf=name=>LET.indexOf(String(name)[0]);
 const rootName=c=>(/^[A-G][♯♭]*/.exec(c.name)||[NOTES[c.root]])[0];
 function steps7(fam,mode){const f=FAMS[fam], rot=f.modes[mode][1]; return f.steps.map((_,i)=>(f.steps[(i+rot)%7]-f.steps[rot]+12)%12).sort((a,b)=>a-b);}
+function parentMinor(A){for(const fam of ['harm','mel']) for(let m=0;m<7;m++) if(steps7(fam,m).join()===A.join()){const r=FAMS[fam].modes[m][1]; return {rot:r,off:FAMS[fam].steps[r]};} return null;}
 function tonicLetter(key,A){ // a natural note keeps its letter; a black key takes the spelling whose scale needs fewer sharps and flats (F♯ and E♭ on a tie)
   if(NOTES[key].length===1) return LET.indexOf(NOTES[key]);
+  const pm=parentMinor(A); // harmonic and melodic minor modes take their letters from the natural minor they come from (G♯ harmonic minor, not A♭)
+  if(pm) return (tonicLetter((key-pm.off+12)%12,[0,2,3,5,7,8,10])+pm.rot)%7;
   let best=null;
   for(let l=0;l<7;l++){
     if(Math.abs(accOf(l,key))>1) continue;
@@ -2331,7 +2334,10 @@ function finger(n){
   if(lo===0) return n.f===0?'o':String(Math.min(4,n.f));
   const o=n.f-lo; return o<0?'1':o>=4?'4+':String(o+1);
 }
-function chordTones(){
+function chordTones(){ // the chord on the key, as Drill builds its I chord: stacked scale degrees, or the fullest chord a smaller scale holds
+  const A=[...cur.set].sort((a,b)=>a-b);
+  if(A.length===7) return [A[2],A[4],A[6]];
+  if(F.fam!=='chrom'&&cur.chords&&cur.chords.length){const I=cur.chords[0], up=cur.chords.filter(c=>I.rel.every(x=>c.rel.includes(x))); return up.reduce((a,b)=>b.rel.length>a.rel.length?b:a).rel.slice(1);}
   const pick=o=>o.find(x=>cur.set.has(x));
   return [pick([4,3]),pick([7,6,8]),pick([10,11,9])].filter(x=>x!==undefined);
 }
