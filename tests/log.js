@@ -180,6 +180,26 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   {const r=X.openRoutine(), old={...r,name:'Old name',updated:1}; ok(X.mergeLogs(X.LOG,{v:1,sessions:[],skills:{},routines:{[r.id]:old}}).routines[r.id].name==='Weeknights "short"','ex-merge-newer');
    const nw={id:'rX',name:'From phone',created:5,updated:5,items:[{uid:'a',ex:'quiz',set:{}}]}; ok(X.mergeLogs(X.LOG,{v:1,sessions:[],skills:{},routines:{rX:nw}}).routines.rX.name==='From phone','ex-merge-new');}
   mode('explore'); X.F.pos=-1; Object.assign(X.F,{key:0,fam:'major',mode:0,pos:-1}); X.refresh();
+  // Explore, locked: a click explains the note and lists the key's chords that use it, without moving the key
+  { const setP=(k,f,m,pos)=>{Object.assign(X.F,{key:k,fam:f,mode:m,pos}); X.refresh(); mode('drill'); mode('explore');};
+    const cell=(s,f)=>d.querySelector(`.cell[data-s="${s}"][data-f="${f}"]`), lbl=(s,f)=>{const e=cell(s,f).querySelector('.dot'); return e?e.textContent:'';};
+    setP(9,'major',5,5); const lb=d.getElementById('lockBtn');
+    ok(!lb.hidden&&lb.getAttribute('aria-pressed')==='true','lk-button');
+    click(cell(3,5)); ok(X.F.key===9&&X.lkSel()===0,'lk-keeps-key',X.F.key);
+    const vc=d.getElementById('voiceCard').textContent;
+    ok(/the ♭3 of A Aeolian/.test(vc)&&/Minor 3rd: 3 half steps above A/.test(vc)&&/A major 3rd, C♯, would make it major/.test(vc)&&/neighbors in the scale are B, a half step below, and D, a whole step above/.test(vc)&&/Also in A minor pentatonic/.test(vc)&&/low E fret 8 · G fret 5 · high E fret 8/.test(vc),'lk-note',vc.slice(0,500));
+    const L=X.lkChords(); ok(L.map(x=>x.ch.name).join(' ')==='C Am F'&&L.map(x=>x.v&&x.v.frets.map(f=>f??'x').join('')).join(' ')==='875558 577555 x87565','lk-chords',L.map(x=>x.ch.name+':'+(x.v&&x.v.frets.join(','))).join(' '));
+    ok(/C is the root of C, the minor 3rd of Am and the perfect 5th of F/.test(d.getElementById('panel').textContent),'lk-jobs');
+    ok(X.lkPairs().length===5,'lk-lines',X.lkPairs().length);
+    click(d.querySelector('[data-act=lksev]')); ok(X.lkChords().map(x=>x.ch.name).join(' ')==='C Cmaj7 Am Am7 F Fmaj7 Dm7','lk-sevenths',X.lkChords().map(x=>x.ch.name).join(' '));
+    click(d.querySelector('[data-act=lkch][data-k=F]'));
+    ok(lbl(1,8)==='R'&&lbl(3,5)==='5'&&cell(3,5).querySelector('.dot.pick')&&lbl(0,0)==='×'&&!X.lkPairs().length,'lk-chord-on-neck',[lbl(1,8),lbl(3,5),lbl(0,0)].join(' '));
+    click(cell(3,5)); ok(X.lkSel()===null,'lk-clear');
+    click(cell(0,7)); ok(/Not in A minor pentatonic: B and F are the notes A Aeolian \(natural minor\) adds to it/.test(d.getElementById('voiceCard').textContent),'lk-not-pent');
+    click(lb); click(cell(0,7)); ok(X.F.key===11,'lk-unlocked-moves-key',X.F.key); click(lb);
+    X.saved.lkSev=false; setP(0,'blues',1,-1); click(cell(1,6)); ok(X.lkSel()===3&&/None of the chords of C Mixolydian, the scale C Major blues sits in, use E♭/.test(d.getElementById('panel').textContent),'lk-blue-note',d.getElementById('panel').textContent.slice(-300));
+    setP(9,'pent',1,-1); click(cell(1,3)); ok(X.lkChords().map(x=>x.ch.name).join(' ')==='C Am F'&&/A Minor pentatonic sits inside A Aeolian/.test(d.getElementById('panel').textContent),'lk-pent-parent',X.lkSel()+' '+X.lkChords().map(x=>x.ch.name).join(' ')+' '+d.getElementById('panel').textContent.slice(-300));
+    X.saved.lkSev=false; setP(0,'major',0,-1); }
   // songs: add in the Songs tab, rate, and play its changes
   const setF=(sel,v)=>{const e=d.querySelector(sel); e.value=v; e.dispatchEvent(new w.Event('change',{bubbles:true}));};
   mode('songs'); click(d.querySelector('[data-act=songform]')); ok(X.st.mode==='songs'&&d.getElementById('sgName'),'add-opens-songs');

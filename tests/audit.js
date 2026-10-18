@@ -94,6 +94,29 @@ setTimeout(async()=>{
       }}
     }}}}
  console.log('quiz questions checked:',nQuiz);
+ // ---- locked Explore: click each note of the scale in every position; each chord listed must hold it and come from the key,
+ // and each shape must play only its notes, the clicked note among them, root in the bass, inside the position
+ { let nLk=0,nLkV=0; X.saved.lkSev=true; click(d.querySelector('[data-mode=explore]'));
+  for(const fam of famKeys){ setSel('selFam',fam); const nModes=d.getElementById('selMode').options.length;
+   for(let m=0;m<nModes;m++){ setSel('selMode',m);
+    for(const key of [0,7]){ setSel('selKey',key);
+     for(const p of [-1,...[...d.getElementById('selPos').options].map(o=>+o.value).filter(v=>v>=0)]){ setSel('selPos',p);
+      const cur=X.cur, S=cur.set, lo=cur.whole?0:cur.lo, hi=cur.whole?12:cur.hi, seen=new Set();
+      for(let s=0;s<6;s++) for(let f=lo;f<=hi;f++){ const q=pc(s,f), iv=(q-cur.key+12)%12; if(!S.has(iv)||seen.has(q)) continue; seen.add(q);
+       X.st.lkSel=null; click(d.querySelector(`.cell[data-s="${s}"][data-f="${f}"]`)); nLk++;
+       const tag=`${fam}/${m}/${key}/${p} ${q}`; if(X.lkSel()!==q||X.F.key!==key){fail('lk-sel',tag); continue;}
+       const W=X.lkWin(), L=X.lkChords();
+       if(fam!=='chrom'&&S.size===7&&L.filter(x=>!x.sev).length!==3) fail('lk-three',tag);
+       for(const x of L){ const c=x.ch, tones=c.rel.map(r=>(c.root+r)%12);
+        if(!tones.includes(q)||(S.size===7&&c.tones.some(t=>!S.has(t)))) fail('lk-chord',`${tag} ${c.name}`);
+        if(!x.v){fail('lk-no-shape',`${tag} ${c.name}`); continue;} nLkV++;
+        const fr=x.v.frets, pl=fr.map((g,t)=>g===null?null:pc(t,g)).filter(z=>z!==null);
+        if(pl.some(z=>!tones.includes(z))||!pl.includes(q)||pl[0]!==c.root) fail('lk-shape',`${tag} ${c.name} ${fr}`);
+        if(fr.some(g=>g!==null&&(g===0?W.lo>1:(g<Math.max(1,W.lo-1)||g>W.hi)))) fail('lk-shape-outside',`${tag} ${c.name} ${fr}`);}
+       for(const [r,t] of X.lkPairs()) if(pc(r.s,r.f)!==cur.key||pc(t.s,t.f)!==q||!X.shapeFits(iv,r,t)) fail('lk-line',tag);
+       if(/undefined|NaN|\[object/.test(d.querySelector('.app').textContent)) fail('lk-text',tag);
+      }}}}}
+  X.st.lkSel=null; X.saved.lkSev=false; console.log('locked explore notes:',nLk,'shapes:',nLkV); }
  // ---- text sanity across modes and layouts
  for(const wide of [true,false]){ const dm=mk(wide), dd=dm.window.document; await new Promise(r=>setTimeout(r,50));
    const ck=el=>el.dispatchEvent(new dm.window.MouseEvent('click',{bubbles:true}));
