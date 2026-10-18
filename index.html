@@ -2318,7 +2318,7 @@ function drawBoard(){
   const E=exSong(), EV=E&&E.c?exVoicing(E,E.sel):null, ERel=E&&E.c?exOverRel(E):null;
   // Fingers: the voicing's dots show which finger frets them, the rest of the chord fades, and the next chord previews as dark dots with pearl rings
   // in Strum, then scale the run bar shows degrees, since a run moves through every finger; the next chord's fingers ring the neck
-  const LK=st.mode==='explore'&&lkSel()!==null?{p:lkSel(),X:lkShown()}:null;
+  const LKX=st.mode==='explore'?lkShown():null, LK=st.mode==='explore'&&(lkSel()!==null||LKX)?{p:lkSel(),X:LKX}:null;
   const nowRun=!!(nowN&&nowN.run), FA=st.mode==='drill'&&fingOn()&&!nowRun?fingering(cur.voicing.frets):null;
   const hideAll=FA&&st.playing&&st.idx>=0&&D.guide==='blind';
   const PV=st.mode==='drill'&&D.guide!=='blind'&&previewNow()?nextProg():null, PF=PV?fingering(PV.voicing.frets):null;
@@ -2786,16 +2786,17 @@ function lkVoicing(ch,p){ // a shape of the chord inside the window, root in the
   return v;
 }
 let lkCache={k:'',v:[]};
-function lkChords(){ // the key's chords that hold the note, triads (and 7ths with Add 7ths), root first, then as its 3rd, 5th and 7th
-  const p=lkSel(); if(p===null||F.fam==='chrom') return [];
+function lkChords(){ // the key's chords, triads (and 7ths with Add 7ths), each voiced in the position; once you click a note, only the ones
+  // that hold it, root first, then as its 3rd, 5th and 7th
+  const p=lkSel(); if(!lkLocked()||F.fam==='chrom') return [];
   const w=lkWin(), k=[cur.key,F.fam,F.mode,w.lo,w.hi,p,!!saved.lkSev].join('|');
   if(lkCache.k===k) return lkCache.v;
   const keep=D.sev, out=[];
   try{ for(const sev of saved.lkSev?[false,true]:[false]){
     D.sev=sev; const list=cur.set.size===7?buildChords():parentChords()||[];
-    list.forEach(ch=>{const ci=(p-ch.root+12)%12; if(ch.rel.includes(ci)) out.push({ch,ci,sev});});
+    list.forEach((ch,i)=>{const ci=p===null?null:(p-ch.root+12)%12; if(p===null||ch.rel.includes(ci)) out.push({ch,ci,sev,i});});
   }} finally{D.sev=keep;}
-  out.sort((a,b)=>chordDeg(a.ci,a.ch.rel)-chordDeg(b.ci,b.ch.rel)||a.sev-b.sev);
+  out.sort((a,b)=>p===null?a.i-b.i||a.sev-b.sev:chordDeg(a.ci,a.ch.rel)-chordDeg(b.ci,b.ch.rel)||a.sev-b.sev);
   out.forEach(x=>x.v=lkVoicing(x.ch,p));
   lkCache={k,v:out}; return out;
 }
@@ -2867,24 +2868,25 @@ function lkNoteHTML(p){
     ${find}<p class="hint">${wide?'Click':'Tap'} ${n} again to clear it.</p></div>`;
 }
 function lkChordsHTML(){
-  const p=lkSel(); if(p===null) return '';
-  const n=noteName(p);
+  if(!lkLocked()) return '';
+  const p=lkSel(), n=p===null?'':noteName(p);
+  if(F.fam==='chrom'&&p===null) return '';
   if(F.fam==='chrom') return `<div class="xch"><p class="hint">All notes has no chords of its own. Pick a scale to see the chords that use ${n}.</p></div>`;
   const L=lkChords(), par=cur.set.size!==7, pm=par&&TO_DIATONIC[F.fam]?FAMS.major.modes[TO_DIATONIC[F.fam][F.mode]||0][0]:'';
   const from=par?`${keyName()} ${pm}`:lkScale(), role=x=>chordIv(x.ch,x.ci), w=lkWin();
-  if(!L.length) return `<div class="xch"><p class="hint">None of the chords of ${esc(from)}, the scale ${esc(lkScale())} sits in, use ${n}.${F.fam==='blues'?' It’s the note the blues adds, so play it in passing between its neighbors.':''}</p></div>`;
-  const tri=L.filter(x=>!x.sev).map(x=>`${x.ci?'the '+role(x)[1]:'the root'} of ${x.ch.name}`);
-  const cards=L.map(x=>{const R_=role(x), on=st.lkPin===x.ch.name;
+  if(!L.length&&p!==null) return `<div class="xch"><p class="hint">None of the chords of ${esc(from)}, the scale ${esc(lkScale())} sits in, use ${n}.${F.fam==='blues'?' It’s the note the blues adds, so play it in passing between its neighbors.':''}</p></div>`;
+  const tri=p===null?[]:L.filter(x=>!x.sev).map(x=>`${x.ci?'the '+role(x)[1]:'the root'} of ${x.ch.name}`);
+  const cards=L.map(x=>{const R_=p===null?null:role(x), on=st.lkPin===x.ch.name;
     return `<button class="shape xshape" data-act="lkch" data-k="${esc(x.ch.name)}" aria-pressed="${on}">${x.v?voiceSVG(x.v,x.ch.root,x.ch,null,p,w.lo):`<span class="xnone">No shape with ${esc(x.ch.name)}’s root in the bass fits frets ${w.lo}–${w.hi}.</span>`}
       <b>${esc(x.ch.name)}<span class="rn">${esc(x.ch.roman)}</span></b>
-      <span class="xrole"><span class="hdeg" style="--c:${COL[x.ci]}">${R_[0]}</span>${n} is its ${x.ci?R_[1]:'root'}</span>${x.v?`<code>${fretText(x.v.frets)}</code>`:''}</button>`;}).join('');
-  return `<div class="xch"><div class="xch-top"><div><b>Chords in ${esc(from)} that use ${n}</b>${tri.length?`<p class="hint">Same note, different job: ${n} is ${lkAnd(tri)}.</p>`:''}</div>
+      ${p===null?`<span class="xrole">${x.ch.rel.map(r=>noteName((x.ch.root+r)%12)).join(' · ')}</span>`:`<span class="xrole"><span class="hdeg" style="--c:${COL[x.ci]}">${R_[0]}</span>${n} is its ${x.ci?R_[1]:'root'}</span>`}${x.v?`<code>${fretText(x.v.frets)}</code>`:''}</button>`;}).join('');
+  return `<div class="xch"><div class="xch-top"><div><b>${p===null?`Chords of ${esc(from)}`:`Chords in ${esc(from)} that use ${n}`}</b>${p===null?`<p class="hint">${wide?'Click':'Tap'} a note on the neck to see the ones that use it.</p>`:''}${tri.length?`<p class="hint">Same note, different job: ${n} is ${lkAnd(tri)}.</p>`:''}</div>
     <span class="swl">Add 7ths<button class="sw sm" data-act="lksev" aria-pressed="${!!saved.lkSev}" aria-label="Add 7ths"></button></span></div>
     ${par?`<p class="hint">${esc(lkScale())} sits inside ${esc(from)}, so these are its chords.</p>`:''}
     <div class="shapes xshapes">${cards}</div>
-    <p class="hint">${wide?'Hover a chord to see it on the neck; click it to hear it and keep it there.':'Tap a chord to hear it and see it on the neck.'} Each shape stays ${cur.whole?'near where you clicked':`inside ${esc(cur.posLabel)}`}.</p></div>`;
+    <p class="hint">${wide?'Hover a chord to see it on the neck; click it to hear it and keep it there.':'Tap a chord to hear it and see it on the neck.'} Each shape stays ${cur.whole?(st.lkAt&&p!==null?'near where you clicked':`inside frets ${w.lo}–${w.hi}`):`inside ${esc(cur.posLabel)}`}.</p></div>`;
 }
-panel.addEventListener('mouseover',e=>{ if(!lkLocked()||lkSel()===null) return;
+panel.addEventListener('mouseover',e=>{ if(!lkLocked()) return;
   const b=e.target.closest&&e.target.closest('[data-act="lkch"]'), k=b?b.dataset.k:null; if(k!==(st.lkHov??null)){st.lkHov=k; renderBoard();}});
 panel.addEventListener('mouseleave',()=>{if(st.lkHov!=null){st.lkHov=null; renderBoard();}});
 function exploreKey(){ // Explore's key, from the dots it draws

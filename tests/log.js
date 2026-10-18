@@ -185,6 +185,8 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     const cell=(s,f)=>d.querySelector(`.cell[data-s="${s}"][data-f="${f}"]`), lbl=(s,f)=>{const e=cell(s,f).querySelector('.dot'); return e?e.textContent:'';};
     setP(9,'major',5,5); const lb=d.getElementById('lockBtn');
     ok(!lb.hidden&&lb.getAttribute('aria-pressed')==='true','lk-button');
+    ok(X.lkChords().map(x=>x.ch.name).join(' ')==='Am B° C Dm Em F G'&&/Chords of A Aeolian/.test(d.querySelector('.xch').textContent),'lk-all-chords',X.lkChords().map(x=>x.ch.name).join(' '));
+    click(d.querySelector('[data-act=lkch][data-k=Dm]')); ok(lbl(1,5)==='R'&&lbl(4,6)==='♭3'&&lbl(0,0)==='×','lk-all-on-neck',[lbl(1,5),lbl(4,6),lbl(0,0)].join(' '));
     click(cell(3,5)); ok(X.F.key===9&&X.lkSel()===0,'lk-keeps-key',X.F.key);
     const vc=d.getElementById('voiceCard').textContent;
     ok(/the ♭3 of A Aeolian/.test(vc)&&/Minor 3rd: 3 half steps above A/.test(vc)&&/A major 3rd, C♯, would make it major/.test(vc)&&/neighbors in the scale are B, a half step below, and D, a whole step above/.test(vc)&&/Also in A minor pentatonic/.test(vc)&&/low E fret 8 · G fret 5 · high E fret 8/.test(vc),'lk-note',vc.slice(0,500));

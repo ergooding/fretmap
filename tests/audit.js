@@ -102,6 +102,12 @@ setTimeout(async()=>{
     for(const key of [0,7]){ setSel('selKey',key);
      for(const p of [-1,...[...d.getElementById('selPos').options].map(o=>+o.value).filter(v=>v>=0)]){ setSel('selPos',p);
       const cur=X.cur, S=cur.set, lo=cur.whole?0:cur.lo, hi=cur.whole?12:cur.hi, seen=new Set();
+      { X.st.lkSel=null; X.st.lkAt=null; const A=X.lkChords(), W=X.lkWin(), tag=`${fam}/${m}/${key}/${p} all`; // no note clicked: every chord of the key
+        if(fam!=='chrom'&&A.filter(x=>!x.sev).length!==7) fail('lk-all',tag);
+        for(const x of A){ const c=x.ch, tones=c.rel.map(r=>(c.root+r)%12); if(!x.v){fail('lk-all-no-shape',`${tag} ${c.name}`); continue;} nLkV++;
+          const fr=x.v.frets, pl=fr.map((g,t)=>g===null?null:pc(t,g)).filter(z=>z!==null);
+          if(pl.some(z=>!tones.includes(z))||pl[0]!==c.root||tones.some(z=>!pl.includes(z)&&!(tones.length>=4&&(z-c.root+12)%12===7))) fail('lk-all-shape',`${tag} ${c.name} ${fr}`);
+          if(fr.some(g=>g!==null&&(g===0?W.lo>1:(g<Math.max(1,W.lo-1)||g>W.hi)))) fail('lk-all-outside',`${tag} ${c.name} ${fr}`);}}
       for(let s=0;s<6;s++) for(let f=lo;f<=hi;f++){ const q=pc(s,f), iv=(q-cur.key+12)%12; if(!S.has(iv)||seen.has(q)) continue; seen.add(q);
        X.st.lkSel=null; click(d.querySelector(`.cell[data-s="${s}"][data-f="${f}"]`)); nLk++;
        const tag=`${fam}/${m}/${key}/${p} ${q}`; if(X.lkSel()!==q||X.F.key!==key){fail('lk-sel',tag); continue;}
