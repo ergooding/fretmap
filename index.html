@@ -214,7 +214,7 @@ html.wide{font-size:19px}
 .vc-diag svg{width:100%;max-width:260px;height:auto;display:block;margin:0 auto}
 .vc-diag:hover svg{opacity:.85}
 .voice-card p{margin:4px 0 0;font-size:.8rem;color:var(--muted);text-align:center}
-.voice-card code{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--ink);font-size:.9rem;letter-spacing:.08em}
+.voice-card code{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--ink);font-size:.9rem;letter-spacing:.08em;white-space:nowrap}
 .dot.vc{outline:3px solid var(--gold);outline-offset:3px}
 .nkey{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 10px;align-items:center;margin:6px 0 4px;font-size:.8rem;line-height:1.35;text-align:left}
 .nk{display:contents}
@@ -252,7 +252,7 @@ html.wide{font-size:19px}
 .exn{display:flex;flex-direction:column;border-left:4px solid var(--c);padding:1px 8px;line-height:1.2}
 .exn small{font-size:.72rem;color:var(--muted)}
 .exn.outk{border-left-style:dashed}
-.ex-play{align-items:center}.ex-play code{font-size:.9rem;letter-spacing:.06em}
+.ex-play{align-items:center}.ex-play code{font-size:.9rem;letter-spacing:.06em;white-space:nowrap}
 .ex-parts{display:flex;flex-direction:column;gap:6px}
 .ex-part{display:flex;flex-direction:column;gap:3px;min-width:0}
 .app.wide .sh-bars.ex-bars{display:flex;flex-wrap:wrap}
@@ -412,7 +412,8 @@ html.land{font-size:15px}
 button.bar{flex:none;min-width:66px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:5px 9px;cursor:pointer}
 button.bar .nm{font-weight:700;font-size:.98rem}
 button.bar .rn{font-family:"Times New Roman",Georgia,serif;color:var(--muted);font-size:.88rem;line-height:1.1}
-button.bar .fr{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.74rem;color:var(--muted);letter-spacing:.04em}
+button.bar .fr{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.74rem;color:var(--muted);letter-spacing:.04em;white-space:nowrap}
+button.bar .fr.long{letter-spacing:-.02em;word-spacing:-.25em}
 button.bar.own .fr{color:color-mix(in srgb,var(--gold) 72%,var(--ink));font-weight:700}
 button.bar .bt{font-family:"Sora",system-ui,sans-serif;font-size:.7rem}
 button.bar.split{border-style:dashed}
@@ -474,7 +475,7 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 .hint.bad:empty{display:none}
 .cchips{display:flex;flex-wrap:wrap;gap:6px}
 .cchip{display:flex;flex-direction:column;align-items:flex-start;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:4px 10px;cursor:pointer;line-height:1.2}
-.cchip small{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.74rem;color:var(--muted)}
+.cchip small{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.74rem;color:var(--muted);white-space:nowrap}
 .cchip.own small{color:color-mix(in srgb,var(--gold) 72%,var(--ink));font-weight:700}
 .cchip[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
 .vpop{border:1px solid var(--gold);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
@@ -482,7 +483,7 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 .shapes{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
 .shape{display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 4px;cursor:pointer;color:var(--ink);font-size:.72rem;text-align:center}
 .shape svg{width:100%;max-width:150px;height:auto}
-.shape code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;letter-spacing:.04em}
+.shape code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;letter-spacing:.04em;white-space:nowrap}
 .shape span{color:var(--muted)}
 .shape[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);background:color-mix(in srgb,var(--gold) 14%,var(--surface))}
 .vp-type{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -546,6 +547,8 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 .bsel:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
 .brow.drop .dx{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding-left:calc(6.4rem + 8px)}
 .brow.drop.sub .dx{padding-left:calc(6.4rem - 6px)}
+.brow.drop .dx .swrow{margin-left:calc(-6.4rem - 8px);max-width:calc(100% + 6.4rem + 8px)} /* the two-part toggle is wider than the control column: it takes the row's full width */
+.brow.drop.sub .dx .swrow{margin-left:calc(-6.4rem + 6px);max-width:calc(100% + 6.4rem - 6px)}
 .brow.drop .swl{margin:0}
 .blab{display:flex;align-items:baseline;border:0;background:none;padding:2px 0;cursor:pointer;text-align:left;font:inherit;font-size:.68rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;min-width:0;align-self:flex-start;max-width:100%}
 .blab::before{content:"▾";margin-right:6px;font-size:.85em}
@@ -3687,7 +3690,7 @@ function renderSheet(){
   const S=songProg(D.prog), sk=S&&LOG.skills[D.prog], n=cur.nbars;
   const sub=S?`${sk.artist?esc(sk.artist)+' · ':''}${S.part?esc(S.part)+' · ':''}${n} bar${n>1?'s':''}`:`${progRomans(D.prog).join(' ')} · ${n} bar${n>1?'s':''}`;
   const part=p=>p.to-p.from<1?` <span class="bt">${beatsText(p.to-p.from)}</span>`:'';
-  const tiles=cur.prog.map((p,i)=>`<button class="bar${p.voicing&&p.voicing.own?' own':''}${p.to-p.from<1?' split'+(p.from>0?' cont':''):''}" data-pci="${i}" aria-pressed="${i===cur.pci}"><span class="nm">${esc(p.ch.name)}</span><span class="rn">${p.ch.roman}${part(p)}</span><span class="fr">${p.voicing?fretText(p.voicing.frets):'picked'}</span></button>`).join('');
+  const tiles=cur.prog.map((p,i)=>`<button class="bar${p.voicing&&p.voicing.own?' own':''}${p.to-p.from<1?' split'+(p.from>0?' cont':''):''}" data-pci="${i}" aria-pressed="${i===cur.pci}"><span class="nm">${esc(p.ch.name)}</span><span class="rn">${p.ch.roman}${part(p)}</span><span class="fr${p.voicing&&p.voicing.frets.some(x=>x>9)?' long':''}">${p.voicing?fretText(p.voicing.frets):'picked'}</span></button>`).join('');
   const missing=[...new Set(cur.prog.filter(p=>!p.voicing).map(p=>p.ch.name))];
   const and=l=>l.length>1?l.slice(0,-1).join(', ')+' and '+l[l.length-1]:l[0]||'', nm=l=>and(l.map(iv=>noteName((cur.key+iv)%12)));
   const B=cur.borrow, fo=`${keyName()} ${esc(modeName()).replace(/^[A-Z](?=[a-z]+ (pentatonic|blues))/,c=>c.toLowerCase())}`;
