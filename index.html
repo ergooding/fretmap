@@ -732,6 +732,22 @@ span.blab::before{content:none}
 .ctile svg{display:block;width:100%;height:auto}
 .ct-h{display:flex;align-items:baseline;justify-content:space-between;gap:6px;flex-wrap:wrap}
 .ct-h b{font-size:.92rem;font-weight:700;color:var(--ink)}
+.xsw{display:flex;gap:18px;align-items:center}
+.xfing{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
+.xf-top{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:8px}
+.app.wide .xfing .cchips.ctiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.fv-h{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left}
+.fv-h code{font-size:.8rem;color:var(--muted)}
+.ftags{align-items:center}
+.fv-h .fat,.ct-h .fat{font-weight:500;color:var(--muted);margin-left:6px;font-size:.85em}
+.ftags{display:flex;gap:6px;flex-wrap:wrap;min-height:20px}
+.app:not(.wide) .xfing .fvrow{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;padding-bottom:4px}
+.app:not(.wide) .xfing .fvrow .fv{flex:0 0 190px}
+.exfsw{justify-content:flex-end}
+.app:not(.wide) .toolbar .tl{min-width:0;max-width:100%}
+.app:not(.wide) .toolbar .segw{flex-wrap:wrap;min-width:0;max-width:100%;flex:0 1 auto}
+.app:not(.wide) .toolbar .seg{flex-wrap:wrap;border-radius:16px;min-width:0;max-width:100%;flex:0 1 auto}
+.btag{font-size:.72rem;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
 .ct-h .rn{font-family:"Times New Roman",Georgia,serif;color:var(--gold);font-weight:700;margin-left:5px;font-size:.92rem}
 .ct-h code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.74rem;color:var(--muted);white-space:nowrap}
 .cchip.own .ct-h code,button.bar.own .ct-h code{color:color-mix(in srgb,var(--gold) 72%,var(--ink));font-weight:700}
@@ -2340,6 +2356,11 @@ function keepInView(){
     if(fs.length){const a=cells[0][Math.min(...fs)].getBoundingClientRect(), b=cells[0][Math.max(...fs)].getBoundingClientRect();
       if(a.left<R.left+4||b.right>R.right-4) to(w.scrollLeft+(a.left+b.right)/2-R.left-R.width/2);}
     viewKey=key; return;}
+  const FP=st.mode==='explore'&&fingPickAny();
+  if(FP){ // a shape from the Fingerings row: bring the whole shape into view
+    const fr=FP.filter(f=>f!==null&&f>0), k3=key+':fp:'+FP.join(); if(k3===viewKey||!fr.length) return; viewKey=k3;
+    const a=cells[0][Math.min(...fr)].getBoundingClientRect(), b=cells[0][Math.max(...fr)].getBoundingClientRect();
+    if(a.left<R.left+4||b.right>R.right-4) to(w.scrollLeft+(a.left+b.right)/2-R.left-R.width/2); return;}
   const q=(st.mode==='name'||st.mode==='find')&&st.q;
   if(q){ // a quiz question: center the R, and the ? beside it
     const k2=key+`:${q.root.s}/${q.root.f}`; if(k2===viewKey) return; viewKey=k2;
@@ -2363,16 +2384,19 @@ function drawBoard(){
   const played=st.mode==='drill'&&D.line!=='prog'?new Set(boxNotes().map(n=>n.s+':'+n.f)):null;
   const nextN=nowN?st.seq[(st.idx+1)%st.seq.length]:null;
   const same=(a,s,f)=>a&&a.s===s&&a.f===f;
-  const E=exSong(), EV=E&&E.c?exVoicing(E,E.sel):null, ERel=E&&E.c?exOverRel(E):null;
+  const E=exSong(), EV=E&&E.c?(fingPick(E.c,E.key)||exVoicing(E,E.sel)):null, ERel=E&&E.c?exOverRel(E):null;
   // Fingers: the voicing's dots show which finger frets them, the rest of the chord fades, and the next chord previews as dark dots with pearl rings
   // in Strum, then scale the run bar shows degrees, since a run moves through every finger; the next chord's fingers ring the neck
   const LKX=st.mode==='explore'?lkShown():null, LK=st.mode==='explore'&&(lkSel()!==null||LKX)?{p:lkSel(),X:LKX}:null;
   const nowRun=!!(nowN&&nowN.run), FA=st.mode==='drill'&&fingOn()&&!nowRun?fingering(cur.voicing.frets):null;
   const hideAll=FA&&st.playing&&st.idx>=0&&D.guide==='blind';
   const PV=st.mode==='drill'&&D.guide!=='blind'&&previewNow()?nextProg():null, PF=PV?fingering(PV.voicing.frets):null;
+  // with Fingerings on, the shape on the neck in Explore shows its fingers and its barre too
+  const XF=st.mode==='explore'&&saved.lkFing?(E?(EV?fingering(EV):null):LKX?fingering(LKX.v.frets):null):null, EF=E&&XF&&saved.lkFlab?XF:null;
+  const BA=FA||XF;
   updNextTag(!!PV); barreEl.classList.toggle('fadeprev',!!PV);
-  barreEl.style.display=FA&&FA.barre&&!hideAll?'':'none';
-  if(FA&&FA.barre){const B=FA.barre; if(horiz) place(barreEl,String(B.f+1),`${6-B.b}/${7-B.a}`); else place(barreEl,`${B.a+2}/${B.b+3}`,String(B.f+1));}
+  barreEl.style.display=BA&&BA.barre&&!hideAll?'':'none';
+  if(BA&&BA.barre){const B=BA.barre; if(horiz) place(barreEl,String(B.f+1),`${6-B.b}/${7-B.a}`); else place(barreEl,`${B.a+2}/${B.b+3}`,String(B.f+1));}
   for(let s=0;s<6;s++)for(let f=0;f<=12;f++){
     const c=cells[s][f];
     if(E){ // a song: the chosen chord's notes, the rest of the key, and the shape you play
@@ -2382,6 +2406,11 @@ function drawBoard(){
       const civ=(n-E.c.root+12)%12, inC=E.c.rel.includes(civ), ref=saved.exlab==='key'?kiv:civ, inO=E.over.includes(kiv);
       const t=saved.exlab==='notes'?exNote(E,n):saved.exlab==='key'?labIn(kiv,new Set(E.over))[0]:exDeg(E,n)[0];
       const vc=EV&&EV[s]===f?' vc':'';
+      if(EF){ // fingers: the shape's dots show which finger frets them, the rest fades behind
+        if(vc){dot(c,f===0?{t:'0',c:COL[ref],cls:'openv'+(inK?'':' outk')}:{t:EF.fing[s],c:COL[ref],cls:(ref===0?'root':'')+(inK?'':' outk')});continue;}
+        if(f===0&&EV[s]===null){dot(c,{t:'×',cls:'mute'});continue;}
+        dot(c,inC?{t,c:COL[ref],cls:(ref===0?'root':'')+ghost+' under'}:null); continue;
+      }
       if(inC) dot(c,{t,c:COL[ref],cls:(ref===0?'root':'')+(inK?'':' outk')+ghost+vc});
       else if(inO) dot(c,{t,cls:'pass'+ghost+vc});
       else dot(c,vc?{t,cls:'pass'+ghost+vc}:null);
@@ -2874,13 +2903,43 @@ function lkChords(){ // the key's chords, triads (and 7ths with Add 7ths), each 
 }
 function lkShown(){ // the chord on the neck: the one under the pointer, else the one you clicked
   const k=st.lkHov??st.lkPin; if(!k) return null;
-  const x=lkChords().find(c=>c.ch.name===k); return x&&x.v?x:null;
+  const x=lkChords().find(c=>c.ch.name===k); if(!x) return null;
+  const fv=k===st.lkPin?fingPick(x.ch,cur.key):null; if(fv) return {...x,v:{frets:fv},fv:true};
+  return x.v?x:null;
+}
+const fingPickAny=()=>saved.lkFing?(st.lkFh??st.lkFv):null;
+function fingPick(ch,key){ // the shape from the Fingerings row on the neck: the one under the pointer, else the one you clicked, if it's this chord's
+  const fv=saved.lkFing?(st.lkFh??st.lkFv):null; if(!fv||!ch) return null;
+  const want=new Set(ch.tones.map(t=>(key+t)%12)); return fv.every((f,s)=>f===null||want.has(pc(s,f)))?fv:null;
+}
+// the open chords everyone learns first; one is used only when its notes and bass match the chord exactly
+const OPEN_STD=['x32010','x32000','x32310','x02220','x02210','x02020','x02010','x02120','320003','320001','320002','022100','022000','020100','020000','021100',
+  'xx0232','xx0231','xx0212','xx0211','xx0222','xx3210','x21202'].map(parseFrets);
+function stdOpen(ch,key){
+  const want=new Set(ch.tones.map(t=>(key+t)%12)), bass=ch.bass??ch.root;
+  return OPEN_STD.find(fr=>{const ps=fr.map((f,s)=>f===null?null:pc(s,f)).filter(x=>x!==null), got=new Set(ps);
+    return ps[0]===bass&&got.size===want.size&&[...want].every(x=>got.has(x));})||null;
+}
+function lkFingList(ch,key=cur.key){ // the common shapes of a chord up the neck: open, then the named CAGED shapes, low to high, inside frets 0-12
+  const out=[], keep={chord:cur.chord,chordPcs:cur.chordPcs,lo:cur.lo,hi:cur.hi};
+  Object.assign(cur,{chord:ch,chordPcs:new Set(ch.tones.map(t=>(key+t)%12))});
+  for(const lo of [0,1,2,3,4,5,6,7,8]){
+    Object.assign(cur,{lo,hi:lo+4}); let v=null; try{v=findVoicing();}catch(e){}
+    if(!v||out.some(o=>fretText(o.frets)===fretText(v.frets))) continue;
+    const fr=v.frets.filter(f=>f), low=fr.length?Math.min(...fr):0, hi=fr.length?Math.max(...fr):0, open=v.frets.includes(0)&&low<=4;
+    if(hi>12||(!open&&!/shape/.test(v.name))) continue;
+    out.push({name:open?'Open':v.name.replace(/ shape.*/,' shape'),at:open?'':`fret ${low}`,frets:v.frets,barre:!!(fingering(v.frets)||{}).barre});
+  }
+  Object.assign(cur,keep);
+  const so=stdOpen(ch,key);
+  if(so){const t=fretText(so), L=out.filter(v=>v.name!=='Open'&&fretText(v.frets)!==t); L.unshift({name:'Open',at:'',frets:so,barre:!!(fingering(so)||{}).barre}); return L;}
+  return out;
 }
 function lkDot(s,f,{p,X}){
   const q=pc(s,f), sel=q===p, ghost=(!cur.whole&&!inWin(f))?' ghost':'';
   if(X){ // a chord shows: its shape in its own colors, counted from its root as Drill does; the scale fades behind it
     const fr=X.v.frets[s];
-    if(fr===f){const ci=(q-X.ch.root+12)%12, t=saved.labels==='notes'?noteName(q):chordIv(X.ch,ci)[0], ok=F.fam!=='chrom'&&!cur.set.has((q-cur.key+12)%12)?' outk':'';
+    if(fr===f){const ci=(q-X.ch.root+12)%12, FN=saved.lkFing&&saved.lkFlab?fingering(X.v.frets):null, t=FN?(f===0?'0':String(FN.fing[s]??'')):saved.labels==='notes'?noteName(q):chordIv(X.ch,ci)[0], ok=F.fam!=='chrom'&&!cur.set.has((q-cur.key+12)%12)?' outk':'';
       return {t,c:COL[ci],cls:(f===0?'openv':ci===0?'root':'')+(sel?' pick':'')+ok};}
     if(f===0&&fr===null) return {t:'×',cls:'mute'};
     const d=exploreDot(s,f); return d?{...d,cls:(d.cls||'')+' under'}:null;
@@ -2957,12 +3016,35 @@ function lkChordsHTML(){
       <b>${esc(x.ch.name)}<span class="rn">${esc(x.ch.roman)}</span></b>
       ${p===null?`<span class="xrole">${x.ch.rel.map(r=>noteName((x.ch.root+r)%12)).join(' · ')}</span>`:`<span class="xrole"><span class="hdeg" style="--c:${COL[x.ci]}">${R_[0]}</span>${n} is its ${x.ci?R_[1]:'root'}</span>`}${x.v?`<code>${fretText(x.v.frets)}</code>`:''}</button>`;}).join('');
   return `<div class="xch"><div class="xch-top"><div><b>${p===null?`Chords of ${esc(from)}`:`Chords in ${esc(from)} that use ${n}`}</b>${p===null?`<p class="hint">${wide?'Click':'Tap'} a note on the neck to see the ones that use it.</p>`:''}${tri.length?`<p class="hint">Same note, different job: ${n} is ${lkAnd(tri)}.</p>`:''}</div>
-    <span class="swl">Add 7ths<button class="sw sm" data-act="lksev" aria-pressed="${!!saved.lkSev}" aria-label="Add 7ths"></button></span></div>
+    <span class="xsw">${fingSw()}<span class="swl">Add 7ths<button class="sw sm" data-act="lksev" aria-pressed="${!!saved.lkSev}" aria-label="Add 7ths"></button></span></span></div>
     ${par?`<p class="hint">${esc(lkScale())} sits inside ${esc(from)}, so these are its chords.</p>`:''}
     <div class="shapes xshapes">${cards}</div>
-    <p class="hint">${wide?'Hover a chord to see it on the neck; click it to hear it and keep it there.':'Tap a chord to hear it and see it on the neck.'} Each shape stays ${cur.whole?(st.lkAt&&p!==null?'near where you clicked':`inside frets ${w.lo}–${w.hi}`):`inside ${esc(cur.posLabel)}`}.</p></div>`;
+    <p class="hint">${wide?'Hover a chord to see it on the neck; click it to hear it and keep it there.':'Tap a chord to hear it and see it on the neck.'} Each shape stays ${cur.whole?(st.lkAt&&p!==null?'near where you clicked':`inside frets ${w.lo}–${w.hi}`):`inside ${esc(cur.posLabel)}`}.</p>${lkFingHTML(L)}</div>`;
 }
-panel.addEventListener('mouseover',e=>{ if(!lkLocked()) return;
+function lkFingHTML(L){
+  if(!saved.lkFing) return '';
+  const x=st.lkPin&&L.find(c=>c.ch.name===st.lkPin);
+  if(!x) return `<div class="xfing"><p class="hint">${wide?'Click':'Tap'} a chord above to see its common fingerings up the neck.</p></div>`;
+  return fingRowHTML(x.ch,x.ch.name,cur.key,lkWin());
+}
+function fingRowHTML(ch,name,key,w){ // the Fingerings row: a chord's common shapes, low to high, with finger numbers
+  const list=lkFingList(ch,key), now=st.lkFv?fretText(st.lkFv):null;
+  const fl=v=>{const FA=fingering(v.frets); return (s,f)=>({ref:(pc(s,f)-ch.root+12)%12,t:f===0?'0':String(FA.fing[s]??'')});};
+  const tiles=list.map(v=>{const t=fretText(v.frets), fr=v.frets.filter(f=>f), lo=fr.length?Math.min(...fr):0, hi=fr.length?Math.max(...fr):0, inPos=w&&lo>=w.lo&&hi<=w.hi;
+    return `<button class="cchip ctile fv" data-act="lkfv" data-f="${t}" data-j="${JSON.stringify(v.frets)}" aria-pressed="${t===now}" aria-label="${esc(name)}, ${esc(v.name)}${v.at?' '+v.at:''}, ${t}">${voiceSVG(v,ch.root,ch,fl(v))}<span class="fv-h"><b>${esc(v.name)}${v.at?`<span class="fat">${v.at}</span>`:''}</b><span class="ftags"><code>${t}</code>${v.barre?'<span class="btag">Barre</span>':''}${inPos?'<span class="intag">In your position</span>':''}</span></span></button>`;}).join('');
+  if(!list.length) return `<div class="xfing"><p class="hint">No common shape of ${esc(name)} fits below fret 12.</p></div>`;
+  return `<div class="xfing"><div class="xf-top"><b>${esc(name)} up the neck</b><span class="hint">${list.length===1?'1 common shape':list.length+' common shapes, low to high'}. Numbers are fingers: 1 index to 4 pinky.</span></div>
+    <div class="cchips ctiles fvrow">${tiles}</div>
+    <p class="hint">${wide?'Hover a shape to see it on the neck; click it to hear it and keep it there. Click it again to go back.':'Tap a shape to hear it and see it on the neck. Tap it again to go back.'}</p></div>`;
+}
+function exFingHTML(E){ // the Fingerings row for the song's chosen chord
+  if(!saved.lkFing||!E.c) return '';
+  return fingRowHTML(E.c,E.sel,E.key,cur.whole?null:{lo:cur.lo,hi:cur.hi});
+}
+const fingSw=()=>`<span class="swl">Fingerings<button class="sw sm" data-act="lkfing" aria-pressed="${!!saved.lkFing}" aria-label="Fingerings"></button></span>`;
+panel.addEventListener('mouseover',e=>{ if(st.mode!=='explore') return;
+  if(wide){const fb=e.target.closest&&e.target.closest('[data-act="lkfv"]'), fv=fb?JSON.parse(fb.dataset.j):null; if(JSON.stringify(fv)!==JSON.stringify(st.lkFh??null)){st.lkFh=fv; renderBoard();} if(fb) return;}
+  if(!lkLocked()) return;
   const b=e.target.closest&&e.target.closest('[data-act="lkch"]'), k=b?b.dataset.k:null; if(k!==(st.lkHov??null)){st.lkHov=k; renderBoard();}});
 panel.addEventListener('mouseleave',()=>{if(st.lkHov!=null){st.lkHov=null; renderBoard();}});
 function exploreKey(){ // Explore's key, from the dots it draws
@@ -3785,9 +3867,9 @@ function exCard(E,side=false){ // side: the card beside the neck on a desktop, w
     const moves=pcs.filter(p=>!npcs.includes(p)).map(p=>{let b=null; npcs.forEach(q=>{const dd=((q-p+18)%12)-6; if(!b||Math.abs(dd)<Math.abs(b.d)) b={q,d:dd};}); return b&&Math.abs(b.d)<=2?`${N(p)} to ${N2(b.q)}`:null;}).filter(Boolean);
     next=`<p>Next comes <b>${esc(nx)}</b> (${esc(C2.roman)}). ${keep.length?`They share ${keep.map(N).join(' and ')}, so ${keep.length>1?'those notes':'that note'} can ring across the change`:'They share no notes'}${moves.length?`, and ${moves.join(', ')} ${moves.length>1?'are':'is'} a step away`:''}.</p>`;
   }
-  const f=exVoicing(E,sel);
+  const f=(st.lkFv&&fingPick(c,key))||exVoicing(E,sel), EF=saved.lkFing&&saved.lkFlab; // a shape clicked in the Fingerings row is the one you play
   const from=saved.exlab==='notes'?'':saved.exlab==='key'?`, counted from ${E.sp(key)}`:`, counted from ${cn}`;
-  const legend=`<p class="hint">On the neck: colored dots are its notes and pearl dots are the other notes to play over it${from}.${outs.length?' A dashed edge marks a note from outside the key.':''} Gold rings are the shape you play.</p>`;
+  const legend=`<p class="hint">On the neck: colored dots are its notes and pearl dots are the other notes to play over it${from}.${outs.length?' A dashed edge marks a note from outside the key.':''} ${EF?'The shape you play shows which finger frets each note, 1 index to 4 pinky, with its barre; the rest of the chord fades behind it.':'Gold rings are the shape you play.'}</p>`;
   const t=st.exTap, tapped=t==null?`<p class="hint vc-tap">${tapWord()} a note on the neck to see what it is here.</p>`
     :`<p class="xn-pent"><b>${exNote(E,t)}</b> is the ${exDeg(E,t)[1]} of ${esc(sel)}${c.rel.includes((t-c.root+12)%12)?', one of its notes':''}, and ${E.scale.includes((t-E.key+12)%12)?`the ${labIn((t-E.key+12)%12,new Set(E.scale))[1]} of ${kname}`:`outside ${kname}`}.</p>`;
   if(side) return `<div class="xnote ex-side"><div class="vc-head"><b>${esc(sel)}</b><span class="rn">${esc(c.roman)}</span><span>in ${kname} · ${esc(E.sk.name)}</span></div>
@@ -3809,9 +3891,10 @@ function exploreSongHTML(E){
     return wide?`<button class="cchip ex-ch ctile${out?' outk':''}" data-act="exch" data-n="${esc(n)}" aria-pressed="${n===E.sel}">${ctileHTML(c,n,exVoicing(E,n),esc(c.roman),out?'<small class="ct-out">Outside the key</small>':'')}</button>`
       :`<button class="cchip ex-ch${out?' outk':''}" data-act="exch" data-n="${esc(n)}" aria-pressed="${n===E.sel}"><b>${esc(n)}</b><small>${esc(c.roman)}${out?' · outside':''}</small></button>`;}).join('');
   const parts=E.parts.filter(p=>p.chords.length).map(p=>`<div class="ex-part"><span class="seglab">${esc(p.name)}</span><div class="sh-bars ex-bars">${p.chords.map(n=>`<button class="bar" data-act="exch" data-n="${esc(n)}" aria-pressed="${n===E.sel}"><span class="nm">${esc(n)}</span><span class="rn">${esc(chordIn(n,key,letterOf(E.sp(key))).roman)}</span></button>`).join('')}</div></div>`).join('');
-  return `<div class="toolbar"><div class="tl">${seg('Labels','exlab',[['chord','From the chord'],['key','From the key'],['notes','Notes']],saved.exlab||'chord')}</div></div>
-    <div class="ex-song">${sum}${wide?`<div class="xch"><b>Chords in ${esc(sk.name)}</b><div class="cchips ctiles">${chips}</div><p class="hint">Click a chord to hear it and see what it does; the card beside the neck explains it.</p></div>`
-      :`<div class="cchips">${chips}</div>${exCard(E)}`}<div class="ex-parts">${parts}</div></div>`;
+  const fs=saved.lkFing&&E.c;
+  return `<div class="toolbar"><div class="tl">${seg('Labels','exlab',[['chord','From the chord'],['key','From the key'],['notes','Notes']].concat(fs?[['fing','Fingers']]:[]),fs&&saved.lkFlab?'fing':saved.exlab||'chord')}</div></div>
+    <div class="ex-song">${sum}${wide?`<div class="xch"><div class="xch-top"><b>Chords in ${esc(sk.name)}</b><span class="xsw">${fingSw()}</span></div><div class="cchips ctiles">${chips}</div><p class="hint">Click a chord to hear it and see what it does; the card beside the neck explains it.</p>${exFingHTML(E)}</div>`
+      :`<div class="cchips">${chips}</div><div class="row exfsw">${fingSw()}</div>${exFingHTML(E)}${exCard(E)}`}<div class="ex-parts">${parts}</div></div>`;
 }
 function saveParts(id,parts){
   const sk=LOG.skills[id]; if(!sk) return;
@@ -4066,7 +4149,7 @@ function renderPanel(){
     // one toolbar under the neck: how the neck looks on the left, what a click does on the right; then the degrees shown
     const ivs=cur.allowed.map(i=>`<button class="ivchip" style="--c:${COL[i]}" data-act="iv" data-i="${i}" aria-pressed="${st.visible.has(i)}" aria-label="${lab(i)[1]}">${lab(i)[0]}</button>`).join('');
     panel.innerHTML=`<div class="toolbar"><div class="tl">${seg('Show','show',[['all','Whole scale'],['chord','Chord tones']],showChord()?'chord':'all')}
-      ${seg('Labels','labels',[['iv','Degrees'],['notes','Notes']],saved.labels==='notes'?'notes':'iv')}</div>
+      ${(()=>{const fs=saved.lkFing&&lkShown(); return seg('Labels','labels',[['iv','Degrees'],['notes','Notes']].concat(fs?[['fing','Fingers']]:[]),fs&&saved.lkFlab?'fing':saved.labels==='notes'?'notes':'iv');})()}</div>
       <div class="tr">${seg('Click a note','lock',[['on','Explain it'],['off','Make it the key']],saved.lkLock===false?'off':'on')}</div></div>
       <div class="row degrow"><span class="seglab">Degrees</span><button class="ivchip" style="--c:${COL[0]}" aria-pressed="true" disabled aria-label="root, always shown" data-tip="R, the root, always shows.">R</button>${ivs}</div>${wide?'':`<div class="xkey">${lkSel()!==null?lkNoteHTML(lkSel()):exploreKey()}</div>`}${lkChordsHTML()}`;
   }else if(st.mode==='name'){
@@ -4329,17 +4412,19 @@ const onClick=e=>{
     case 'strum': strumNow(); return;
     case 'move': stopMet(); st.picking=true; render(); return;
     case 'keepbox': st.picking=false; st.seq=genSeq(); render(); return;
-    case 'exch':{const E=exSong(); if(!E) return; st.exName=b.dataset.n; st.exTap=null; render();
+    case 'exch':{const E=exSong(); if(!E) return; if(st.exName!==b.dataset.n){st.lkFv=null; st.lkFh=null;} st.exName=b.dataset.n; st.exTap=null; render();
       if(saved.sound){const f=exVoicing(E,b.dataset.n); if(f) hearFrets(f);}
       if(b.closest('.cchips')){const el=[...document.querySelectorAll('.cchips [data-act="exch"]')].find(x=>x.dataset.n===b.dataset.n); if(el) el.focus();} return;}
-    case 'exhear':{const E=exSong(); const f=E&&E.sel&&exVoicing(E,E.sel); if(f) hearFrets(f); return;}
-    case 'exlab': saved.exlab=b.dataset.v; break;
+    case 'exhear':{const E=exSong(); const f=E&&E.sel&&((st.lkFv&&E.c&&fingPick(E.c,E.key))||exVoicing(E,E.sel)); if(f) hearFrets(f); return;}
+    case 'exlab': if(b.dataset.v==='fing'){saved.lkFlab=true; break;} saved.lkFlab=false; saved.exlab=b.dataset.v; break;
     case 'lksev': saved.lkSev=!saved.lkSev; st.lkPin=null; st.lkHov=null; break;
-    case 'lkch':{const k=b.dataset.k; st.lkPin=st.lkPin===k?null:k; st.lkHov=null;
+    case 'lkch':{const k=b.dataset.k; st.lkPin=st.lkPin===k?null:k; st.lkHov=null; st.lkFv=null; st.lkFh=null;
       const x=st.lkPin&&lkChords().find(c=>c.ch.name===k); if(x&&x.v&&saved.sound) hearFrets(x.v.frets); break;}
     case 'iv': st.visible.has(i)?st.visible.delete(i):st.visible.add(i); break;
     case 'show': st.visible=new Set(b.dataset.v==='chord'?chordTones():cur.allowed); break;
-    case 'labels': saved.labels=b.dataset.v; break;
+    case 'labels': if(b.dataset.v==='fing'){saved.lkFlab=true; break;} saved.lkFlab=false; saved.labels=b.dataset.v; break;
+    case 'lkfing': saved.lkFing=!saved.lkFing; st.lkFv=null; st.lkFh=null; if(saved.lkFing) saved.lkFlab=true; break;
+    case 'lkfv':{const t=b.dataset.f; st.lkFv=st.lkFv&&fretText(st.lkFv)===t?null:JSON.parse(b.dataset.j); st.lkFh=null; if(st.lkFv&&saved.sound) hearFrets(st.lkFv); break;}
     case 'lock': saved.lkLock=b.dataset.v==='on'; st.lkSel=null; st.lkAt=null; st.lkPin=null; st.lkHov=null; break;
     case 'answer':{const q=st.q;if(q.answered)return;q.picked=i;q.answered=true;record(i===q.iv);play(q.root);play(q.target,.45);break;}
     case 'hear': play(st.q.root);play(st.q.target,.5); return;
@@ -4569,6 +4654,10 @@ const TIPS=[
  ['#modes [data-mode="explore"]',()=>focusSong()?'<b>Explore</b>: what each chord of your song does in its key, and what to play over it. Shortcut: 1.':`<b>Explore</b>: see every degree of the scale around the key. ${saved.lkLock===false?'Click a note to make it the key.':'Click a note to see how it fits the key and the chords that use it.'} Shortcut: 1.`],
  ['[data-act="lock"][data-v="on"]',()=>'<b>Explain it</b>: clicking a note keeps the key and position, explains the note against the root, and shows the chords that use it.'],
  ['[data-act="lock"][data-v="off"]',()=>'<b>Make it the key</b>: clicking a note makes it the new key, keeping the scale and mode.'],
+ ['[data-act="lkfing"]',()=>`<b>Fingerings</b>: ${wide?'click':'tap'} a chord to see its common shapes up the neck, with finger numbers and barres on the neck. Currently ${saved.lkFing?'on':'off'}.`],
+ ['[data-act="lkfv"]',el=>{const fr=JSON.parse(el.dataset.j), FA=fingering(fr); return `<b>${esc(el.getAttribute('aria-label'))}</b>. Fingers, low E to high e: ${fr.map((f,s)=>f===null?'×':f===0?'open':FA.fing[s]).join(' ')}${FA.barre?`, finger 1 barred across fret ${FA.barre.f}`:''}. ${wide?'Hover to see it on the neck; click to hear it and keep it there.':'Tap to hear it and see it on the neck.'}`;}],
+ ['[data-act="labels"][data-v="fing"]',()=>'Label the chord\'s dots by the finger that frets them: 1 index, 2 middle, 3 ring, 4 pinky, 0 for an open string.'],
+ ['[data-act="exlab"][data-v="fing"]',()=>'Label the chord\'s dots by the finger that frets them: 1 index, 2 middle, 3 ring, 4 pinky, 0 for an open string.'],
  ['[data-act="lksev"]',()=>`<b>Add 7ths</b>: also show the 4-note 7th chords that use the note. Currently ${saved.lkSev?'on':'off (triads)'}.`],
  ['[data-act="lkch"]',el=>`<b>${esc(el.dataset.k)}</b>: ${wide?'hover to see it on the neck, click to hear it and keep it there':'tap to hear it and see it on the neck'}.`],
  ['#modes [data-mode="quiz"]',()=>'<b>Quiz</b>: Name it asks which degree a note is; Find it asks you to click where a degree sits. Shortcut: 2.'],
@@ -4716,7 +4805,7 @@ document.addEventListener('keydown',e=>{const t=e.target.closest&&e.target.close
 addEventListener('scroll',hideTip,true);
 addEventListener('resize',hideTip);
 
-window.__fretDebug={lkChords,lkPairs,lkSel,lkWin,shapeFits,ivShapeList,fingering,fingerMoves,tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,EXS,EX_BY,exStart,exGo,routines,openRoutine,chipDone,exProgress,fillSet,editStart,ceditStart,runOf,setupSkill,stepState,followKey,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule,setWhere,setPlan,passEnd,cycleShapes,techMarks,regen};
+window.__fretDebug={lkFingList,stdOpen,lkChords,lkPairs,lkSel,lkWin,shapeFits,ivShapeList,fingering,fingerMoves,tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,EXS,EX_BY,exStart,exGo,routines,openRoutine,chipDone,exProgress,fillSet,editStart,ceditStart,runOf,setupSkill,stepState,followKey,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule,setWhere,setPlan,passEnd,cycleShapes,techMarks,regen};
 fillSelects();
 render();
 setTimeout(syncNow,300); // does nothing without a token
