@@ -64,6 +64,21 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   // leaving the mode mid-run logs it
   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(20); mode('explore');
   ok(entries(X).length===2,'stop-on-mode-switch',entries(X).length);
+  // the timer: a 30 s scale run plays on past the time to the next root, stops there by itself, and pausing keeps the time left
+  {mode('drill'); X.saved.bpm=120; const setT=v=>{const t=d.querySelector('.tsel'); t.value=String(v); t.dispatchEvent(new w.Event('change',{bubbles:true}));};
+   setT(30); ok(X.saved.timer===30&&d.querySelector('.tsel').value==='30','timer-set');
+   const n0=entries(X).length; click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer);
+   for(let i=0;i<6;i++){advance(1); await sleep(20);}
+   ok(/^0:2\d left$/.test(d.getElementById('tleft').textContent),'timer-counts',d.getElementById('tleft').textContent);
+   click(d.querySelector('[data-act=play]')); ok(X.st.paused&&/^0:2\d left$/.test(d.getElementById('tleft').textContent),'timer-pause-keeps',d.getElementById('tleft').textContent);
+   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer);
+   let lastK=-1, endAt=0, lastT=0, ending=false;
+   for(let i=0;i<200&&X.st.playing;i++){advance(0.25); await sleep(15); if(X.st.playing){lastK=X.met.k-1; endAt=X.met.endAt||endAt; ending=ending||X.met.ending; lastT=w.__now;}}
+   while(lastK>0&&X.st.seq[lastK].rest) lastK--; // a pass is padded to whole bars with rests after its last note
+   const last=X.st.seq[lastK], key=X.cur.key, pcOf=n=>([4,9,2,7,11,4][n.s]+n.f)%12;
+   ok(!X.st.playing&&!X.st.paused&&ending&&last&&!last.rest&&pcOf(last)===key&&lastT>=endAt-1,'timer-ends-on-root',JSON.stringify({playing:X.st.playing,lastK,last,key,endAt,lastT}));
+   ok(/^Done: 0:30$/.test(d.getElementById('tleft').textContent)&&entries(X).length===n0+1,'timer-done',d.getElementById('tleft').textContent+' '+entries(X).length);
+   setT(0); ok(!X.saved.timer&&!d.getElementById('tleft').textContent,'timer-off');}
   // quiz answers
   mode('name'); for(let i=0;i<5;i++){w.__clock+=4000; const q=X.st.q; click(d.querySelector(`[data-act=answer][data-i="${i%2?q.iv:(q.iv===X.cur.allowed[0]?X.cur.allowed[1]:X.cur.allowed[0])}"]`)); click(d.querySelector('[data-act=next]'));}
   const qe=entries(X).find(e=>e.skill==='iv'); ok(qe&&qe.asked===5&&qe.right===2&&Object.values(qe.miss).reduce((a,b)=>a+b,0)===3,'quiz',JSON.stringify(qe));
@@ -79,6 +94,12 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   strum('gallop'); ok(X.R.pat==='gallop'&&!d.querySelector('#exhead .smenu:not([hidden])')&&d.querySelector('#exhead [data-row=rpat][data-v=gallop]').getAttribute('aria-pressed')==='true','strum-menu-pick');
   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(20); click(d.querySelector('[data-act=play]'));
   const re2=entries(X).filter(e=>e.skill.startsWith('prog:')); ok(re2.length===2&&re2[0].skill!==re2[1].skill&&re2[1].skill.endsWith(':gallop'),'prog-pattern-skill',re2.map(e=>e.skill).join(' '));
+  // the timer with chords: once time is up, the changes play to their end and the drill stops
+  {const t=d.querySelector('.tsel'); t.value='60'; t.dispatchEvent(new w.Event('change',{bubbles:true}));
+   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); let k=-1, len=0, ending=false;
+   for(let i=0;i<600&&X.st.playing;i++){advance(0.25); await sleep(15); if(X.st.playing){k=X.met.k; len=X.st.seq.length; ending=ending||X.met.ending;}}
+   ok(!X.st.playing&&ending&&k===len,'timer-prog-ends-with-changes',JSON.stringify({k,len,ending,p:X.st.playing}));
+   t.value='0'; t.dispatchEvent(new w.Event('change',{bubbles:true}));}
   // a gap of more than 20 minutes starts a new session
   const nS=X.LOG.sessions.length; w.__clock+=25*60e3;
   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(30); click(d.querySelector('[data-act=play]'));

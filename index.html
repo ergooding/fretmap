@@ -486,6 +486,9 @@ button.bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 
 .pbar .icon{height:auto;min-height:42px;width:40px;font-size:1.1rem}
 .pbar .play{flex:0 1 150px;min-width:100px}
 .pbar .chip{align-self:center}
+.tsel{font:inherit;font-size:.85rem;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 8px;align-self:center;flex:none;min-width:0}
+.tleft{align-self:center;font-size:.85rem;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink)}
+.tleft:empty{display:none}
 .pcount{flex:1;min-width:0;align-self:center;font-size:.9rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
 .pcount:empty{display:none}
 .pcount b{color:var(--ink)}
@@ -1931,12 +1934,29 @@ function regen(){
 }
 
 // ---------- metronome ----------
-const met={timer:null,next:0,step:0,k:0,queue:[],raf:0,taps:[]};
+const met={timer:null,next:0,step:0,k:0,queue:[],raf:0,taps:[],tlen:0,endAt:0,ending:false,done:false};
+// the drill timer: once time is up, a scale line plays on to the next root and stops there, and chords finish
+// the current time through the changes; pausing keeps the time that's left
+const TIMES=[[0,'No timer'],[30,'30 s'],[60,'1 min'],[120,'2 min'],[180,'3 min'],[300,'5 min'],[600,'10 min']];
+const mmss=x=>`${Math.floor(x/60)}:${String(Math.floor(x%60)).padStart(2,'0')}`;
+function timerText(){
+  if(!saved.timer&&!met.tlen) return '';
+  if(met.ending) return D.line==='prog'?'Time’s up: finishing the changes':'Time’s up: ending on the root';
+  if(st.playing&&met.endAt) return `${mmss(Math.min(Math.ceil(met.tlen),Math.ceil(Math.max(0,met.endAt-ac.currentTime))))} left`;
+  if(st.playing&&met.tlen) return `${mmss(met.tlen)} left`;
+  if(st.paused&&st.tLeft!=null) return `${mmss(Math.ceil(st.tLeft))} left`;
+  if(st.timeUp) return `Done: ${mmss(st.timeUp)}`;
+  return '';
+}
+function updTimer(){const el=document.getElementById('tleft'); if(!el) return; const t=timerText(); if(el.textContent!==t) el.textContent=t;}
+const timerHTML=()=>`<select class="tsel" data-tm="1" aria-label="Timer">${TIMES.map(([v,l])=>`<option value="${v}"${v===(saved.timer||0)?' selected':''}>${v?'⏱ '+l:l}</option>`).join('')}</select><span class="tleft" id="tleft" role="timer">${timerText()}</span>`;
+function timeUp(t){met.done=true; met.queue.push({t,end:true});}
 function startMet(fromK=0){
   ensureAC();
   if(!st.seq.length||(!fromK&&st.pbar)){st.pbar=0; st.seq=genSeq();}
   if(!st.seq.length) return;
   logStop(); logStart();
+  met.tlen=st.paused&&st.tLeft!=null?st.tLeft:(saved.timer||0); met.endAt=0; met.ending=false; met.done=false; st.tLeft=null; st.timeUp=0;
   met.step=D.line==='prog'?-4:-4*D.sub; met.k=fromK<st.seq.length?fromK:0; st.paused=false; met.next=ac.currentTime+0.12; met.queue=[];
   st.playing=true; st.idx=-1;
   met.timer=setInterval(schedule,25); schedule();
@@ -1947,6 +1967,7 @@ function stopMet(){
   logStop();
   clearInterval(met.timer); cancelAnimationFrame(met.raf);
   st.playing=false; st.paused=false; st.idx=-1; st.count=0; met.queue=[];
+  met.tlen=0; met.endAt=0; met.ending=false; met.done=false; st.tLeft=null;
 }
 function pauseMet(){
   // keep the current note lit; resuming counts in and repeats the bar that was interrupted
@@ -1954,6 +1975,7 @@ function pauseMet(){
   const bar=4*D.sub, idx=st.idx;
   let k=idx>=0?idx-idx%bar:met.k-met.k%bar;
   if(D.line==='prog'){const j=idx>=0?idx:Math.min(met.k,st.seq.length-1), b=st.seq[j]?st.seq[j].bar:0; k=st.seq.findIndex(n=>n.bar===b);}
+  st.tLeft=met.tlen?(met.endAt?Math.max(0.001,met.endAt-ac.currentTime):met.tlen):null; met.ending=false; met.done=false;
   clearInterval(met.timer); cancelAnimationFrame(met.raf);
   st.playing=false; st.paused=true; st.count=0; met.queue=[];
   st.resumeK=Math.max(0,k);
@@ -1965,17 +1987,20 @@ function togglePlay(){
 function schedule(){
   if(D.line==='prog') return pschedule();
   const sub=D.sub;
-  while(met.next<ac.currentTime+0.12){
+  while(met.next<ac.currentTime+0.12&&!met.done){
     const i=met.step, t=met.next;
     const beatNo=Math.floor(i/sub), beat=((i%sub)+sub)%sub===0, bar=beat&&((beatNo%4)+4)%4===0;
     if(D.click||i<0){ if(beat) click(t,bar?1760:1175,bar?0.4:0.25); else if(D.click&&sub>1) click(t,880,0.06); }
     if(i<0){ if(beat) met.queue.push({t,count:beatNo+5}); }
     else{
-      if(met.k>=st.seq.length) passEnd(t);
-      const n=st.seq[met.k];
+      if(met.tlen&&!met.endAt) met.endAt=t+met.tlen;
+      const late=met.endAt&&t>=met.endAt-0.001; if(late&&!met.ending){met.ending=true; met.queue.push({t,ending:true});}
+      if(met.k>=st.seq.length){ if(late){timeUp(t); return;} passEnd(t); } // time's up at the end of a pass: the pass already ended on the root
+      const n=st.seq[met.k], lastRoot=late&&n&&!n.rest&&!n.chord&&n.s!=null&&pc(n.s,n.f)===cur.key;
       if(n&&n.chord) strum(t,0.2);
-      else if(n&&!n.rest&&D.notes) toneAt(MIDI[n.s]+capo()+n.f,t,n.sl?0.18:0.26); // a hammer-on or pull-off sounds softer than a picked note
+      else if(n&&!n.rest&&D.notes) toneAt(MIDI[n.s]+capo()+n.f,t,lastRoot?0.9:n.sl?0.18:0.26); // a hammer-on or pull-off sounds softer than a picked note; the last root rings
       met.queue.push({t,k:met.k}); met.k++;
+      if(lastRoot){timeUp(t+60/saved.bpm/sub); return;}
     }
     met.next+=60/saved.bpm/sub; met.step++;
   }
@@ -2000,13 +2025,15 @@ function cycleNext(){
 }
 function pschedule(){
   // progressions: a one-bar count-in of four clicks, then each step at its own bar's grid (strum bars 8 or 16, arpeggio bars 4 × notes per beat)
-  while(met.next<ac.currentTime+0.12){
+  while(met.next<ac.currentTime+0.12&&!met.done){
     const t0=met.next;
     if(met.step<0){
       click(t0,met.step===-4?1760:1175,met.step===-4?0.4:0.25); met.queue.push({t:t0,count:met.step+5});
       met.next+=60/saved.bpm; met.step++; continue;
     }
-    if(met.k>=st.seq.length) passEnd(t0);
+    if(met.tlen&&!met.endAt) met.endAt=t0+met.tlen;
+    if(met.endAt&&t0>=met.endAt-0.001&&!met.ending){met.ending=true; met.queue.push({t:t0,ending:true});}
+    if(met.k>=st.seq.length){ if(met.ending){timeUp(t0); return;} passEnd(t0); }
     const n=st.seq[met.k], dur=60/saved.bpm*4/n.n, per=n.n/4;
     const t=t0+((n.sw??R.swing)&&(n.n===8||n.n===16)&&n.k%2===1?dur/3:0); // shuffle: the second of each pair lands two thirds of the way through
     if(n.k%per===0&&D.click) click(t,n.k===0?1760:1175,n.k===0?0.4:0.25);
@@ -2023,6 +2050,7 @@ function draw(){
   const now=ac.currentTime; let changed=false, newTab=false, newChord=false, newShape=false;
   while(met.queue.length&&met.queue[0].t<=now){
     const e=met.queue.shift(); changed=true;
+    if(e.end){const len=saved.timer||0; stopMet(); st.timeUp=len||1; render(); return;}
     if('count' in e) st.count=e.count;
     if(e.newSeq) newTab=true;
     if(e.shape) newShape=true;
@@ -2031,6 +2059,7 @@ function draw(){
       const n=st.seq[e.k]; if(cur.prog&&n&&n.ci!==cur.pci){setProgChord(n.ci); newChord=true;}}
   }
   if(newShape){fillSelects(); render(); updateTab(); met.raf=requestAnimationFrame(draw); return;} // the next shape: everything that names the box
+  updTimer();
   if(changed){ if(newTab) renderTab(); renderBoard(); renderPrompt(); updateTab(); updateRGrid();
     if(newChord){renderVoice(); markProgChord();} }
   met.raf=requestAnimationFrame(draw);
@@ -4088,7 +4117,7 @@ function pbarHTML(){
   return `<div class="pbar">${transportHTML()}
     <button class="btn primary play" data-act="play">${st.playing?'❚❚ Pause':st.paused?'▶ Resume':'▶ Play'}</button>
     ${st.paused?'<button class="icon" data-act="restart" aria-label="Restart from the top">⏮</button>':''}
-    <span class="pcount" id="pcount"></span>${cleanChip()}
+    ${timerHTML()}<span class="pcount" id="pcount"></span>${cleanChip()}
     ${wide?'':'<button class="icon gear" data-act="sheet" aria-label="Drill settings" aria-haspopup="dialog">⚙</button>'}</div>`;
 }
 function updateLive(){
@@ -4242,6 +4271,9 @@ const onChange=e=>{
     f.text().then(t=>{const err=importLog(t); st.importMsg=err||`Imported ${f.name}.`; render();}); return;}
   if(st.mode==='songs'&&songChange(e)) return;
   if(e.target.id==='exName'){const r=openRoutine(), v=e.target.value.trim(); if(r&&v&&v!==r.name){r.name=v.slice(0,60); touch(r);} render(); return;}
+  if(e.target.dataset.tm){saved.timer=+e.target.value||0; save(); // a new time starts now
+    if(st.playing){met.tlen=saved.timer; met.endAt=saved.timer?ac.currentTime+saved.timer:0; met.ending=false;}
+    else{st.tLeft=st.paused&&saved.timer?saved.timer:null; st.timeUp=0;} updTimer(); return;}
   const k=e.target.dataset.set; if(!k) return;
   const v=e.target.value;
   if(k==='rpat'){R.pat=v; if(RPAT[v]) R.swing=RPAT[v].swing; save(); keepSongStrum(); regen(); return;}
@@ -4746,6 +4778,7 @@ const TIPS=[
  ['[data-set="guide"]',()=>GUIDE_TIP[D.guide]],
  ['[data-act="slower"]',()=>'4 bpm slower.'],
  ['[data-act="faster"]',()=>'4 bpm faster.'],
+ ['.tsel',()=>`<b>Timer</b>: play for this long, then end cleanly. A scale line plays on to the next root and stops there; chords finish the current time through the changes. Pause keeps the time that's left.${saved.timer?` Set to ${mmss(saved.timer)}.`:''}`],
  ['[data-act="tap"]',()=>`${tapWord()} this a few times in rhythm to set the tempo.`],
  ['[data-set="sub"]',()=>D.line==='prog'?'How many arpeggio notes to play per beat.':'How many drill notes to play per beat.'],
  ['[data-act="play"]',()=>st.playing?'Pause. Shortcut: space':st.paused?'Resume with a one-bar count-in, repeating the bar you paused in. Shortcut: space':'Start, with a one-bar count-in. Shortcut: space'],
