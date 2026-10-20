@@ -64,8 +64,8 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   // leaving the mode mid-run logs it
   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(20); mode('explore');
   ok(entries(X).length===2,'stop-on-mode-switch',entries(X).length);
-  // the timer: a 30 s scale run plays on past the time to the next root, stops there by itself, and pausing keeps the time left
-  {mode('drill'); X.saved.bpm=120; const setT=v=>{const t=d.querySelector('.tsel'); t.value=String(v); t.dispatchEvent(new w.Event('change',{bubbles:true}));};
+  // the timer: a 30 s scale run plays on past the time to the end of its run up and down, stops on the root by itself, and pausing keeps the time left
+  {mode('drill'); X.saved.bpm=100; const setT=v=>{const t=d.querySelector('.tsel'); t.value=String(v); t.dispatchEvent(new w.Event('change',{bubbles:true}));};
    setT(30); ok(X.saved.timer===30&&d.querySelector('.tsel').value==='30','timer-set');
    const n0=entries(X).length; click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer);
    for(let i=0;i<6;i++){advance(1); await sleep(20);}
@@ -73,9 +73,10 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
    click(d.querySelector('[data-act=play]')); ok(X.st.paused&&/^0:2\d left$/.test(d.getElementById('tleft').textContent),'timer-pause-keeps',d.getElementById('tleft').textContent);
    click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer);
    let lastK=-1, endAt=0, lastT=0, ending=false;
-   for(let i=0;i<200&&X.st.playing;i++){advance(0.25); await sleep(15); if(X.st.playing){lastK=X.met.k-1; endAt=X.met.endAt||endAt; ending=ending||X.met.ending; lastT=w.__now;}}
+   for(let i=0;i<400&&X.st.playing;i++){advance(0.25); await sleep(15); if(X.st.playing){lastK=X.met.k-1; endAt=X.met.endAt||endAt; ending=ending||X.met.ending; lastT=w.__now;}}
    while(lastK>0&&X.st.seq[lastK].rest) lastK--; // a pass is padded to whole bars with rests after its last note
-   const last=X.st.seq[lastK], key=X.cur.key, pcOf=n=>([4,9,2,7,11,4][n.s]+n.f)%12;
+   const last=X.st.seq[lastK], key=X.cur.key, pcOf=n=>([4,9,2,7,11,4][n.s]+n.f)%12, runEnd=X.st.seq.map(n=>!n.rest).lastIndexOf(true);
+   ok(lastK===runEnd&&lastK>0,'timer-finishes-run',JSON.stringify({lastK,runEnd,len:X.st.seq.length}));
    ok(!X.st.playing&&!X.st.paused&&ending&&last&&!last.rest&&pcOf(last)===key&&lastT>=endAt-1,'timer-ends-on-root',JSON.stringify({playing:X.st.playing,lastK,last,key,endAt,lastT}));
    ok(/^Done: 0:30$/.test(d.getElementById('tleft').textContent)&&entries(X).length===n0+1,'timer-done',d.getElementById('tleft').textContent+' '+entries(X).length);
    setT(0); ok(!X.saved.timer&&!d.getElementById('tleft').textContent,'timer-off');}

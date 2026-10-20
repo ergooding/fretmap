@@ -1936,13 +1936,13 @@ function regen(){
 
 // ---------- metronome ----------
 const met={timer:null,next:0,step:0,k:0,queue:[],raf:0,taps:[],tlen:0,endAt:0,ending:false,done:false};
-// the drill timer: once time is up, a scale line plays on to the next root and stops there, and chords finish
+// the drill timer: once time is up, a scale line finishes its run up and down, which ends on the root, and chords finish
 // the current time through the changes; pausing keeps the time that's left
 const TIMES=[[0,'No timer'],[30,'30 s'],[60,'1 min'],[120,'2 min'],[180,'3 min'],[300,'5 min'],[600,'10 min']];
 const mmss=x=>`${Math.floor(x/60)}:${String(Math.floor(x%60)).padStart(2,'0')}`;
 function timerText(){
   if(!saved.timer&&!met.tlen) return '';
-  if(met.ending) return D.line==='prog'?'Time’s up: finishing the changes':'Time’s up: ending on the root';
+  if(met.ending) return D.line==='prog'?'Time’s up: finishing the changes':'Time’s up: finishing the run';
   if(st.playing&&met.endAt) return `${mmss(Math.min(Math.ceil(met.tlen),Math.ceil(Math.max(0,met.endAt-ac.currentTime))))} left`;
   if(st.playing&&met.tlen) return `${mmss(met.tlen)} left`;
   if(st.paused&&st.tLeft!=null) return `${mmss(Math.ceil(st.tLeft))} left`;
@@ -1953,7 +1953,7 @@ function updTimer(){const el=document.getElementById('tleft'); if(!el) return; c
 const timeLabel=v=>{const x=TIMES.find(t=>t[0]===(+v||0)); return x?x[1]:mmss(+v);};
 // the timer an exercise starts with, in Customize: attr says whose it is (Drill's own, or a session item being edited)
 const timerSel=(v,attr,tip)=>`<select class="tsel" ${attr} aria-label="Timer" data-tip="${esc(tip)}">${TIMES.map(([t,l])=>`<option value="${t}"${t===(+v||0)?' selected':''}>${t?'⏱ '+l:l}</option>`).join('')}</select>`;
-const timerTip=(name,where)=>`<b>Timer</b>: how long ${name} plays each time ${where}, then it ends cleanly. A scale line plays on to the next root and stops there; chords finish the current time through the changes.`;
+const timerTip=(name,where)=>`<b>Timer</b>: how long ${name} plays each time ${where}, then it ends cleanly. A scale line finishes its run up and down and ends on the root; chords finish the current time through the changes.`;
 const timerHTML=()=>`<select class="tsel" data-tm="1" aria-label="Timer">${TIMES.map(([v,l])=>`<option value="${v}"${v===(saved.timer||0)?' selected':''}>${v?'⏱ '+l:l}</option>`).join('')}</select><span class="tleft" id="tleft" role="timer">${timerText()}</span>`;
 function timeUp(t){met.done=true; met.queue.push({t,end:true});}
 function startMet(fromK=0){
@@ -2000,12 +2000,11 @@ function schedule(){
     else{
       if(met.tlen&&!met.endAt) met.endAt=t+met.tlen;
       const late=met.endAt&&t>=met.endAt-0.001; if(late&&!met.ending){met.ending=true; met.queue.push({t,ending:true});}
-      if(met.k>=st.seq.length){ if(late){timeUp(t); return;} passEnd(t); } // time's up at the end of a pass: the pass already ended on the root
-      const n=st.seq[met.k], lastRoot=late&&n&&!n.rest&&!n.chord&&n.s!=null&&pc(n.s,n.f)===cur.key;
+      if(met.k>=st.seq.length){ if(late){timeUp(t); return;} passEnd(t); } // time's up: the run plays to its end, which is the root
+      const n=st.seq[met.k], lastRoot=late&&n&&!n.rest&&!n.chord&&st.seq.slice(met.k+1).every(x=>x.rest); // the run's last note rings
       if(n&&n.chord) strum(t,0.2);
       else if(n&&!n.rest&&D.notes) toneAt(MIDI[n.s]+capo()+n.f,t,lastRoot?0.9:n.sl?0.18:0.26); // a hammer-on or pull-off sounds softer than a picked note; the last root rings
       met.queue.push({t,k:met.k}); met.k++;
-      if(lastRoot){timeUp(t+60/saved.bpm/sub); return;}
     }
     met.next+=60/saved.bpm/sub; met.step++;
   }
@@ -4789,7 +4788,7 @@ const TIPS=[
  ['[data-set="guide"]',()=>GUIDE_TIP[D.guide]],
  ['[data-act="slower"]',()=>'4 bpm slower.'],
  ['[data-act="faster"]',()=>'4 bpm faster.'],
- ['.tsel',()=>`<b>Timer</b>: play for this long, then end cleanly. A scale line plays on to the next root and stops there; chords finish the current time through the changes. Pause keeps the time that's left.${saved.timer?` Set to ${mmss(saved.timer)}.`:''}`],
+ ['.tsel',()=>`<b>Timer</b>: play for this long, then end cleanly. A scale line finishes its run up and down and ends on the root; chords finish the current time through the changes. Pause keeps the time that's left.${saved.timer?` Set to ${mmss(saved.timer)}.`:''}`],
  ['[data-act="tap"]',()=>`${tapWord()} this a few times in rhythm to set the tempo.`],
  ['[data-set="sub"]',()=>D.line==='prog'?'How many arpeggio notes to play per beat.':'How many drill notes to play per beat.'],
  ['[data-act="play"]',()=>st.playing?'Pause. Shortcut: space':st.paused?'Resume with a one-bar count-in, repeating the bar you paused in. Shortcut: space':'Start, with a one-bar count-in. Shortcut: space'],
