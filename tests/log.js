@@ -197,6 +197,26 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(X.F.key===7&&X.F.pos===lo&&/frets/i.test(d.querySelector('#exhead [data-act=pmenu][data-m=where]').textContent),'edit-pins',X.F.key+' '+X.F.pos);
   click(d.querySelector('#exhead [data-act=edsave]'));
   {const s=X.openRoutine().items[2].set; ok(!X.st.edit&&s.key===7&&s.pos===lo&&s.where==='focus'&&s.pick==='arp'&&s.goal===75,'edit-save',JSON.stringify(s));}
+  // each exercise in a session keeps its own timer: set in Customize, in Drill or in the Exercises tab, and used when it starts
+  {const sel=(el,v)=>{if(!el){fail('timer-sel-missing'); return;} el.value=String(v); el.dispatchEvent(new w.Event('change',{bubbles:true}));};
+   const t0=X.saved.timer||0;
+   click(d.querySelector('#exhead [data-act=excust]')); sel(d.querySelector('#exhead select[data-tm]'),60);
+   ok(X.saved.timer===60&&d.querySelector('.pbar .tsel, #pbar .tsel, .tsel:not(#exhead .tsel)').value==='60','timer-cust-live',X.saved.timer);
+   click(d.querySelector('#exhead [data-act=edcancel]')); ok((X.saved.timer||0)===t0&&!X.openRoutine().items[2].set.timer,'timer-cust-cancel',X.saved.timer);
+   click(d.querySelector('#exhead [data-act=excust]')); sel(d.querySelector('#exhead select[data-tm]'),60); click(d.querySelector('#exhead [data-act=edsave]'));
+   ok(X.openRoutine().items[2].set.timer===60,'timer-cust-save',JSON.stringify(X.openRoutine().items[2].set));
+   goMode(d,click,'practice'); click(d.querySelector('[data-act=exedit]')); click(d.querySelector('[data-act=excusti][data-i="0"]'));
+   sel(d.querySelector('.exi.open select[data-ectm]'),120); ok(X.st.cedit&&X.st.cedit.d.timer===120&&d.querySelector('.exi.open select[data-ectm]').value==='120','timer-ecedit');
+   click(d.querySelector('.exi.open [data-act=ecsave]'));
+   ok(X.openRoutine().items[0].set.timer===120&&/goal \d+ bpm · ⏱ 2 min/.test([...d.querySelectorAll('.exi')][0].textContent),'timer-ecsave',[...d.querySelectorAll('.exi')][0].textContent);
+   click(d.querySelector('[data-act=exdone]'));
+   click(d.querySelector('[data-act=exitem][data-i="0"]')); ok(X.saved.timer===120&&d.querySelector('.tsel').value==='120','timer-start-0',X.saved.timer);
+   click(d.querySelector('[data-act=exnext]')); ok(!X.saved.timer,'timer-start-none',X.saved.timer);
+   click(d.querySelector('[data-act=exnext]')); ok(X.saved.timer===60,'timer-start-2',X.saved.timer);
+   sel(d.querySelector('#pbar .tsel')||[...d.querySelectorAll('select[data-tm]')].find(x=>!x.closest('#exhead')),30);
+   ok(/You changed the timer from 1 min/.test(d.getElementById('exhead').textContent),'timer-change-offer',d.getElementById('exhead').textContent.slice(0,300));
+   click(d.querySelector('#exhead [data-act=exsave]')); ok(X.openRoutine().items[2].set.timer===30,'timer-exsave',JSON.stringify(X.openRoutine().items[2].set));
+   sel([...d.querySelectorAll('select[data-tm]')].find(x=>!x.closest('#exhead')),0); X.openRoutine().items[0].set.timer=0; X.openRoutine().items[2].set.timer=0;}
   // sessions sync: the newer copy of a session wins, and an import brings sessions in
   {const r=X.openRoutine(), old={...r,name:'Old name',updated:1}; ok(X.mergeLogs(X.LOG,{v:1,sessions:[],skills:{},routines:{[r.id]:old}}).routines[r.id].name==='Weeknights "short"','ex-merge-newer');
    const nw={id:'rX',name:'From phone',created:5,updated:5,items:[{uid:'a',ex:'quiz',set:{}}]}; ok(X.mergeLogs(X.LOG,{v:1,sessions:[],skills:{},routines:{rX:nw}}).routines.rX.name==='From phone','ex-merge-new');}

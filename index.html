@@ -727,6 +727,7 @@ span.blab::before{content:none}
 .eline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .eline.rel{position:relative}
 .eline .btn{flex:none;padding:8px 16px}
+.eline .tsel{font-size:.8rem;padding:4px 8px}
 .sumc{display:flex;flex-wrap:wrap;gap:4px;margin:3px 0 1px}
 .chip.sm{padding:2px 9px;font-size:.74rem;cursor:default;background:color-mix(in srgb,var(--ink) 5%,var(--surface));white-space:normal}
 .exi.open{grid-template-columns:auto minmax(0,1fr);border:2px solid var(--gold);align-items:start}
@@ -1949,6 +1950,10 @@ function timerText(){
   return '';
 }
 function updTimer(){const el=document.getElementById('tleft'); if(!el) return; const t=timerText(); if(el.textContent!==t) el.textContent=t;}
+const timeLabel=v=>{const x=TIMES.find(t=>t[0]===(+v||0)); return x?x[1]:mmss(+v);};
+// the timer an exercise starts with, in Customize: attr says whose it is (Drill's own, or a session item being edited)
+const timerSel=(v,attr,tip)=>`<select class="tsel" ${attr} aria-label="Timer" data-tip="${esc(tip)}">${TIMES.map(([t,l])=>`<option value="${t}"${t===(+v||0)?' selected':''}>${t?'⏱ '+l:l}</option>`).join('')}</select>`;
+const timerTip=(name,where)=>`<b>Timer</b>: how long ${name} plays each time ${where}, then it ends cleanly. A scale line plays on to the next root and stops there; chords finish the current time through the changes.`;
 const timerHTML=()=>`<select class="tsel" data-tm="1" aria-label="Timer">${TIMES.map(([v,l])=>`<option value="${v}"${v===(saved.timer||0)?' selected':''}>${v?'⏱ '+l:l}</option>`).join('')}</select><span class="tleft" id="tleft" role="timer">${timerText()}</span>`;
 function timeUp(t){met.done=true; met.queue.push({t,end:true});}
 function startMet(fromK=0){
@@ -3251,7 +3256,7 @@ function exSummary(E,s){
   const key=s.key!=null?`key of ${keyName(s.key)} · `:'', goal=`goal ${s.goal}${pct(E)}`;
   if(E.id==='songs'){const sk=LOG.skills[s.song]; return sk&&!sk.gone?esc(sk.name):songSteps().length?'Your songs, in the order you added them':'Add a song in the Songs tab first';}
   if(isQuiz(E)) return `${rowLabel(E.rows[0],s.quiz)} · ${goal} right`;
-  return `${key}${buildText(s)} · ${goal}`;
+  return `${key}${buildText(s)} · ${goal}${+s.timer?` · ${timeLabel(s.timer)} timer`:''}`;
 }
 // ---- starting and leaving an exercise
 function leaveSongFocus(){ // an exercise that isn't a song puts the focus back on the key you had
@@ -3291,6 +3296,7 @@ function exStartNow(o){
   stopMet(); st.paused=false; st.sheet=false; st.picking=false; st.bnew=null; st.edit=null; st.pmenu=null;
   st.ex={rid:o.rid||null,uid:o.uid||null,ex:o.ex,base:s,goal:s.goal};
   if(isQuiz(E)){ if(st.mode!==s.quiz) setMode(s.quiz); else render(); return; }
+  saved.timer=+s.timer||0; st.tLeft=null; st.timeUp=0; // each exercise runs on its own timer, or none
   if(E.id==='songs'){
     const list=rowChips(E.rows[0],s), id=LOG.skills[s.song]&&!LOG.skills[s.song].gone?s.song:(list[0]||[])[0];
     if(id){setFocusSong(id); setPlay(()=>{D.plan=s.plan||D.plan; D.sbg=s.sbg; D.pick=s.pick;}); toDrill();} else {leaveSongFocus(); refresh(); fillSelects(); toDrill();}
@@ -3331,7 +3337,7 @@ function bsong(id){ // a song from the Chords row's menu: its key and chords, ke
   if(D.plan!==plan){setPlay(()=>{D.plan=plan; D.sbg=sbg; D.pick=pick;}); save(); if(st.mode==='drill') regen(); else render();}
 }
 function captureBuild(){
-  const s={prog:D.prog,chord:D.chord,plan:D.plan,sbg:D.sbg,pick:D.pick,tech:D.tech,over:D.over,where:D.where,sub:D.sub,sev:D.sev,resolve:D.resolve};
+  const s={prog:D.prog,chord:D.chord,plan:D.plan,sbg:D.sbg,pick:D.pick,tech:D.tech,over:D.over,where:D.where,sub:D.sub,sev:D.sev,resolve:D.resolve,timer:saved.timer||0};
   if(isLinePlan(D.plan)) s.pattern=D.pattern;
   if(RPAT[R.pat]&&!songNow()) s.rpat=R.pat;
   return s;
@@ -3347,7 +3353,7 @@ function exCapture(){ // the exercise's settings as Drill has them now, to compa
   if(D.where==='focus'&&b.where!=='focus'&&b.where) s.pos=F.pos;
   return s;
 }
-const EX_KEYS=['prog','chord','plan','sbg','pick','pattern','tech','over','rpat','where','pos','sub','sev','resolve','song','quiz','goal'];
+const EX_KEYS=['prog','chord','plan','sbg','pick','pattern','tech','over','rpat','where','pos','sub','sev','resolve','song','quiz','goal','timer'];
 function exChange(){ // what's different from the session's settings for this exercise, in words, or ''
   if(!st.ex||!st.ex.rid) return '';
   const E=exOf(st.ex.ex), b=st.ex.base, c=exCapture();
@@ -3360,6 +3366,7 @@ function exChange(){ // what's different from the session's settings for this ex
   for(const k of Object.keys(lab)){ if(!live(k)||E.id==='songs'&&k==='prog') continue;
     if(String(c[k]??'')!==String(b[k]??'')) return `You changed ${lab[k][0]} from ${esc(lab[k][1](b[k]))}.`; }
   if(c.goal!==b.goal) return `You changed the goal from ${b.goal}${pct(E)}.`;
+  if((+c.timer||0)!==(+b.timer||0)) return `You changed the timer from ${timeLabel(b.timer)}.`;
   if(['pos','sub','sev','resolve'].some(k=>b[k]!==undefined&&b[k]!==null&&String(c[k])!==String(b[k]))) return 'You changed this exercise’s settings.';
   return '';
 }
@@ -3555,10 +3562,10 @@ function keyLine(c,key){
     [['',[['','Follow the focus','ekey',on(''),'Play in the key picked in the bar at the top.']]],['',KEY_OPTS.map((n,i)=>[String(i),n,'ekey',on(String(i)),`Always play this exercise in ${n}.`])]],
     '<b>Key</b>: follow the key in the bar at the top, or always play this exercise in one key.',true)}</div>`;
 }
-function goalLine(E,goal,act,save,cancel,saveLabel,saveTip){
+function goalLine(E,goal,act,save,cancel,saveLabel,saveTip,tm){ // tm: the exercise's timer pick, when it plays on a beat
   const q=isQuiz(E), g=E.id==='songs'?`<span class="hint">Goal: each song’s own tempo</span>`
     :`<span class="gstep"><button data-act="${act}" data-v="-5" aria-label="Lower the goal" data-tip="Lower the goal by 5${q?' percent':' bpm'}.">−</button><b>goal ${goal}${q?'%':' bpm'}</b><button data-act="${act}" data-v="5" aria-label="Raise the goal" data-tip="Raise the goal by 5${q?' percent':' bpm'}.">+</button></span>`;
-  return `<div class="eline"><span class="lab">Goal</span>${g}<span class="sp"></span><button class="btn" data-act="${cancel}" data-tip="Put everything back the way it was.">Cancel</button><button class="btn primary" data-act="${save}" data-tip="${esc(saveTip)}">${saveLabel}</button></div>`;
+  return `<div class="eline"><span class="lab">Goal</span>${g}${tm||''}<span class="sp"></span><button class="btn" data-act="${cancel}" data-tip="Put everything back the way it was.">Cancel</button><button class="btn primary" data-act="${save}" data-tip="${esc(saveTip)}">${saveLabel}</button></div>`;
 }
 function editWhere(E,rid,uid){ // whose settings Customize changes
   const r=rid&&LOG.routines[rid];
@@ -3575,7 +3582,7 @@ function builderHTML(){
     return `<div class="exh-top"><span class="lab">Customize</span><span class="sp"></span>${gear}</div><div class="exh-title"><b>${esc(E.name)}</b><small>${w.lab}</small></div>
       ${E.user?`<input id="edName" class="ename" value="${esc(st.edit.name)}" maxlength="60" aria-label="Name" data-tip="The exercise’s name, under Yours in the Exercises tab.">`:''}
       <p class="hint">${tapWord()} a chip to start ${esc(E.name)} there. The neck plays what you pick.</p>${rows}
-      ${E.id==='songs'?'':keyLine(ctx,st.edit.key)}${goalLine(E,st.ex.goal,'exgoal','edsave','edcancel',w.save,w.tip)}`;
+      ${E.id==='songs'?'':keyLine(ctx,st.edit.key)}${goalLine(E,st.ex.goal,'exgoal','edsave','edcancel',w.save,w.tip,timerSel(saved.timer,'data-tm="1"',timerTip(esc(E.name),'you start it')))}`;
   }
   const nw=st.bnew?`<div class="bnew"><input id="bName" value="${esc(st.bnew.name)}" maxlength="60" aria-label="Name for the new exercise"><button class="btn primary" data-act="bnewok" data-tip="Save this setup under Yours in the Exercises tab.">Save</button><button class="btn" data-act="bnewno" data-tip="Don’t save it.">Cancel</button></div>`
     :`<button class="chip" data-act="bnew" data-tip="Keep this setup as an exercise of your own, under Yours in the Exercises tab, to start it again or add it to a session.">Save as a new exercise</button>`;
@@ -3699,14 +3706,14 @@ function exMove(r,from,to){
 // In the Exercises tab a session's exercise opens the same rows right in the list.
 function editStart(){
   if(!st.ex) return; const b=st.ex.base, E=exOf(st.ex.ex);
-  st.edit={snap:JSON.parse(JSON.stringify({D,F,R,bpm:saved.bpm,goal:st.ex.goal,fmode:saved.fmode,fsong:saved.fsong,fkey:saved.fkey,spart:saved.spart,mode:st.mode})),
+  st.edit={snap:JSON.parse(JSON.stringify({D,F,R,bpm:saved.bpm,timer:saved.timer||0,goal:st.ex.goal,fmode:saved.fmode,fsong:saved.fsong,fkey:saved.fkey,spart:saved.spart,mode:st.mode})),
     key:b.key??null,pos:(b.where||'focus')==='focus'&&b.pos!=null?+b.pos:null,name:E.name};
   st.pmenu=null; st.bnew=null; render();
 }
 function editCancel(){
   const e=st.edit; if(!e) return; st.edit=null; st.pmenu=null; const o=e.snap;
   [[D,o.D],[F,o.F],[R,o.R]].forEach(([a,b])=>{Object.keys(a).forEach(k=>delete a[k]); Object.assign(a,b);});
-  Object.assign(saved,{bpm:o.bpm,fmode:o.fmode,fsong:o.fsong,fkey:o.fkey,spart:o.spart}); if(st.ex) st.ex.goal=o.goal;
+  Object.assign(saved,{bpm:o.bpm,timer:o.timer||0,fmode:o.fmode,fsong:o.fsong,fkey:o.fkey,spart:o.spart}); if(st.ex) st.ex.goal=o.goal;
   refresh(); fillSelects(); save();
   if(st.mode!==o.mode) setMode(o.mode); else regen();
 }
@@ -3769,7 +3776,7 @@ function ceditHTML(r,it,k){
   if(isQuiz(E)) ctx.rows=[{k:'quiz',name:'Quiz'}];
   else if(E.id==='songs') ctx.rows=[{k:'song',name:'Song'},...bRows(ctx.V,false).filter(x=>['plan','rpat','pick'].includes(x.k))];
   return `<div class="exi open" data-i="${k}"><span class="mk">${k+1}</span><div class="tx ed"><div class="exh-title"><b>${esc(E.name)}</b><small>Customize · for ${esc(r.name)}</small></div>
-    ${rowsHTML(ctx)}${isQuiz(E)||E.id==='songs'?'':keyLine(ctx,d.key)}${goalLine(E,d.goal,'ecgoal','ecsave','eccancel','Save',`Keep these settings for ${esc(E.name)} in ${esc(r.name)}.`)}</div></div>`;
+    ${rowsHTML(ctx)}${isQuiz(E)||E.id==='songs'?'':keyLine(ctx,d.key)}${goalLine(E,d.goal,'ecgoal','ecsave','eccancel','Save',`Keep these settings for ${esc(E.name)} in ${esc(r.name)}.`,isQuiz(E)?'':timerSel(d.timer,'data-ectm="1"',timerTip(esc(E.name),`you reach it in ${esc(r.name)}`)))}</div></div>`;
 }
 // what an exercise starts with, as the chips it shows in Drill
 function playBits(s,song){
@@ -3792,7 +3799,7 @@ function sumList(E,s){
   return out;
 }
 const sumChips=(E,s)=>`<span class="sumc">${sumList(E,s).map(x=>`<span class="chip sm">${esc(x)}</span>`).join('')}</span>`;
-const goalText=(E,s)=>E.id==='songs'?'each song’s own tempo':`goal ${s.goal}${isQuiz(E)?'% right':' bpm'}`;
+const goalText=(E,s)=>(E.id==='songs'?'each song’s own tempo':`goal ${s.goal}${isQuiz(E)?'% right':' bpm'}`)+(!isQuiz(E)&&+s.timer?` · ⏱ ${timeLabel(s.timer)}`:'');
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&st.pmenu){const m=st.pmenu; st.pmenu=null; if(st.mode==='practice') render(); else renderEx();
   const n=document.querySelector(`[data-act="pmenu"][data-m="${m}"]`); if(n) n.focus(); e.stopPropagation();} },true);
 document.addEventListener('click',e=>{ if(st.pmenu&&!e.target.closest('.smenu,[data-act="pmenu"]')&&!e.target.closest('button')){st.pmenu=null; if(st.mode==='practice') render(); else renderEx();} });
@@ -4271,9 +4278,13 @@ const onChange=e=>{
     f.text().then(t=>{const err=importLog(t); st.importMsg=err||`Imported ${f.name}.`; render();}); return;}
   if(st.mode==='songs'&&songChange(e)) return;
   if(e.target.id==='exName'){const r=openRoutine(), v=e.target.value.trim(); if(r&&v&&v!==r.name){r.name=v.slice(0,60); touch(r);} render(); return;}
+  if(e.target.dataset.ectm){if(st.cedit){st.cedit.d.timer=+e.target.value||0; render();} return;}
   if(e.target.dataset.tm){saved.timer=+e.target.value||0; save(); // a new time starts now
     if(st.playing){met.tlen=saved.timer; met.endAt=saved.timer?ac.currentTime+saved.timer:0; met.ending=false;}
-    else{st.tLeft=st.paused&&saved.timer?saved.timer:null; st.timeUp=0;} updTimer(); return;}
+    else{st.tLeft=st.paused&&saved.timer?saved.timer:null; st.timeUp=0;}
+    document.querySelectorAll('select[data-tm]').forEach(x=>{if(x!==e.target) x.value=String(saved.timer);}); // the play bar and Customize show the same time
+    if(st.ex&&!st.edit) renderEx(); // a session's exercise offers to keep the new time
+    updTimer(); return;}
   const k=e.target.dataset.set; if(!k) return;
   const v=e.target.value;
   if(k==='rpat'){R.pat=v; if(RPAT[v]) R.swing=RPAT[v].swing; save(); keepSongStrum(); regen(); return;}
