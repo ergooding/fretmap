@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Tab loop mockup</title>
+<title>Fretmap</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
@@ -781,6 +781,119 @@ span.blab::before{content:none}
 .ex-side .ex-play{align-items:center;gap:10px}
 .ex-side .ex-tag{margin:0}
 .exi .tx.ed{gap:10px}
+/* the chord builder: three steps, steps 2 and 3 slide shut like drawers and show their choices as pills */
+.cb{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cb h3{font-size:.95rem;margin:0;font-weight:700}
+.cb-steps{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.cb-step{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 14px 4px 4px;cursor:pointer;font-size:.84rem}
+.cb-step .n{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.78rem;background:var(--line);color:var(--ink)}
+.cb-step b{font-weight:600}
+.cb-step small{color:var(--muted)}
+.cb-step.done .n{background:var(--good);color:#fff}
+.cb-step.on{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.cb-step.on .n{background:var(--gold);color:#14110d}
+.cb-sep{color:var(--muted)}
+.cb-panel{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.cb-ph{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cb-ph .hint{margin:0 0 0 auto}
+.cb-root{display:flex;gap:6px;align-items:center}
+.cb-rootsel{font:inherit;font-size:15px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:3px 8px}
+.cb-rlist{display:flex;gap:6px;flex-wrap:wrap}
+.cb-neck{overflow-x:auto;scrollbar-width:thin}
+.cb-nsvg{display:block;width:100%;min-width:560px;height:auto}
+.cb-ring{cursor:pointer}
+.cb-ring circle{fill:rgba(233,169,58,.25);stroke:var(--gold);stroke-width:2.5;stroke-dasharray:4 3}
+.cb-ring text{fill:var(--pearl)}
+.cb-ring:hover circle,.cb-ring:focus-visible circle{fill:rgba(233,169,58,.55)}
+.cb-ring:focus-visible{outline:none}
+.cb-ring.on circle{fill:var(--gold);stroke:var(--pearl);stroke-dasharray:none}
+.cb-ring.on text{fill:#14110d}
+.cb-drawer{gap:0}
+.cb-drawer.off{opacity:.5}
+.cb-drawer:not(.shut) .cb-dh{margin-bottom:8px}
+.cb-drawer.shut{padding-block:7px}
+.cb-dh{display:flex;align-items:center;gap:10px;min-width:0}
+.cb-dh .hint{margin:0 0 0 auto}
+.cb-fold{display:flex;align-items:center;gap:8px;border:0;background:none;padding:0;cursor:pointer;text-align:left;font:inherit;color:inherit;flex:none;max-width:62%}
+.cb-fold h3{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb-fold .short,.cb-drawer.shut .cb-fold h3:not(.short){display:none}
+.cb-drawer.shut .cb-fold .short{display:block}
+.cb-chev{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;flex:none;transition:transform .25s}
+.cb-chev::before{content:"";width:7px;height:7px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-2px) rotate(45deg)}
+.cb-drawer.shut .cb-chev{transform:rotate(-90deg)}
+.cb-peek{display:none;flex:1;min-width:0;gap:6px;overflow-x:auto;scrollbar-width:thin;padding:2px}
+.cb-drawer.shut .cb-peek{display:flex}
+.cb-drawer.shut .cb-dh>.hint{display:none}
+.cb-peek .chip{padding:5px 11px;display:inline-flex;align-items:baseline;gap:6px}
+.cb-peek .chip code{font-size:.78rem}
+.cb-peek .chip small{font-size:.72rem;opacity:.8}
+.cb-peek .chip[aria-pressed="true"]{order:-1}
+.cb-dbody{display:grid;grid-template-rows:1fr;transition:grid-template-rows .28s ease}
+.cb-drawer.shut .cb-dbody{grid-template-rows:0fr}
+.cb-dinner{min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:10px}
+.cb-none{font-size:.84rem;color:var(--muted);margin:0;padding:4px 0}
+.cb-car{display:flex;align-items:center;gap:6px}
+.cb-arr{flex:none;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:1rem;color:var(--ink)}
+.cb-track{display:flex;gap:8px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:thin;padding:2px 2px 6px;flex:1;min-width:0}
+.cb-cc,.cb-vc{display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 6px;cursor:pointer;color:var(--ink)}
+.cb-cc{flex:none;width:128px}
+.cb-cc b{font-size:1rem}
+.cb-cc small,.cb-vc small{font-size:.7rem;color:var(--muted);text-align:center;line-height:1.3}
+.cb-cc svg,.cb-vc svg{width:100%;max-width:124px;height:auto;display:block}
+.cb-cc[aria-pressed="true"],.cb-vc[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold);background:color-mix(in srgb,var(--gold) 12%,var(--surface))}
+.cb-vs{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
+.cb-vc code{font-size:.78rem}
+.cb-rn{font-family:"Times New Roman",Georgia,serif;color:var(--gold);font-weight:700;font-size:.95rem;line-height:1}
+.cb-rn.big{font-size:1.3rem}
+.cb-res{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.cb-nm{font-size:1.5rem;font-weight:700}
+.cb-tones{display:flex;flex-wrap:wrap;gap:6px}
+.cb-tone{display:flex;flex-direction:column;border-left:4px solid var(--c);padding:1px 8px;line-height:1.2}
+.cb-tone small{font-size:.72rem;color:var(--muted)}
+.cb-hear{flex:none;margin-left:auto;padding:8px 16px}
+.cb-labs{display:flex;align-items:center;gap:4px}
+.cb-labs .chip{padding:4px 10px}
+.cb-card{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.cb-card .xch-top .chip{flex:none}
+.dot.rpick{background:rgba(233,169,58,.3);border:3px dashed var(--gold);color:var(--pearl);cursor:pointer}
+.dot.rpick:hover{background:rgba(233,169,58,.6)}
+@media (prefers-reduced-motion:reduce){.cb-dbody,.cb-chev{transition:none}.cb-track{scroll-behavior:auto}}
+/* the progression builder pop-up */
+#cpm{position:fixed;inset:0;z-index:850;background:rgba(10,14,12,.5);display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:max(16px,env(safe-area-inset-top,0px)) 12px max(16px,env(safe-area-inset-bottom,0px))}
+#cpm[hidden]{display:none}
+.cpm-panel{background:var(--surface);color:var(--ink);border-radius:16px;width:min(1180px,100%);max-height:100%;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.cpm-head{display:flex;align-items:flex-start;gap:12px;padding:14px 18px 10px;border-bottom:1px solid var(--line)}
+.cpm-head>div{flex:1;min-width:0}
+.cpm-head h2{margin:0;font-size:1.1rem}
+.cpm-head .hint{margin:2px 0 0}
+.cpm-body{overflow:auto;padding:14px 18px;display:grid;grid-template-columns:minmax(220px,260px) minmax(0,1fr);gap:16px;align-items:start}
+.cpm-side{display:flex;flex-direction:column;gap:10px;position:sticky;top:0}
+.cpm-main{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cpm-now{margin:0;font-size:.9rem}
+.cpm-f{display:flex;flex-direction:column;gap:4px}
+.cpm-f input,.cpm-f select{font:inherit;font-size:15px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:6px 8px}
+.cpm-bars{display:flex;flex-direction:column;gap:6px}
+.cpm-bar{display:grid;grid-template-columns:2.6rem minmax(0,1fr) auto;grid-template-areas:"no nm x" "no fr x";align-items:center;column-gap:8px;row-gap:1px;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:6px 6px 6px 10px;cursor:pointer}
+.cpm-bar .no{grid-area:no;font-size:.72rem;color:var(--muted)}
+.cpm-bar .nm{grid-area:nm;font-weight:700;min-width:0}
+.cpm-bar .nm i{font-style:normal;font-family:"Times New Roman",Georgia,serif;color:var(--gold);margin-left:6px}
+.cpm-bar code{grid-area:fr;font-size:.74rem;color:var(--muted)}
+.cpm-bar>.x,.cpm-bar>span:last-child{grid-area:x}
+.cpm-bar .x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:1.05rem;padding:0 6px}
+.cpm-bar[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);background:color-mix(in srgb,var(--gold) 20%,var(--surface))}
+.cpm-bar:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.cpm-add{border:1px dashed var(--line);background:none;border-radius:10px;padding:7px;color:var(--muted);cursor:pointer}
+.cpm-side .hint{margin:0}
+.cpm-foot{display:flex;align-items:center;gap:8px;padding:10px 18px 14px;border-top:1px solid var(--line)}
+.cpm-foot .sp{flex:1}
+.cpm-foot .btn{flex:none;padding:9px 18px}
+.cpm-foot .btn[disabled]{opacity:.5;cursor:default}
+.sh-edit{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sh-edit .hint{margin:0}
+.bar-ed{display:none;font-size:.68rem;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 8px;background:var(--surface);align-self:flex-start;cursor:pointer}
+button.bar:hover .bar-ed,button.bar:focus-visible .bar-ed,button.bar[aria-pressed="true"] .bar-ed{display:inline-block}
+.bar-ed:hover{color:var(--ink);border-color:var(--gold)}
+@media (max-width:860px){.cpm-body{grid-template-columns:1fr}.cpm-side{position:static}.cb-ph .hint{margin-left:0}}
 </style>
 </head>
 <body>
@@ -827,6 +940,7 @@ span.blab::before{content:none}
 </div>
 
 <div id="gloss" hidden></div>
+<div id="cpm" hidden></div>
 <div id="tip" role="tooltip" aria-hidden="true"></div>
 <script>
 (function(){
@@ -914,8 +1028,8 @@ function progChords(id,k,sev){ // a common progression's chords, bar by bar, in 
   if(fx){const set=fx[A.includes(3)&&!A.includes(4)?'min':'maj']||fx.maj||fx.min; return P.degs.map(d=>at((k.key+set[d][0])%12,set[d][sev?2:1]));}
   return P.degs.map(d=>{const r=A[d], q=QUAL[[2,4].concat(sev?[6]:[]).map(j=>(A[(d+j)%7]-r+12)%12).join(',')]; return q!==undefined?at((k.key+r)%12,q):{name:sp((k.key+r)%12)+'*',roman:ROMAN[d]};});
 }
-function progRomans(id){const P=PROG_BY[id]||PROG_BY.pop; if(P.id==='one'&&cur.pchords) return [overList()[D.chord].roman]; return PROG_FIX[P.id]?progChords(P.id,followKey(),D.sev).map(c=>c.roman):P.degs.map(d=>cur.pchords?cur.pchords[d].roman:ROMAN[d]);}
-function progLabel(id){const S=songProg(id); if(S) return `${esc(S.name)}: ${S.chords.length>8?S.chords.slice(0,8).join(' ')+' …':S.chords.join(' ')}`; const P=PROG_BY[id]||PROG_BY.pop; return P.degs.length>6?P.name:`${P.name}: ${progRomans(P.id).join(' ')}`;}
+function progRomans(id){const M=mineProg(id); if(M){const tl=letterOf(spellIn(cur.key,cur.A7)(cur.key)); return mineBars(M).map(x=>chordIn(x.name,cur.key,tl).roman);} const P=PROG_BY[id]||PROG_BY.pop; if(P.id==='one'&&cur.pchords) return [overList()[D.chord].roman]; return PROG_FIX[P.id]?progChords(P.id,followKey(),D.sev).map(c=>c.roman):P.degs.map(d=>cur.pchords?cur.pchords[d].roman:ROMAN[d]);}
+function progLabel(id){const M=mineProg(id); if(M){const n=mineBars(M).map(x=>x.name); return `${esc(M.name)}: ${n.length>8?n.slice(0,8).join(' ')+' …':n.join(' ')}`;} const S=songProg(id); if(S) return `${esc(S.name)}: ${S.chords.length>8?S.chords.slice(0,8).join(' ')+' …':S.chords.join(' ')}`; const P=PROG_BY[id]||PROG_BY.pop; return P.degs.length>6?P.name:`${P.name}: ${progRomans(P.id).join(' ')}`;}
 // ---------- typed chords (a song's own progression) ----------
 // Chord symbols as people write them: A, E6, Dmaj7, F#m7, Bb, Gsus4, C/G (a slash chord: the note after the slash is the lowest).
 // "(A, E6, Dmaj7) x2" repeats a group; each chord gets one bar, so write a chord twice to hold it for two.
@@ -1194,19 +1308,23 @@ function refresh(){
   cur.chordPcs=new Set(cur.chord.tones.map(t=>(cur.key+t)%12));
   cur.voicing=cur.whole?neckVoicing():findVoicing();
   cur.prog=null;
-  const song=D.line==='prog'&&songProg(D.prog);
-  if(D.line==='prog'&&(cur.pchords||song)){
+  if(/^mine-/.test(D.prog)&&logReady()&&!mineProg(D.prog)) D.prog='pop'; // your progression was deleted
+  const song=D.line==='prog'&&songProg(D.prog), mine=D.line==='prog'&&!song&&mineProg(D.prog);
+  if(D.line==='prog'&&(cur.pchords||song||mine)){
     // each chord of the progression, voiced inside the box (frets 0–4 gives open chords); a song brings its own chords
     // a bar split between chords gives each chord its own entry, with the part of the bar it covers (from and to, 0 to 1)
     const stl=song&&LOG.skills[song.id]?letterOf(songSpell(LOG.skills[song.id])(cur.key)):undefined; // the song's chords count up from its key as the song spells it
-    const items=song?song.bars.flatMap((b,bar)=>b.segs.map(x=>({ch:chordIn(x.name,cur.key,stl),bar,from:x.from,to:x.to,part:b.part})))
+    const ktl=letterOf(spellIn(cur.key,cur.A7)(cur.key));
+    const items=mine?mineBars(mine).map((x,bar)=>({ch:chordIn(x.name,cur.key,ktl),bar,from:0,to:1,part:-1,own:x.frets})) // your own: each bar keeps the shape you built
+      :song?song.bars.flatMap((b,bar)=>b.segs.map(x=>({ch:chordIn(x.name,cur.key,stl),bar,from:x.from,to:x.to,part:b.part})))
       :D.prog==='one'?[{ch:overList()[D.chord],bar:0,from:0,to:1,part:-1}] // one chord: the one picked in the Over row
       :PROG_FIX[D.prog]?progChords(D.prog,followKey(),D.sev).map((ch,bar)=>({ch,bar,from:0,to:1,part:-1}))
       :(PROG_BY[D.prog]||PROG_BY.pop).degs.map((d,bar)=>({ch:cur.pchords[d],bar,from:0,to:1,part:-1}));
     cur.prog=items.map((it,d)=>{
       const ch=it.ch; cur.chord=ch; cur.chordPcs=new Set(ch.tones.map(t=>(cur.key+t)%12));
-      const own=song&&parseFrets(song.voicings[ch.name]); // the song's own voicing wins, wherever it sits on the neck
-      return {...it,d,pcs:cur.chordPcs,voicing:own?{name:`Your voicing for ${song.name}`,frets:own,own:true}:cur.whole?neckVoicing():findVoicing()};
+      const own=song?parseFrets(song.voicings[ch.name]):it.own; // the song's own voicing wins, wherever it sits on the neck; so does each bar of yours
+      const {own:_o,...rest}=it;
+      return {...rest,d,pcs:cur.chordPcs,voicing:own?{name:`Your voicing for ${song?song.name:mine.name}`,frets:own,own:true}:cur.whole?neckVoicing():findVoicing()};
     });
     cur.nbars=items.length?items[items.length-1].bar+1:0;
     setProgChord(0);
@@ -2158,7 +2276,7 @@ let LOG={v:1,sessions:[],skills:{},gist:null};
 try{const raw=localStorage.getItem(LOG_KEY); if(raw){const o=JSON.parse(raw); if(o&&o.v===1) LOG=Object.assign(LOG,o);}}catch(e){}
 Object.values(LOG.skills).forEach(sk=>{ // older versions read C/G as C: read the parts again
   if(sk&&sk.kind==='song'&&sk.parts&&sk.parts.length){const ch=sk.parts.flatMap(p=>parseChords(p.text).chords); if(ch.length) sk.chords=ch;}});
-if(songProg(D.prog)) refresh(); // the first refresh ran before the log, which holds the song's chords
+if(songProg(D.prog)||/^mine-/.test(D.prog)) refresh(); // the first refresh ran before the log, which holds the song's chords and your progressions
 function storeLog(){try{localStorage.setItem(LOG_KEY,JSON.stringify(LOG));}catch(e){}}
 function saveLog(){storeLog(); syncSoon();}
 const lg={cur:null,last:null,quiz:null}; // the running entry, the last finished one, the running quiz entry
@@ -2277,10 +2395,10 @@ function mergeLogs(a,b){
   // sessions you set up, how far you got in each, and your defaults: the newer copy of each wins
   const newer=(x,y,f)=>{const o={...(x||{})}; Object.entries(y||{}).forEach(([id,v])=>{const u=o[id]; if(!u||(v[f]||0)>(u[f]||0)) o[id]=v;}); return o;};
   return {v:1,sessions:Object.values(sessions).sort((p,q)=>p.start-q.start),skills,gist:a.gist||null,
-    routines:newer(a.routines,b.routines,'updated'),runs:newer(a.runs,b.runs,'t'),exprefs:newer(a.exprefs,b.exprefs,'updated'),exuser:newer(a.exuser,b.exuser,'updated')};
+    routines:newer(a.routines,b.routines,'updated'),runs:newer(a.runs,b.runs,'t'),exprefs:newer(a.exprefs,b.exprefs,'updated'),exuser:newer(a.exuser,b.exuser,'updated'),progs:newer(a.progs,b.progs,'updated')};
 }
 function relink(){ if(lg.last) lg.last=findEntry(lg.last.id)||lg.last; } // merging copies entries; keep pointing at the live one
-const exportable=()=>({v:1,sessions:LOG.sessions,skills:LOG.skills,routines:LOG.routines,runs:LOG.runs,exprefs:LOG.exprefs,exuser:LOG.exuser});
+const exportable=()=>({v:1,sessions:LOG.sessions,skills:LOG.skills,routines:LOG.routines,runs:LOG.runs,exprefs:LOG.exprefs,exuser:LOG.exuser,progs:LOG.progs||{}});
 function exportLog(){
   const blob=new Blob([JSON.stringify(exportable(),null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`fretmap-log-${dayKey(now())}.json`;
@@ -2414,7 +2532,7 @@ function keepInView(){
     if(fs.length){const a=cells[0][Math.min(...fs)].getBoundingClientRect(), b=cells[0][Math.max(...fs)].getBoundingClientRect();
       if(a.left<R.left+4||b.right>R.right-4) to(w.scrollLeft+(a.left+b.right)/2-R.left-R.width/2);}
     viewKey=key; return;}
-  const FP=st.mode==='explore'&&fingPickAny();
+  const FP=st.mode==='explore'&&(fingPickAny()||(cbXShown()||{v:{}}).v.frets);
   if(FP){ // a shape from the Fingerings row: bring the whole shape into view
     const fr=FP.filter(f=>f!==null&&f>0), k3=key+':fp:'+FP.join(); if(k3===viewKey||!fr.length) return; viewKey=k3;
     const a=cells[0][Math.min(...fr)].getBoundingClientRect(), b=cells[0][Math.max(...fr)].getBoundingClientRect();
@@ -2476,6 +2594,7 @@ function drawBoard(){
     }
     if(st.mode==='explore'||picking()){
       c.classList.toggle('out',!cur.whole&&!inWin(f)&&!picking());
+      if(!st.lkHov&&cbXRing(s,f)){const x=st.cbx.b, on=x.spot&&x.spot.s===s&&x.spot.f===f; dot(c,{t:saved.labels==='notes'?noteName(pc(s,f)):cbSp(x.root),cls:'rpick'+(on?' root':'')}); continue;} // step 1 of the chord builder: the root's spots on the 6th, 5th and 4th strings
       dot(c,LK?lkDot(s,f,LK):exploreDot(s,f));
     }else if(st.mode==='drill'){
       const out=!inWin(f); c.classList.toggle('out',out);
@@ -2761,6 +2880,8 @@ document.getElementById('voiceCard').addEventListener('click',e=>{
   if(e.target.closest('[data-act]')){onClick(e); return;}
   const rb=e.target.closest('[data-rn]');
   if(rb){D.chord=+rb.dataset.rn; refresh(); save(); regen(); return;}
+  const ed=e.target.closest('[data-cpedit]');
+  if(ed){cpOpen('drill',+ed.dataset.cpedit); return;}
   const pb=e.target.closest('[data-pci]');
   if(pb){showProgChord(+pb.dataset.pci); return;}
   if(!e.target.closest('.vc-diag')) return;
@@ -2863,7 +2984,7 @@ function followKey(){
   const seven=FAMS[F.fam].steps.length===7;
   return {key:cur.key,fam:seven?F.fam:'major',mode:seven?F.mode:(TO_DIATONIC[F.fam]||[0])[F.mode]||0};
 }
-function progNames(k,prog){return !PROG_FIX[prog]&&cur.pchords?(PROG_BY[prog]||PROG_BY.pop).degs.map(d=>cur.pchords[d].name):progChords(prog,k,D.sev).map(c=>c.name);} // chord names of a progression, as Add 7ths builds them and its numerals read
+function progNames(k,prog){const M=mineProg(prog); if(M) return mineBars(M,k.key).map(x=>x.name); return !PROG_FIX[prog]&&cur.pchords?(PROG_BY[prog]||PROG_BY.pop).degs.map(d=>cur.pchords[d].name):progChords(prog,k,D.sev).map(c=>c.name);} // chord names of a progression, as Add 7ths builds them and its numerals read
 function setupSkill(s){
   const wh=s.where==='cycle'?'c':s.pos, line=s.line||(isLinePlan(s.plan)&&s.prog==='one'?'scale':'prog');
   return line==='prog'?`prog:${s.key}:${s.fam}:${s.mode}:${wh}:${s.prog==='one'&&+s.chord?'one-'+s.chord:s.prog}:${s.plan}:${isLinePlan(s.plan)?lineId(s):playId(s,s.rpat)}`
@@ -2961,7 +3082,8 @@ function lkChords(){ // the key's chords, triads (and 7ths with Add 7ths), each 
   out.forEach(x=>x.v=lkVoicing(x.ch,p));
   lkCache={k,v:out}; return out;
 }
-function lkShown(){ // the chord on the neck: the one under the pointer, else the one you clicked
+function lkShown(){ // the chord on the neck: the one under the pointer, else the chord builder's, else the one you clicked
+  if(st.lkHov==null){const c=cbXShown(); if(c) return c;}
   const k=st.lkHov??st.lkPin; if(!k) return null;
   const x=lkChords().find(c=>c.ch.name===k); if(!x) return null;
   const fv=k===st.lkPin?fingPick(x.ch,cur.key):null; if(fv) return {...x,v:{frets:fv},fv:true};
@@ -3271,7 +3393,7 @@ function itemLabel(r,it){ // the exercise's name, plus its main choice when the 
 function buildText(s){
   // a setup in words: the chords, how each is played, the technique and where
   const S=/^song:/.test(s.prog||'')&&LOG.skills[s.prog];
-  const ov=overList(), ch=s.prog==='one'?`One chord, ${bareRoman((ov[+s.chord||0]||ov[0]).roman)}`:S?esc(S.name):(PROG_BY[s.prog]||PROG_BY.pop).name;
+  const ov=overList(), ch=s.prog==='one'?`One chord, ${bareRoman((ov[+s.chord||0]||ov[0]).roman)}`:S?esc(S.name):esc(progName(s.prog));
   const play=s.plan==='line'?`scale line, ${patLabel(s.pattern).toLowerCase()}${s.over==='restart'&&s.prog!=='one'?' from each chord':''}`
     :s.plan==='tones'?`chord tones, ${patLabel(s.pattern).toLowerCase()}`:esc(playBits(s,!!S).map(x=>x.replace(/^8ths, /,'')).join(' · ').toLowerCase());
   const tech=isLinePlan(s.plan)&&TECH[s.tech]?` · ${listLabel(TECH_CH,s.tech).toLowerCase()}`:'';
@@ -3300,7 +3422,7 @@ function exStart(o){ // one entry in the browser's history for the whole switch
 function applyBuild(s){
   // a setup onto Drill: the chords, how to play each, the pattern, technique and strum, then where on the neck
   D.guide='full';
-  if(s.prog==='one'||PROG_BY[s.prog]) D.prog=s.prog; else if(!songProg(D.prog)) D.prog='pop';
+  if(s.prog==='one'||PROG_BY[s.prog]||mineProg(s.prog)) D.prog=s.prog; else if(!songProg(D.prog)) D.prog='pop';
   D.chord=+s.chord||0; D.plan=PLAY_CH.some(p=>p[0]===s.plan)?s.plan:'both'; D.sbg=s.sbg==='boom'?'boom':''; D.pick=PICK_CH.some(p=>p[0]===s.pick)?s.pick:'arp';
   if(s.pattern) D.pattern=s.pattern;
   D.tech=TECH[s.tech]?s.tech:'any'; D.over=s.over==='restart'?'restart':'through';
@@ -3384,7 +3506,7 @@ function exChange(){ // what's different from the session's settings for this ex
   if(!st.ex||!st.ex.rid) return '';
   const E=exOf(st.ex.ex), b=st.ex.base, c=exCapture();
   if(isQuiz(E)) return c.quiz!==b.quiz?`You changed the quiz from ${rowLabel(E.rows[0],b.quiz)}.`:c.goal!==b.goal?`You changed the goal from ${b.goal}%.`:'';
-  const ov=overList(), lab={prog:['chords',v=>v==='one'?'One chord':(PROG_BY[v]||{name:v}).name],chord:['the chord',v=>(ov[+v]||ov[0]).name],plan:['how you play each chord',v=>listLabel(PLAY_CH,v)],
+  const ov=overList(), lab={prog:['chords',v=>progName(v)],chord:['the chord',v=>(ov[+v]||ov[0]).name],plan:['how you play each chord',v=>listLabel(PLAY_CH,v)],
     pattern:[D.plan==='tones'?'the chord-tone pattern':'the line',patLabel],over:['how the line meets the changes',v=>listLabel(OVER_CH,v)],tech:['the technique',v=>listLabel(TECH_CH,v)],
     sbg:['the strum',v=>v==='boom'?'Boom-chuck':'a strum pattern'],rpat:['the strum pattern',v=>RPAT[v]?RPAT[v].name:v],pick:['the pick',v=>listLabel(PICK_CH,v)],where:['where you play',v=>listLabel(WHERE,v)]};
   const live=k=>k==='chord'?c.prog==='one':k==='pattern'?isLinePlan(c.plan):k==='over'?c.plan==='line'&&c.prog!=='one':k==='tech'?isLinePlan(c.plan)
@@ -3439,7 +3561,7 @@ function bRows(V,live){
 const boxesOf=(V,live)=>live?cur.pos:positions(V.key!=null?+V.key:cur.key);
 function bList(r,V,live){ // a row's chips, as [value, label]
   switch(r.k){
-    case 'prog':{const L=PROGS.map(p=>[p[0],p[1]]), sk=!live&&/^song:/.test(V.prog||'')&&LOG.skills[V.prog]; return sk?[[V.prog,sk.name],...L]:L;}
+    case 'prog':{const L=PROGS.map(p=>[p[0],p[1]]), sk=!live&&/^song:/.test(V.prog||'')&&LOG.skills[V.prog]; if(!live) mineList().forEach(p=>L.push([p.id,p.name])); return sk?[[V.prog,sk.name],...L]:L;}
     case 'chord': {const other=!live&&V.key!=null&&+V.key!==cur.key; return overList().map((c,i)=>[String(i),other?bareRoman(c.roman):`${bareRoman(c.roman)} ${c.name}`]);}
     case 'spart': return r.list;
     case 'plan': return PLAY_CH;
@@ -3499,7 +3621,8 @@ function bTip(k,v,l,done,goal){
   const ex=t=>`<span class="tex">${t}</span>`, key=keyName(), ok=done?` ✓ Clean at ${goal} bpm or better.`:'';
   const first=cur.prog?cur.prog[0].ch:cur.chord, names=c=>chordSpell(c).map(x=>x.name);
   let t='';
-  if(k==='prog'){const P=PROG_BY[v]; t=`${PROG_TIP[v]||''}`+(v==='one'?'':ex(`In ${key}: ${progNames(followKey(),v).join(' ')}${P.degs.length<=8?` (${progRomans(v).join(' ')})`:''}`));}
+  if(k==='prog'&&mineProg(v)){const M=mineProg(v); t=`your own progression${M.from&&PROG_BY[M.from]?`, started from ${esc(PROG_BY[M.from].name)}`:''}. Each bar plays the shape you built, and moves with the key.`+ex(`In ${key}: ${progNames(followKey(),v).map(esc).join(' ')}${M.bars.length<=8?` (${progRomans(v).join(' ')})`:''}`);}
+  else if(k==='prog'){const P=PROG_BY[v]; t=`${PROG_TIP[v]||''}`+(v==='one'?'':ex(`In ${key}: ${progNames(followKey(),v).join(' ')}${P.degs.length<=8?` (${progRomans(v).join(' ')})`:''}`));}
   else if(k==='chord'){const ov=overList(), c=ov[+v]; t=`is built from ${formulaText(c)}. Roman numerals count chords up the key: I is built on its 1st note, V on its 5th. Capitals are major chords, small letters minor; ° marks a diminished chord and + an augmented one.`
     +(ov.length===7?ex(`In ${key}: ${[0,1,4].map(i=>`${ov[i].roman.replace(/[^iIvV°+♭♯]/g,'')} is ${ov[i].name}`).join(', ')}`):'')+(+v===D.chord&&!st.playing?' Click again to hear it.':'');}
   else if(k==='spart') t=v==='-1'?'Every part of the song, one after another.':'Only this part, so you can work on it on its own.';
@@ -3541,7 +3664,7 @@ function rowsHTML(c){
     if(r.k==='prog'&&S) list=list.filter(([v])=>v!==D.prog);
     if(r.k==='where'&&c.edit) list=list.filter(([v])=>v!=='focus');
     const seg=r.k==='lpat'&&V.prog!=='one'?`<div class="swrow"><span class="lab">Over the changes</span><div class="seg" role="group" aria-label="Over the changes">${OVER_CH.map(([v,l])=>`<button data-act="${act}" data-row="over" data-v="${v}" aria-pressed="${V.over===v}" data-tip="${esc(bTip('over',v,l))}">${l}</button>`).join('')}</div></div>`:'';
-    const sev=r.k==='prog'&&(!live||cur.set.size===7||D.line==='prog'&&cur.prog)?`<span class="swl">Add 7ths<button class="sw sm" data-act="${live?'sev':act}" data-row="sev" aria-pressed="${!!V.sev}" aria-label="Add 7ths" data-tip="<b>Add 7ths</b>: play 4-note 7th chords, like Am7 and Gmaj7, instead of 3-note triads."></button></span>`:'';
+    const sev=r.k==='prog'&&!mineProg(V.prog)&&(!live||cur.set.size===7||D.line==='prog'&&cur.prog)?`<span class="swl">Add 7ths<button class="sw sm" data-act="${live?'sev':act}" data-row="sev" aria-pressed="${!!V.sev}" aria-label="Add 7ths" data-tip="<b>Add 7ths</b>: play 4-note 7th chords, like Am7 and Gmaj7, instead of 3-note triads."></button></span>`:'';
     const {groups,pick}=rowOptions(c,r,now,list), ctl=wide?rowMenu(c,r,groups,pick):rowSelect(r,groups,pick);
     return `<div class="brow drop${r.sub?' sub':''} rel" role="group" aria-label="${r.name}">${ctl}${sev||seg?`<div class="dx">${sev}${seg}</div>`:''}</div>`;
   }).join('');
@@ -3553,7 +3676,9 @@ function rowOptions(c,r,now,list){
   const mk=(v,l)=>{const done=!!xr&&!!s&&chipDone(E,xr.k,v,s.goal,s); return o(v,l+(done?' ✓':''),v===now,bTip(r.k,v,esc(l),done,s&&s.goal));};
   const mine=list.map(([v,l])=>mk(v,l));
   let groups=[['',mine]];
-  if(r.k==='prog'&&live) groups=[['Progressions',mine],['Your songs',[...songSteps().map(({id,s:k})=>o('',k.name+(k.artist?` · ${k.artist}`:''),id===D.prog,`<b>${esc(k.name)}</b>: play over its chords, in its key.`,'bsongpick',r.k,id)),
+  const yours=r.k==='prog'&&(live||act==='echip')?[...mineList().map(p=>mk(p.id,p.name)),o('','+ Build a custom progression…',false,'<b>Build a custom progression</b>: pick each bar’s chord and where it sits on the neck, starting from any progression.','cpnew',r.k,live?'drill':'cedit','add')]:null;
+  if(r.k==='prog'&&!live&&yours) groups=[['Progressions',mine.filter(x=>!mineProg(x.v))],['Your progressions',yours]];
+  if(r.k==='prog'&&live) groups=[['Progressions',mine],['Your progressions',yours],['Your songs',[...songSteps().map(({id,s:k})=>o('',k.name+(k.artist?` · ${k.artist}`:''),id===D.prog,`<b>${esc(k.name)}</b>: play over its chords, in its key.`,'bsongpick',r.k,id)),
     o('','+ Add a song in the Songs tab',false,'Add a song you’re learning, with its chords, in the Songs tab.','songform',r.k,'','add')]]];
   if(r.k==='rpat'){
     groups=[...RPATS.map(([g,L])=>[g,L.map(p=>mk(p[0],p[1]))]),['Bluegrass',[mk('boom','Boom-chuck')]],...(live?[['Your own',[mk('custom','Your pattern')]]]:[])];
@@ -3818,7 +3943,7 @@ function sumList(E,s){
   if(E.id==='songs'){const sk=LOG.skills[s.song]; return [sk&&!sk.gone?sk.name:'Your songs, in order',...playBits(s,true)];}
   if(isQuiz(E)) return [rowLabel(E.rows[0],s.quiz)];
   const S=/^song:/.test(s.prog||'')&&LOG.skills[s.prog], ov=overList();
-  const out=[s.prog==='one'?`One chord, ${bareRoman((ov[+s.chord||0]||ov[0]).roman)}`:S?S.name:(PROG_BY[s.prog]||PROG_BY.pop).name,...playBits(s,!!S)];
+  const out=[s.prog==='one'?`One chord, ${bareRoman((ov[+s.chord||0]||ov[0]).roman)}`:S?S.name:progName(s.prog),...playBits(s,!!S)];
   if(s.where&&s.where!=='focus') out.push(listLabel(WHERE,s.where));
   else if(s.pos!=null) out.push(+s.pos<0?'Whole neck':(positions(s.key??cur.key).find(p=>p.lo===+s.pos)||{label:`Frets ${s.pos}–${+s.pos+4}`}).label);
   if(s.key!=null) out.push(`Key of ${keyName(+s.key)}`);
@@ -4099,7 +4224,7 @@ function renderSheet(){
   const sub=S?`${sk.artist?esc(sk.artist)+' · ':''}${S.part?esc(S.part)+' · ':''}${n} bar${n>1?'s':''}`:`${progRomans(D.prog).join(' ')} · ${n} bar${n>1?'s':''}`;
   const part=p=>p.to-p.from<1?` <span class="bt">${beatsText(p.to-p.from)}</span>`:'';
   const tiles=cur.prog.map((p,i)=>`<button class="bar${p.voicing&&p.voicing.own?' own':''}${p.to-p.from<1?' split'+(p.from>0?' cont':''):''}${wide?' ctile':''}" data-pci="${i}" aria-pressed="${i===cur.pci}">${wide
-    ?ctileHTML(p.ch,p.ch.name,p.voicing?p.voicing.frets:null,p.ch.roman+part(p),p.voicing?'':'<small class="ct-out">Picked: no shape fits here</small>')
+    ?ctileHTML(p.ch,p.ch.name,p.voicing?p.voicing.frets:null,p.ch.roman+part(p),p.voicing?'':'<small class="ct-out">Picked: no shape fits here</small>')+(p.from===0?`<span class="bar-ed" data-cpedit="${p.bar}" role="button" aria-label="Edit bar ${p.bar+1}">Edit</span>`:'')
     :`<span class="nm">${esc(p.ch.name)}</span><span class="rn">${p.ch.roman}${part(p)}</span><span class="fr${p.voicing&&p.voicing.frets.some(x=>x>9)?' long':''}">${p.voicing?fretText(p.voicing.frets):'picked'}</span>`}</button>`).join('');
   const missing=[...new Set(cur.prog.filter(p=>!p.voicing).map(p=>p.ch.name))];
   const and=l=>l.length>1?l.slice(0,-1).join(', ')+' and '+l[l.length-1]:l[0]||'', nm=l=>and(l.map(iv=>noteName((cur.key+iv)%12)));
@@ -4107,11 +4232,12 @@ function renderSheet(){
   const borrow=[B?`Borrowed from ${B.name}: ${B.out.length?`these chords use ${nm(B.out)}${B.was.length?` where ${fo} has ${nm(B.was)}`:`, which ${fo} doesn’t have`}, so `:''}the neck shows ${B.name}'s notes.`:'',
     cur.cnote,B||cur.cnote?'Dashed dots are outside your focus.':''].filter(Boolean).join(' ');
   const notes=[borrow,missing.length&&D.plan!=='arp'&&!isLinePlan(D.plan)?`No voicing of ${missing.map(esc).join(', ')} fits this box, so ${missing.length===1?'it is':'they are'} picked instead.`:'',
-    cur.chords.length!==7&&!S&&!PROG_FIX[D.prog]?`${esc(modeName())} has too few notes to build these chords, so they come from ${keyName()} ${FAMS.major.modes[TO_DIATONIC[F.fam][F.mode]||0][0]}, the nearest 7-note mode${F.fam==='blues'?' (the blue note sits outside it)':''}.`:''].filter(Boolean).join(' ');
-  const title=`<b class="sh-title sh-static">${S?esc(S.name):D.prog==='one'?`${esc(cur.prog[0].ch.name)}, one chord`:esc((PROG_BY[D.prog]||PROG_BY.pop).name)}</b>`;
+    cur.chords.length!==7&&!S&&!mineProg(D.prog)&&!PROG_FIX[D.prog]?`${esc(modeName())} has too few notes to build these chords, so they come from ${keyName()} ${FAMS.major.modes[TO_DIATONIC[F.fam][F.mode]||0][0]}, the nearest 7-note mode${F.fam==='blues'?' (the blue note sits outside it)':''}.`:''].filter(Boolean).join(' ');
+  const title=`<b class="sh-title sh-static">${S?esc(S.name):D.prog==='one'?`${esc(cur.prog[0].ch.name)}, one chord`:esc(progName(D.prog))}</b>`;
   el.innerHTML=`${songNote()}
     <div class="sh-top">${title}<span class="sh-sub">${sub}</span><span class="sh-no" id="barNo">bar ${cur.prog[cur.pci].bar+1} of ${n}</span></div>
     <div class="sh-bars" role="group" aria-label="Bars, one chord each">${tiles}</div>
+    <div class="sh-edit"><button class="chip" data-act="cpedit" data-tip="Change any bar's chord and where it sits on the neck, in a pop-up. Use it to save it as your own.">✎ Edit progression</button>${mineProg(D.prog)?'':`<span class="hint">Editing makes it your own, starting from ${S?esc(S.name):D.prog==='one'?esc(cur.prog[0].ch.name):esc(progName(D.prog))}.</span>`}</div>
     ${notes?`<p class="hint">${notes}</p>`:''}
     <div id="fkey">${fingOn()?fingKey():''}</div>`;
 }
@@ -4213,7 +4339,7 @@ function renderPanel(){
     panel.innerHTML=`<div class="toolbar"><div class="tl">${seg('Show','show',[['all','Whole scale'],['chord','Chord tones']],showChord()?'chord':'all')}
       ${(()=>{const fs=saved.lkFing&&lkShown(); return seg('Labels','labels',[['iv','Degrees'],['notes','Notes']].concat(fs?[['fing','Fingers']]:[]),fs&&saved.lkFlab?'fing':saved.labels==='notes'?'notes':'iv');})()}</div>
       <div class="tr">${seg('Click a note','lock',[['on','Explain it'],['off','Make it the key']],saved.lkLock===false?'off':'on')}</div></div>
-      <div class="row degrow"><span class="seglab">Degrees</span><button class="ivchip" style="--c:${COL[0]}" aria-pressed="true" disabled aria-label="root, always shown" data-tip="R, the root, always shows.">R</button>${ivs}</div>${wide?'':`<div class="xkey">${lkSel()!==null?lkNoteHTML(lkSel()):exploreKey()}</div>`}${lkChordsHTML()}`;
+      <div class="row degrow"><span class="seglab">Degrees</span><button class="ivchip" style="--c:${COL[0]}" aria-pressed="true" disabled aria-label="root, always shown" data-tip="R, the root, always shows.">R</button>${ivs}</div>${wide?'':`<div class="xkey">${lkSel()!==null?lkNoteHTML(lkSel()):exploreKey()}</div>`}${lkChordsHTML()}${cbXCard()}`;
   }else if(st.mode==='name'){
     const n=cur.allowed.length+1, cols=Math.min(n,n>8?6:n);
     const btns=cur.allowed.map(i=>{let cls='ans';
@@ -4250,8 +4376,10 @@ neck.addEventListener('click',e=>{
     if(!st.playing) play(p);
     return;
   }
+  if(st.mode==='explore'&&cbXRing(p.s,p.f)){cbXAct({dataset:{cb:'spot',s:String(p.s),f:String(p.f)}}); return;} // a gold ring: the chord builder's root spot
   play(p);
   if(st.mode==='explore'&&exSong()){st.exTap=pc(p.s,p.f); renderPrompt(); renderVoice(); return;} // a song keeps its key: the tap just says what the note is
+  if(st.mode==='explore') st.cbx.on=false; // a note: the neck goes back to the key
   if(st.mode==='explore'&&lkLocked()){ // locked: the click explains the note; click it again to clear it
     if(!cur.set.has(ivOf(p,cur.key))) return;
     const q=pc(p.s,p.f), same=lkSel()===q&&(!cur.whole||(st.lkAt&&st.lkAt.s===p.s&&st.lkAt.f===p.f));
@@ -4341,6 +4469,7 @@ panel.addEventListener('dragend',()=>{st.drag=null; panel.querySelectorAll('.exi
 document.addEventListener('toggle',e=>{const k=e.target.dataset&&e.target.dataset.fold; if(k&&!!saved.fold[k]===e.target.open){saved.fold[k]=!e.target.open; save();}},true);
 panel.addEventListener('toggle',e=>{ if(e.target.classList&&e.target.classList.contains('psync')) st.syncOpen=e.target.open; },true);
 const onClick=e=>{
+  if(e.target.closest&&e.target.closest('[data-cb]')) return; // the chord builder handles its own
   if(e.target.classList.contains('sets-wrap')){st.sheet=false; render(); return;}
   const b=e.target.closest('button'); if(!b) return;
   const act=b.dataset.act, i=+b.dataset.i;
@@ -4352,6 +4481,7 @@ const onClick=e=>{
     const sel=`[data-act="${act}"]${b.dataset.k?`[data-k="${b.dataset.k}"]`:''}${b.dataset.v?`[data-v="${b.dataset.v}"]`:''}`;
     setTimeout(()=>keepSets(sel),0);
   }
+  const ed=e.target.closest('[data-cpedit]'); if(ed){cpOpen('drill',+ed.dataset.cpedit); return;} // a bar's Edit tag
   const pb=b.dataset.pci!==undefined?b:null;
   if(pb){showProgChord(+pb.dataset.pci); return;}
   switch(act){
@@ -4367,6 +4497,8 @@ const onClick=e=>{
     case 'clean': toggleClean(); return;
     case 'exchip': if(st.ex) bchoose(b.dataset.row,b.dataset.v); return;
     case 'bchip': bchoose(b.dataset.row,b.dataset.v); return;
+    case 'cpnew': cpOpen(b.dataset.id==='cedit'?'cedit':'drill',0); return;
+    case 'cpedit': cpOpen('drill',cur.prog&&cur.prog[cur.pci]?cur.prog[cur.pci].bar:0); return;
     case 'bsongpick': bsong(b.dataset.id); return;
     case 'bnew': st.bnew={name:buildText(captureBuild()).replace(/&amp;/g,'&').split(' · ').slice(0,2).join(' · ').slice(0,60)}; st.bmsg=''; renderEx(); {const n=document.getElementById('bName'); if(n){n.focus(); n.select();}} return;
     case 'bnewno': st.bnew=null; renderEx(); return;
@@ -4487,14 +4619,14 @@ const onClick=e=>{
     case 'exhear':{const E=exSong(); const f=E&&E.sel&&((st.lkFv&&E.c&&fingPick(E.c,E.key))||exVoicing(E,E.sel)); if(f) hearFrets(f); return;}
     case 'exlab': if(b.dataset.v==='fing'){saved.lkFlab=true; break;} saved.lkFlab=false; saved.exlab=b.dataset.v; break;
     case 'lksev': saved.lkSev=!saved.lkSev; st.lkPin=null; st.lkHov=null; break;
-    case 'lkch':{const k=b.dataset.k; st.lkPin=st.lkPin===k?null:k; st.lkHov=null; st.lkFv=null; st.lkFh=null;
+    case 'lkch':{const k=b.dataset.k; st.cbx.on=false; st.lkPin=st.lkPin===k?null:k; st.lkHov=null; st.lkFv=null; st.lkFh=null;
       const x=st.lkPin&&lkChords().find(c=>c.ch.name===k); if(x&&x.v&&saved.sound) hearFrets(x.v.frets); break;}
     case 'iv': st.visible.has(i)?st.visible.delete(i):st.visible.add(i); break;
     case 'show': st.visible=new Set(b.dataset.v==='chord'?chordTones():cur.allowed); break;
     case 'labels': if(b.dataset.v==='fing'){saved.lkFlab=true; break;} saved.lkFlab=false; saved.labels=b.dataset.v; break;
     case 'lkfing': saved.lkFing=!saved.lkFing; st.lkFv=null; st.lkFh=null; if(saved.lkFing) saved.lkFlab=true; break;
-    case 'lkfv':{const t=b.dataset.f; st.lkFv=st.lkFv&&fretText(st.lkFv)===t?null:JSON.parse(b.dataset.j); st.lkFh=null; if(st.lkFv&&saved.sound) hearFrets(st.lkFv); break;}
-    case 'lock': saved.lkLock=b.dataset.v==='on'; st.lkSel=null; st.lkAt=null; st.lkPin=null; st.lkHov=null; break;
+    case 'lkfv':{const t=b.dataset.f; st.cbx.on=false; st.lkFv=st.lkFv&&fretText(st.lkFv)===t?null:JSON.parse(b.dataset.j); st.lkFh=null; if(st.lkFv&&saved.sound) hearFrets(st.lkFv); break;}
+    case 'lock': st.cbx.on=false; saved.lkLock=b.dataset.v==='on'; st.lkSel=null; st.lkAt=null; st.lkPin=null; st.lkHov=null; break;
     case 'answer':{const q=st.q;if(q.answered)return;q.picked=i;q.answered=true;record(i===q.iv);play(q.root);play(q.target,.45);break;}
     case 'hear': play(st.q.root);play(st.q.target,.5); return;
     case 'quiz': if(b.dataset.v!==st.mode) setMode(b.dataset.v); return;
@@ -4512,7 +4644,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&st.sheet&&document
 // Captured before buttons and menus see it, so it never also re-clicks a focused button.
 let spaceHandled=false;
 document.addEventListener('keydown',e=>{
-  if(e.key!==' '||e.metaKey||e.ctrlKey||e.altKey||st.mode!=='drill'||picking()||!document.getElementById('gloss').hidden) return;
+  if(e.key!==' '||e.metaKey||e.ctrlKey||e.altKey||st.mode!=='drill'||picking()||!document.getElementById('gloss').hidden||cpOpen_()) return;
   e.preventDefault(); e.stopPropagation(); spaceHandled=true;
   if(!e.repeat){ if(document.activeElement&&document.activeElement!==document.body) document.activeElement.blur(); togglePlay(); }
 },true);
@@ -4520,7 +4652,7 @@ document.addEventListener('keyup',e=>{ if(e.key===' '&&spaceHandled){ e.preventD
 document.addEventListener('keypress',e=>{ if(e.key===' '&&spaceHandled){ e.preventDefault(); e.stopPropagation(); } },true);
 document.addEventListener('keydown',e=>{
   const tag=e.target.tagName;
-  if(e.key===' '||tag==='SELECT'||tag==='INPUT'||tag==='TEXTAREA'||e.metaKey||e.ctrlKey||e.altKey) return;
+  if(e.key===' '||tag==='SELECT'||tag==='INPUT'||tag==='TEXTAREA'||e.metaKey||e.ctrlKey||e.altKey||cpOpen_()) return;
   else if((e.key==='ArrowRight'||e.key==='ArrowLeft')){ e.preventDefault(); document.querySelector(`[data-step="${e.key==='ArrowRight'?1:-1}"]`).click(); }
   else if('12345'.includes(e.key)&&e.key.length===1){ document.querySelectorAll('#modes button')[+e.key-1].click(); }
 });
@@ -4956,7 +5088,333 @@ document.addEventListener('keydown',e=>{ // arrow keys move a focused edge one n
 });
 document.addEventListener('click',e=>{if(e.target.closest('[data-lp="clear"]')){st.loop=null; drawLoop(); const el=document.getElementById('tab'); if(el&&!st.playing) el.scrollLeft=0;}});
 window.addEventListener('resize',()=>drawLoop());
-window.__fretDebug={setLoop,loopOn,lkFingList,stdOpen,lkChords,lkPairs,lkSel,lkWin,shapeFits,ivShapeList,fingering,fingerMoves,tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,EXS,EX_BY,exStart,exGo,routines,openRoutine,chipDone,exProgress,fillSet,editStart,ceditStart,runOf,setupSkill,stepState,followKey,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule,setWhere,setPlan,passEnd,cycleShapes,techMarks,regen};
+function logReady(){try{return !!LOG;}catch(e){return false;}}
+// ---------- the chord builder: where the root sits, then a chord on that root, then a voicing in that spot ----------
+// Explore keeps one on the page, with step 1 on the big neck. Drill's progression builder opens one in a pop-up, a bar at a time.
+const CB_TYPES=[['',[0,4,7]],['m',[0,3,7]],['7',[0,4,7,10]],['maj7',[0,4,7,11]],['m7',[0,3,7,10]],['sus2',[0,2,7]],['sus4',[0,5,7]],['add9',[0,2,4,7]],
+ ['6',[0,4,7,9]],['m6',[0,3,7,9]],['9',[0,2,4,7,10]],['7sus4',[0,5,7,10]],['m7♭5',[0,3,6,10]],['°7',[0,3,6,9]],['°',[0,3,6]],['+',[0,4,8]],['5',[0,7]]];
+// the names a shape is checked against, so a shape is only offered when it reads as the chord picked (a G6 that is really Em7/G isn't)
+const CB_NAMING=CB_TYPES.concat([['m(add9)',[0,2,3,7]],['m(maj7)',[0,3,7,11]],['+7',[0,4,8,10]],['maj9',[0,2,4,7,11]],['m9',[0,2,3,7,10]],['6/9',[0,2,4,7,9]],['add11',[0,4,5,7]]]);
+const CB_SN=['6th','5th','4th','3rd','2nd','1st'];
+const cbIv=suf=>(CB_TYPES.find(t=>t[0]===suf)||[0,[0,4,7]])[1];
+const cbSp=p=>spellIn(cur.key,cur.A7)(p); // note names as the focus key spells them
+const cbName=(root,suf)=>cbSp(root)+suf;
+const cbCh=(root,suf)=>chordIn(cbName(root,suf),cur.key,letterOf(cbSp(cur.key)));
+const cbSpotName=sp=>`${CB_SN[sp.s]} string, ${sp.f?'fret '+sp.f:'open'}`;
+const cbFt=fr=>fr.map(x=>x==null?'x':x).join(fr.some(x=>x>9)?' ':'');
+function cbSuf(name){ // a chord name's type, as one of the builder's: Bdim is B°, F♯m7b5 is F♯m7♭5
+  const c=parseChord(name); if(!c) return null; const j=c.rel.slice().sort((a,b)=>a-b).join();
+  const t=CB_TYPES.find(t=>t[1].join()===j); return t?t[0]:null;
+}
+function cbNameIt(fr){ // the simplest name for what sounds, with the lowest note as the root when it can be
+  const N=fr.map((f,s)=>f==null?null:pc(s,f)).filter(x=>x!=null); if(!N.length) return null;
+  const pcs=[...new Set(N)], bass=N[0]; let best=null;
+  for(const r of pcs){const rel=pcs.map(p=>(p-r+12)%12).sort((a,b)=>a-b), j=rel.join();
+    CB_NAMING.forEach(([suf,iv],i)=>{const no5=iv.includes(7)&&iv.length>3&&!rel.includes(7)&&rel.concat(7).sort((a,b)=>a-b).join()===iv.join();
+      if(j!==iv.join()&&!no5) return; const sc=(no5?1:0)+(r!==bass?2:0)+i*0.01;
+      if(!best||sc<best.sc) best={sc,root:r,suf};});}
+  return best;
+}
+function cbFing(fr){ // fingers 1 to 4, low fret first; a barre only when the notes on the lowest fret need one
+  const F=fr.map((f,s)=>({f,s})).filter(x=>x.f>0); if(!F.length) return {n:0,fing:fr.map(()=>null),barre:null};
+  const mn=Math.min(...F.map(x=>x.f)), at=F.filter(x=>x.f===mn), lo=at[0].s, hi=at[at.length-1].s;
+  const under=fr.some((f,s)=>s>lo&&s<hi&&f!=null&&f<mn); // an open string or a lower note inside the barre would be stopped by it
+  const barre=at.length>=2&&!under&&(F.length>4||at.length>=3);
+  const fing=fr.map(()=>null); let k=1;
+  if(barre){at.forEach(x=>fing[x.s]=1); k=2;}
+  F.filter(x=>!(barre&&x.f===mn)).sort((a,b)=>a.f-b.f||a.s-b.s).forEach(x=>{fing[x.s]=k++;});
+  return {n:k-1,fing,barre:barre?{f:mn,lo,hi}:null};
+}
+const cbCache={};
+function cbVoicings(root,suf,rs,rf){
+  // the root on string rs at fret rf is the bass: lower strings rest, each higher string rests or plays a chord tone near the root.
+  // Every chord tone sounds (a 7th, 6th or 9th chord may leave out its 5th), fretted notes span four frets, four fingers at most.
+  const key=[root,suf,rs,rf].join('|'); if(cbCache[key]) return cbCache[key];
+  const iv=cbIv(suf), tones=iv.map(x=>(root+x)%12), opt5=iv.length>3&&iv.includes(7);
+  const lo=Math.max(0,rf-3), hi=Math.min(15,rf+4), out=[];
+  const opts=s=>{if(s<rs) return [null]; if(s===rs) return [rf]; const L=[null]; for(let f=lo;f<=hi;f++) if(tones.includes(pc(s,f))) L.push(f); if(lo>0&&rf<=4&&tones.includes(OPEN[s])) L.push(0); return L;};
+  const O=[0,1,2,3,4,5].map(opts), fr=[];
+  (function rec(s){
+    if(s===6){
+      const snd=fr.filter(f=>f!=null); if(snd.length<3) return;
+      const fz=fr.filter(f=>f>0), span=fz.length?Math.max(...fz)-Math.min(...fz):0; if(span>3) return;
+      let top=5; while(fr[top]==null) top--;
+      const inner=fr.slice(rs,top+1).filter(f=>f==null).length; if(inner>1) return;
+      const have=new Set(fr.map((f,i)=>f==null?null:pc(i,f)).filter(x=>x!=null));
+      const miss=tones.filter(t=>!have.has(t)); if(miss.length&&!(opt5&&miss.length===1&&miss[0]===(root+7)%12)) return;
+      const fg=cbFing(fr); if(fg.n>4) return;
+      const nm=cbNameIt(fr); if(!nm||nm.root!==root||nm.suf!==suf) return;
+      out.push({fr:[...fr],fg,miss:miss.length,snd:snd.length,inner,span});
+      return;
+    }
+    for(const f of O[s]){fr[s]=f; rec(s+1);}
+  })(0);
+  // the most useful first: more strings, no gaps, every tone, a small stretch; open strings far from the nut sound odd; a power chord is best on three strings
+  out.forEach(v=>{const mx=Math.max(0,...v.fr.filter(f=>f>0)); v.score=(suf==='5'?-Math.abs(v.snd-3)*3:v.snd*3)-v.inner*4-v.miss*3-v.span-v.fg.n*0.5+(v.fg.barre?0.5:0)-(v.fr.includes(0)&&mx>=5?4:0);});
+  out.sort((a,b)=>b.score-a.score);
+  const seen=new Set(), keep=[]; for(const v of out){const k=v.fr.join(); if(!seen.has(k)){seen.add(k); keep.push(v);} if(keep.length>=6) break;}
+  return cbCache[key]=keep;
+}
+function cbDescribe(v){
+  const p=[v.snd===6?'All 6 strings':`${v.snd} strings`];
+  if(v.fg.barre) p.push(`barre at ${v.fg.barre.f}`);
+  if(v.fr.includes(0)) p.push('open strings');
+  if(v.inner) p.push('one string muted inside');
+  if(v.miss) p.push('no 5th');
+  return p.join(' · ');
+}
+function cbSpots(root){const out=[]; for(const s of [0,1,2]) for(let f=0;f<=12;f++) if(pc(s,f)===root) out.push({s,f}); return out;} // 6th string first, then 5th, then 4th, low to high on each
+function cbFirst(root,suf,near){ // a spot and voicing for a chord, closest to fret `near` (lowest first without one)
+  const L=cbSpots(root).map(sp=>({spot:sp,v:cbVoicings(root,suf,sp.s,sp.f)[0]})).filter(x=>x.v);
+  if(!L.length) return null;
+  const at=x=>{const fz=x.v.fr.filter(f=>f>0); return fz.length?(Math.min(...fz)+Math.max(...fz))/2:0;};
+  L.sort((a,b)=>near==null?a.spot.f-b.spot.f||a.spot.s-b.spot.s:Math.abs(at(a)-near)-Math.abs(at(b)-near)||a.spot.s-b.spot.s);
+  return L[0];
+}
+function cbFrom(name,frets){ // a chord and its frets as a bar of the builder: its root spot when the bass is the root on the 6th, 5th or 4th string
+  const c=parseChord(name), suf=cbSuf(name)??(c&&c.rel.includes(3)&&!c.rel.includes(4)?'m':''), root=c?c.root:cur.key;
+  if(!frets){const ff=cbFirst(root,suf); return {root,suf,spot:ff&&ff.spot,fr:ff&&ff.v.fr};}
+  const s=frets.findIndex(f=>f!==null), spot=s>=0&&s<=2&&pc(s,frets[s])===root&&frets[s]<=12?{s,f:frets[s]}:null;
+  return {root,suf,spot,fr:frets.slice()};
+}
+function cbMove(fr,d){ // a shape moved d frets, kept on the neck
+  let x=fr.map(f=>f==null?null:f+d); const fz=x.filter(f=>f!=null);
+  if(fz.length&&Math.min(...fz)<0) x=x.map(f=>f==null?null:f+12);
+  const gz=x.filter(f=>f!=null); if(gz.length&&Math.max(...gz)>15&&Math.min(...gz)>=12) x=x.map(f=>f==null?null:f-12);
+  return x;
+}
+// ---- the upright chord box: strings top to bottom, the nut (or the first fret's number) on top ----
+function cbBox(fr,root,suf,mode){
+  const fg=cbFing(fr), fz=fr.filter(f=>f>0), mx=fz.length?Math.max(...fz):0, mn=fz.length?Math.min(...fz):1;
+  const base=mx<=5?1:mn, W=136, H=140, x0=30, dx=19, y0=26, dy=22, rows=5, ch=cbCh(root,suf);
+  let g=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(ch.name)} chord box, ${cbFt(fr)}">`;
+  g+=base===1?`<rect x="${x0-1}" y="${y0-4}" width="${dx*5+2}" height="5" style="fill:var(--ink)"/>`:`<text x="${x0-11}" y="${y0+dy*0.65}" text-anchor="end" font-size="11" font-weight="600" style="fill:var(--ink)">${base}fr</text>`;
+  for(let r=0;r<=rows;r++) g+=`<line x1="${x0}" x2="${x0+dx*5}" y1="${y0+r*dy}" y2="${y0+r*dy}" style="stroke:var(--ink)" stroke-width="${r?1:1.2}" opacity=".7"/>`;
+  for(let s=0;s<6;s++) g+=`<line x1="${x0+s*dx}" x2="${x0+s*dx}" y1="${y0}" y2="${y0+rows*dy}" style="stroke:var(--ink)" stroke-width="${1.6-s*0.15}" opacity=".8"/>`;
+  if(fg.barre){const b=fg.barre, y=y0+(b.f-base+0.5)*dy; g+=`<rect x="${x0+b.lo*dx-7}" y="${y-7}" width="${(b.hi-b.lo)*dx+14}" height="14" rx="7" style="fill:var(--ink)" opacity=".85"/>`;}
+  fr.forEach((f,s)=>{const x=x0+s*dx;
+    if(f==null){g+=`<text x="${x}" y="${y0-9}" text-anchor="middle" font-size="12" style="fill:var(--ink)" opacity=".7">×</text>`; return;}
+    const iv=(pc(s,f)-root+12)%12, d=chordIv(ch,iv)[0];
+    if(f===0){g+=`<circle cx="${x}" cy="${y0-12}" r="5" fill="none" stroke="${iv===0?COL[0]:'currentColor'}" stroke-width="${iv===0?2.4:1.4}"/>`; return;}
+    const y=y0+(f-base+0.5)*dy, lab=mode==='deg'?d:(fg.fing[s]||''), deg=mode==='deg'||iv===0;
+    g+=`<circle cx="${x}" cy="${y}" r="8.2" style="fill:${deg?COL[mode==='deg'?iv:0]:'var(--ink)'}"/><text x="${x}" y="${y+3.6}" text-anchor="middle" font-size="${String(lab).length>1?8:10}" font-weight="700" style="fill:${deg?'#14110d':'var(--surface)'}">${lab}</text>`;});
+  return g+'</svg>';
+}
+// ---- a small sideways neck, frets 0 to 12, drawn like the big one: step 1 in the pop-up, where there's no big neck ----
+function cbNeckSVG(b,step){
+  const O=34, G=44, RH=24, P=16, N=12, W=O+G*N+6, H=P+RH*5+RH/2+22, sy=s=>P+(5-s)*RH, fx=f=>f===0?O/2:O+(f-0.5)*G;
+  let o=`<svg class="cb-nsvg" viewBox="0 0 ${W} ${H}" role="group" aria-label="The neck, frets 0 to 12">`;
+  o+=`<rect x="${O}" y="${P-RH/2}" width="${G*N}" height="${RH*6}" rx="5" style="fill:var(--wood)"/>`;
+  if(b.spot&&b.fr){const fz=b.fr.filter(f=>f>0); if(fz.length){const a=Math.min(...fz), z=Math.max(...fz); o+=`<rect x="${O+(a-1)*G}" y="${P-RH/2}" width="${(z-a+1)*G}" height="${RH*6}" fill="#F5E6C4" opacity=".1"/>`;}}
+  for(let k=1;k<=N;k++) o+=`<line x1="${O+k*G}" y1="${P-RH/2}" x2="${O+k*G}" y2="${P+RH*5.5}" style="stroke:var(--fret)" stroke-width="2"/>`;
+  o+=`<line x1="${O}" y1="${P-RH/2}" x2="${O}" y2="${P+RH*5.5}" style="stroke:var(--pearl)" stroke-width="7"/>`;
+  [3,5,7,9].forEach(f=>o+=`<circle cx="${fx(f)}" cy="${P+2.5*RH}" r="5" style="fill:var(--pearl)" opacity=".55"/>`);
+  [1.5,3.5].forEach(k=>o+=`<circle cx="${fx(12)}" cy="${P+k*RH}" r="5" style="fill:var(--pearl)" opacity=".55"/>`);
+  for(let s=0;s<6;s++) o+=`<line x1="0" y1="${sy(s)}" x2="${O+G*N}" y2="${sy(s)}" stroke="#cfc8b8" stroke-width="${STR_W[s]}"/>`;
+  const ly=P+RH*5.5+15;
+  for(let f=0;f<=N;f++){const m=[3,5,7,9,12].includes(f); o+=`<text x="${fx(f)}" y="${ly}" text-anchor="middle" font-size="${f?11:9}" style="fill:var(${m?'--ink':'--muted'})"${m?' font-weight="600"':''}>${f||'open'}</text>`;}
+  const ch=b.fr?cbCh(b.root,b.suf):null, FG=b.fr?cbFing(b.fr):null;
+  if(step!==1&&FG&&FG.barre){const B=FG.barre; o+=`<rect x="${fx(B.f)-7}" y="${sy(B.hi)-8}" width="14" height="${sy(B.lo)-sy(B.hi)+16}" rx="7" fill="#2a1d12" style="stroke:var(--pearl)" stroke-width="2" opacity=".9"/>`;}
+  for(let s=0;s<6;s++){
+    if(step===1&&s<=2) for(let f=0;f<=N;f++){ if(pc(s,f)!==b.root) continue;
+      const on=b.spot&&b.spot.s===s&&b.spot.f===f, x=fx(f), y=sy(s);
+      o+=`<g class="cb-ring${on?' on':''}" data-cb="spot" data-tip="${esc(`<b>${cbSpotName({s,f})}</b>: build the chord with its root here.`)}" data-s="${s}" data-f="${f}" role="button" tabindex="0" aria-pressed="${!!on}" aria-label="Root on the ${cbSpotName({s,f})}"><circle cx="${x}" cy="${y}" r="13"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="10.5" font-weight="700">${esc(cbSp(b.root))}</text></g>`;}
+    if(step===1||!b.fr) continue;
+    const f=b.fr[s], y=sy(s);
+    if(f==null){o+=`<text x="${O/2}" y="${y+5}" text-anchor="middle" font-size="15" style="fill:var(--ink)" opacity=".8">×</text>`; continue;}
+    const iv=(pc(s,f)-b.root+12)%12, t=chordIv(ch,iv)[0], x=fx(f);
+    if(f===0){o+=`<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="${COL[iv]}" stroke-width="3"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--ink)">${t}</text>`; continue;}
+    if(iv===0) o+=`<circle cx="${x}" cy="${y}" r="13" style="fill:var(--pearl)"/>`;
+    o+=`<circle cx="${x}" cy="${y}" r="10.5" fill="${COL[iv]}"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="${t.length>1?9:11}" font-weight="700" fill="#14110d">${t}</text>`;
+  }
+  return o+'</svg>';
+}
+// ---- the builder's three steps. b: {root,suf,spot,fr} (the chord being built); ui: {step,mode}; o.id names its folds; o.big: step 1 uses the big neck ----
+const cbFolds=id=>(saved.cbFold=saved.cbFold||{})[id]||(saved.cbFold[id]={});
+const CB_STEP_TIP=['<b>Root</b>: where the chord’s root sits, on the 6th, 5th or 4th string. It’s the lowest note.','<b>Chord</b>: the chords on this root that fit in this spot.','<b>Voicing</b>: the ways to play the chord with its root in this spot.'];
+function cbTip(root,suf,n){const ch=cbCh(root,suf); return `<b>${ch.name}</b> (${ch.roman}): ${formulaText(ch)}. ${n} voicing${n>1?'s':''} here.`;}
+function cbHTML(b,ui,o){
+  const fold=cbFolds(o.id), rn=(r,s)=>esc(cbCh(r,s).roman), tap=wide?'Click':'Tap', R=esc(cbSp(b.root));
+  const isOn=v=>!!b.fr&&v.fr.join()===b.fr.join();
+  const steps=[[1,'Root',b.spot?cbSpotName(b.spot):'not picked',!!b.spot],[2,'Chord',b.spot?esc(cbName(b.root,b.suf)):'—',!!b.fr],[3,'Voicing',b.fr?cbFt(b.fr):'—',!!b.fr]]
+    .map(([n,l,v,done],i)=>`${i?'<span class="cb-sep" aria-hidden="true">›</span>':''}<button class="cb-step${ui.step===n?' on':''}${done?' done':''}" data-cb="step" data-n="${n}" data-tip="${esc(CB_STEP_TIP[n-1])}" aria-current="${ui.step===n?'step':'false'}"><span class="n">${done?'✓':n}</span><b>${l}</b><small>${v}</small></button>`).join('');
+  const roots=Array.from({length:12},(_,i)=>(cur.key+i)%12).sort((x,y)=>x-y).map(p=>`<option value="${p}"${p===b.root?' selected':''}>${esc(cbSp(p))}</option>`).join('');
+  const hint1=o.big?(ui.step===1?(o.on?`${tap} a gold ring on the neck above, or pick from the list.`:`Pick from the list, or ${tap.toLowerCase()} Root to ring its spots on the neck.`):'Click Root above to see the root spots on the neck again.'):(ui.step===1?`${tap} a gold ring on the neck, or pick from the list.`:'The shaded frets are where the voicing sits.');
+  const p1=`<div class="cb-panel"><div class="cb-ph"><h3>1 · Where the ${R} root sits</h3><label class="cb-root"><span class="blab">Root</span><select class="cb-rootsel" aria-label="Root" data-tip="<b>Root</b>: the note the chord is built on. Its spots on the 6th, 5th and 4th strings are listed below.">${roots}</select></label><span class="hint">${hint1}</span></div>
+    ${o.big?'':`<div class="cb-neck">${cbNeckSVG(b,ui.step)}</div>`}
+    <div class="cb-rlist" role="group" aria-label="Root spots">${cbSpots(b.root).map(sp=>`<button class="chip" data-cb="spot" data-s="${sp.s}" data-f="${sp.f}" data-tip="${esc(`<b>${cbSpotName(sp)}</b>: build the chord with its root here, as the lowest note.`)}" aria-pressed="${!!(b.spot&&b.spot.s===sp.s&&b.spot.f===sp.f)}">${cbSpotName(sp)}</button>`).join('')}</div></div>`;
+  const drawer=(p,head,short,peek,hint,body,on)=>`<div class="cb-panel cb-drawer${fold[p]?' shut':''}${on?'':' off'}"><div class="cb-dh"><button class="cb-fold" data-cb="fold" data-p="${p}" data-tip="Open or close this step. Closed, it shows its choices in one line." aria-expanded="${!fold[p]}"><span class="cb-chev" aria-hidden="true"></span><h3>${head}</h3><h3 class="short">${short}</h3></button><div class="cb-peek" role="group">${peek}</div>${hint}</div><div class="cb-dbody"><div class="cb-dinner">${body}</div></div></div>`;
+  let p2, p3;
+  if(!b.spot) p2=drawer('p2','2 · Chords on this root','2 · Chord','<p class="cb-none">Pick where the root sits first.</p>','','<p class="cb-none">Pick where the root sits first.</p>',false);
+  else{
+    const have=CB_TYPES.map(([suf])=>({suf,V:cbVoicings(b.root,suf,b.spot.s,b.spot.f)})).filter(c=>c.V.length);
+    const pills=have.map(c=>{const on=c.suf===b.suf&&!!b.fr; return `<button class="chip" data-cb="suf" data-suf="${esc(c.suf)}" data-tip="${esc(cbTip(b.root,c.suf,c.V.length))}" aria-pressed="${on}">${on?'✓ ':''}${esc(cbName(b.root,c.suf))}</button>`;}).join('');
+    const cards=have.map(c=>`<button class="cb-cc" data-cb="suf" data-suf="${esc(c.suf)}" data-tip="${esc(cbTip(b.root,c.suf,c.V.length))}" aria-pressed="${c.suf===b.suf&&!!b.fr}"><b>${esc(cbName(b.root,c.suf))}</b><span class="cb-rn">${rn(b.root,c.suf)}</span>${cbBox(c.V[0].fr,b.root,c.suf,ui.mode)}<small>${c.V.length} voicing${c.V.length>1?'s':''}</small></button>`).join('');
+    p2=drawer('p2',`2 · ${R} chords with the root on the ${cbSpotName(b.spot)}`,'2 · Chord',pills,`<span class="hint">${have.length} of ${CB_TYPES.length} chord types fit here</span>`,
+      `<div class="cb-car"><button class="cb-arr" data-cb="scroll" data-dir="-1" aria-label="Scroll left" data-tip="Back to the first chords.">‹</button><div class="cb-track">${cards}</div><button class="cb-arr" data-cb="scroll" data-dir="1" aria-label="Scroll right" data-tip="More chords on this root.">›</button></div>`,true);
+  }
+  const labs=`<span class="hint cb-labs">Labels in the dots: <button class="chip" data-cb="mode" data-v="fing" data-tip="Number each dot with the finger that frets it: 1 index to 4 pinky." aria-pressed="${ui.mode!=='deg'}">Fingers</button> <button class="chip" data-cb="mode" data-v="deg" data-tip="Label each dot with its degree in the chord: R, 3, 5 and so on." aria-pressed="${ui.mode==='deg'}">Degrees</button></span>`;
+  if(!b.fr){const why=b.spot?`No ${esc(cbName(b.root,b.suf))} shape fits with the root here. Pick another chord.`:'Pick a root spot and a chord first.';
+    p3=drawer('p3','3 · Voicings in this spot','3 · Voicing',`<p class="cb-none">${why}</p>`,labs,`<p class="cb-none">${why}</p>`,false);}
+  else{
+    const V=b.spot?cbVoicings(b.root,b.suf,b.spot.s,b.spot.f):[], mine=!V.some(isOn), ch=cbCh(b.root,b.suf), iv=cbIv(b.suf);
+    const own={fr:b.fr,fg:cbFing(b.fr),snd:b.fr.filter(f=>f!=null).length,inner:0,miss:0}, L=mine?[own,...V]:V;
+    const pills=L.map((v,i)=>{const on=isOn(v); return `<button class="chip" data-cb="v" data-i="${i}" data-tip="${esc(`<b>${cbFt(v.fr)}</b>: ${v===own?'the voicing you had':cbDescribe(v)}. Frets from low E to high E.`)}" aria-pressed="${on}">${on?'✓ ':''}<code>${cbFt(v.fr)}</code>${on?`<small>${v===own?'the one you had':cbDescribe(v)}</small>`:''}</button>`;}).join('');
+    const cards=L.map((v,i)=>`<button class="cb-vc" data-cb="v" data-i="${i}" data-tip="${esc(`<b>${cbFt(v.fr)}</b>: ${v===own?'the voicing you had':cbDescribe(v)}. Frets from low E to high E.`)}" aria-pressed="${isOn(v)}">${cbBox(v.fr,b.root,b.suf,ui.mode)}<code>${cbFt(v.fr)}</code><small>${v===own?'The voicing you had':cbDescribe(v)}</small></button>`).join('');
+    const tones=iv.map(x=>{const p=(b.root+x)%12, inV=b.fr.some((f,s)=>f!=null&&pc(s,f)===p), d=chordIv(ch,x); return `<span class="cb-tone" style="--c:${COL[x]}${inV?'':';opacity:.45'}"><b>${esc(cbSp(p))}</b><small>${x?d[0]:'root'}${inV?'':' (left out)'}</small></span>`;}).join('');
+    p3=drawer('p3',`3 · ${esc(ch.name)} voicings${b.spot?` with the root on the ${cbSpotName(b.spot)}`:''}`,'3 · Voicing',pills,labs,
+      `<div class="cb-vs">${cards}</div><div class="cb-res"><span class="cb-nm">${esc(ch.name)}</span><span class="cb-rn big">${esc(ch.roman)}</span><div class="cb-tones">${tones}</div><button class="btn primary cb-hear" data-cb="hear" data-tip="Hear the chord, strummed low to high.">▶ Hear it</button></div>`,true);
+  }
+  return `<div class="cb" data-cbid="${o.id}"><div class="cb-steps">${steps}</div>${p1}${p2}${p3}</div>`;
+}
+function cbAct(el,b,ui,o){ // a click in the builder: returns true when it changed something to redraw
+  const k=el.dataset.cb, hear=fr=>{if(fr&&saved.sound) hearFrets(fr);};
+  if(k==='step'){ui.step=+el.dataset.n; if(ui.step>1){cbFolds(o.id)['p'+ui.step]=false; save();} return true;}
+  if(k==='fold'){const f=cbFolds(o.id); f[el.dataset.p]=!f[el.dataset.p]; save(); return true;}
+  if(k==='mode'){ui.mode=el.dataset.v; return true;}
+  if(k==='scroll'){const t=el.parentElement.querySelector('.cb-track'); if(t) t.scrollLeft+=+el.dataset.dir*400; return false;}
+  if(k==='hear'){if(b.fr) hearFrets(b.fr); return false;}
+  if(k==='spot'){b.spot={s:+el.dataset.s,f:+el.dataset.f}; const V=cbVoicings(b.root,b.suf,b.spot.s,b.spot.f); b.fr=V[0]?V[0].fr.slice():null; ui.step=2; hear(b.fr); return true;}
+  if(k==='suf'){b.suf=el.dataset.suf; const V=b.spot?cbVoicings(b.root,b.suf,b.spot.s,b.spot.f):[]; b.fr=V[0]?V[0].fr.slice():null; ui.step=3; hear(b.fr); return true;}
+  if(k==='v'){const V=b.spot?cbVoicings(b.root,b.suf,b.spot.s,b.spot.f):[], mine=b.fr&&!V.some(v=>v.fr.join()===b.fr.join()), L=mine?[{fr:b.fr},...V]:V, v=L[+el.dataset.i];
+    if(v){b.fr=v.fr.slice(); ui.step=3; hear(b.fr);} return true;}
+  return false;
+}
+function cbRedraw(host,draw){ // redraw, keeping the strips where they were scrolled and the focus on the same control
+  const box=host.querySelector('.cb'), sc=box?[...box.querySelectorAll('.cb-track,.cb-peek,.cb-neck')].map(x=>x.scrollLeft):[];
+  const a=document.activeElement, key=a&&box&&box.contains(a)&&a.dataset&&a.dataset.cb?['cb','n','p','suf','i','s','f','v','dir'].map(k=>a.dataset[k]??'').join('|'):null;
+  draw();
+  const nb=host.querySelector('.cb'); if(!nb) return;
+  [...nb.querySelectorAll('.cb-track,.cb-peek,.cb-neck')].forEach((x,i)=>{if(sc[i]!=null) x.scrollLeft=sc[i];});
+  if(key){const m=[...nb.querySelectorAll('[data-cb]')].find(x=>['cb','n','p','suf','i','s','f','v','dir'].map(k=>x.dataset[k]??'').join('|')===key); if(m) m.focus({preventScroll:true});}
+}
+
+// ---- Explore's builder: always on the page; step 1 rings the root spots on the big neck, and the chord you build shows there ----
+// on: the builder is what you're working with, so the neck shows its rings or its chord; a click on a chord card, a shape or a note hands the neck back
+st.cbx={b:{root:null,suf:'',spot:null,fr:null},ui:{step:1,mode:'fing'},on:false,rootSet:false};
+function cbX(){const x=st.cbx; if(x.b.root==null||(!x.b.spot&&!x.rootSet)) x.b.root=cur.key; return x;} // until you pick, the root is the key's
+const cbXOn=()=>st.mode==='explore'&&!exSong();
+function cbXShown(){ // the built chord as Explore's neck shows it
+  const x=cbX(); if(!cbXOn()||!x.on||!x.b.fr||x.ui.step===1) return null;
+  return {ch:cbCh(x.b.root,x.b.suf),v:{frets:x.b.fr},cb:true};
+}
+function cbXRing(s,f){const x=cbX(); return cbXOn()&&x.on&&x.ui.step===1&&s<=2&&pc(s,f)===x.b.root;}
+function cbXCard(){
+  if(!cbXOn()) return '';
+  const x=cbX();
+  const tip=x.on?(x.b.fr&&x.ui.step>1?' It shows on the neck.':''):(x.b.fr?` ${wide?'Click':'Tap'} any step to show ${esc(cbName(x.b.root,x.b.suf))} on the neck again.`:'');
+  return `<div class="cb-card" id="cbX"><div class="xch-top"><div><b>Chord builder</b><p class="hint">Pick where the root sits, then a chord on that root, then a voicing.${tip}</p></div>${x.b.fr?'<button class="chip" data-cb="clear" data-tip="Take the chord off the neck and start again from where the root sits.">Clear the chord</button>':''}</div>${cbHTML(x.b,x.ui,{id:'explore',big:true,on:x.on})}</div>`;
+}
+function cbXAct(el){
+  const x=cbX();
+  if(el.dataset.cb==='clear'){x.b.spot=null; x.b.fr=null; x.ui.step=1; x.rootSet=false;}
+  else if(!cbAct(el,x.b,x.ui,{id:'explore'})&&x.on) return;
+  x.on=true;
+  st.lkPin=null; st.lkHov=null; st.lkFv=null; st.lkFh=null;
+  cbRedraw(panel,()=>{renderPanel(); renderBoard();});
+}
+function cbXRoot(v){const x=cbX(); x.b.root=+v; x.rootSet=true; x.on=true; x.b.spot=null; x.b.fr=null; x.ui.step=1; st.lkPin=null; cbRedraw(panel,()=>{renderPanel(); renderBoard();});}
+panel.addEventListener('click',e=>{const el=e.target.closest&&e.target.closest('[data-cb]'); if(el&&el.closest('#cbX')) cbXAct(el);});
+panel.addEventListener('change',e=>{if(e.target.classList.contains('cb-rootsel')&&e.target.closest('#cbX')) cbXRoot(e.target.value);});
+
+// ---------- your own progressions: saved in the log, so they sync; each keeps the key it was built in and moves with the focus key ----------
+const mineList=()=>!logReady()?[]:Object.values(LOG.progs||{}).filter(p=>p&&!p.gone).sort((a,b)=>a.created-b.created);
+function mineProg(id){if(!/^mine-/.test(id||'')||!logReady()) return null; const p=LOG.progs&&LOG.progs[id]; return p&&!p.gone?p:null;}
+function mineBars(p,key=cur.key){ // its bars in a key: each chord's root and shape move by the same distance
+  let d=((key-p.key)%12+12)%12; if(d>6) d-=12;
+  const sp=key===cur.key?cbSp:spellIn(key,MAJ);
+  return p.bars.map(x=>{const c=parseChord(x.name), suf=x.name.replace(/^[A-G][♯♭]?/,'').replace(/\/.*/,''), root=((c?c.root:0)+d+12)%12, fr=parseFrets(x.frets);
+    return {name:sp(root)+suf,frets:fr?cbMove(fr,d):null};});
+}
+const progName=id=>{const M=mineProg(id); return M?M.name:id==='one'?'One chord':(PROG_BY[id]||PROG_BY.pop).name;};
+
+// ---------- the progression builder pop-up: the bars on the left, the chord builder for the bar you pick on the right ----------
+let CP=null; // {id, name, from, bars:[{root,suf,spot,fr}], sel, ui, ctx, msg}
+const cpEl=document.getElementById('cpm');
+const cpOpen_=()=>!cpEl.hidden;
+function cpBarsOf(id){ // a progression's bars as the builder's, voiced the way Drill voices them when it's the one playing
+  if(id===D.prog&&cur.prog&&D.line==='prog') return cur.prog.filter(p=>p.from===0).map(p=>cbFrom(p.ch.name,p.voicing?p.voicing.frets:null));
+  const M=mineProg(id); if(M) return mineBars(M).map(x=>cbFrom(x.name,x.frets));
+  const names=id==='one'?[cur.chord.name]:progNames(followKey(),id); let near=null;
+  return names.map(n=>{const c=parseChord(n), suf=cbSuf(n)??'', ff=c&&cbFirst(c.root,suf,near); if(ff){const fz=ff.v.fr.filter(f=>f>0); near=fz.length?Math.min(...fz):near;}
+    return {root:c?c.root:cur.key,suf,spot:ff&&ff.spot,fr:ff&&ff.v.fr};});
+}
+function cpOpen(ctx,at){
+  // ctx: 'drill' (the Chords row, Edit, a bar's Edit) or 'cedit' (Customize in the Exercises tab); at: the bar to start on
+  if(st.playing) pauseMet();
+  st.pmenu=null;
+  const src=ctx==='cedit'&&st.cedit?st.cedit.d.prog:D.prog, M=mineProg(src), from=M?M.from:src==='one'?'pop':PROG_BY[src]?src:'pop';
+  const bars=cpBarsOf((M||PROG_BY[src]||src==='one'||src===D.prog&&cur.prog)?src:'pop'), S=songProg(src);
+  CP={id:M?M.id:null,name:M?M.name:S?`My ${S.name}`:`My ${progName(src==='one'?'pop':src)}`,from,bars,sel:Math.max(0,Math.min(at||0,bars.length-1)),ui:{step:3,mode:'fing'},ctx,msg:''};
+  CP.ui.step=CP.bars[CP.sel].fr?3:1;
+  cpEl.hidden=false; hideTip(); cpRender();
+  const n=document.getElementById('cpName'); if(n) n.focus({preventScroll:true});
+}
+function cpClose(){cpEl.hidden=true; CP=null; render();}
+function cpRender(){
+  if(!CP) return;
+  const key=keyName(), b=CP.bars[CP.sel], ok=CP.bars.every(x=>x.fr);
+  const opts=[['',PROGS.filter(p=>p[0]!=='one').map(p=>[p[0],p[1]])],['Your progressions',mineList().map(p=>[p.id,p.name])]].filter(g=>g[1].length)
+    .map(([g,L])=>{const o=L.map(([v,l])=>`<option value="${esc(v)}"${v===CP.from?' selected':''}>${esc(l)}</option>`).join(''); return g?`<optgroup label="${esc(g)}">${o}</optgroup>`:o;}).join('');
+  const bars=CP.bars.map((x,i)=>{const ch=x.fr?cbCh(x.root,x.suf):null;
+    return `<div class="cpm-bar" role="button" tabindex="0" data-cpbar="${i}" data-tip="${esc(`<b>Bar ${i+1}</b>: build its chord on the right.`)}" aria-pressed="${i===CP.sel}"><span class="no">Bar ${i+1}</span><span class="nm">${ch?esc(ch.name):esc(cbSp(x.root))+'…'}<i>${ch?esc(ch.roman):''}</i></span><code>${x.fr?cbFt(x.fr):'pick a voicing'}</code>${CP.bars.length>1?`<button class="x" data-cpx="${i}" aria-label="Remove bar ${i+1}" data-tip="Remove bar ${i+1}.">×</button>`:'<span></span>'}</div>`;}).join('');
+  const where=CP.ctx==='cedit'?'Exercises':'Drill';
+  cpEl.innerHTML=`<div class="cpm-panel" role="dialog" aria-modal="true" aria-labelledby="cpmT">
+    <div class="cpm-head"><div><h2 id="cpmT">${CP.id?`Edit ${esc(CP.name)}`:'Build a progression'}</h2><p class="hint">${where} · in ${esc(key)} · ${CP.id?'your progression':`starting from ${esc(progName(CP.from))}`}. ${wide?'Click':'Tap'} a bar, then build its chord.</p></div><button class="icon" data-cp="close" aria-label="Close" data-tip="Close without saving.">✕</button></div>
+    <div class="cpm-body"><div class="cpm-side">
+      <label class="cpm-f"><span class="blab">Name</span><input id="cpName" data-tip="The name it goes by in the Chords row." value="${esc(CP.name)}" autocomplete="off" spellcheck="false"></label>
+      <label class="cpm-f"><span class="blab">Start from</span><select id="cpFrom" data-tip="<b>Start from</b>: load another progression’s chords to build from. It replaces the bars.">${opts}</select></label>
+      <div class="cpm-bars" role="group" aria-label="Bars">${bars}<button class="cpm-add" data-cp="add" data-tip="Add a bar at the end, a copy of the last one.">+ Add a bar</button></div>
+      <p class="hint">Each bar keeps its own spot on the neck. Changing the key moves the whole progression with it.</p></div>
+      <div class="cpm-main"><p class="cpm-now"><b>Bar ${CP.sel+1}</b></p>${cbHTML(b,CP.ui,{id:'modal'})}</div></div>
+    <div class="cpm-foot">${CP.id?'<button class="btn" data-cp="del" data-tip="Delete this progression.">Delete</button>':''}<span class="sp"></span><span class="hint" role="status">${CP.msg||(ok?'':'Every bar needs a voicing first.')}</span><button class="btn" data-cp="close" data-tip="Close without saving.">Cancel</button><button class="btn primary" data-cp="use"${ok?'':' disabled'} data-tip="Save it under Your progressions in the Chords row and play it.">Use this progression</button></div></div>`;
+}
+function cpSave(){
+  const name=(document.getElementById('cpName').value||'').trim()||'My progression', t=now(), id=CP.id||rid('mine-');
+  LOG.progs=LOG.progs||{};
+  const o=LOG.progs[id]||{id,created:t};
+  LOG.progs[id]={...o,id,name,key:cur.key,from:CP.from,bars:CP.bars.map(x=>({name:cbName(x.root,x.suf),frets:fretText(x.fr)})),updated:t,gone:false};
+  saveLog();
+  const ctx=CP.ctx; cpEl.hidden=true; CP=null;
+  if(ctx==='cedit'&&st.cedit) cchoose('prog',id); else bchoose('prog',id);
+  render();
+}
+cpEl.addEventListener('click',e=>{
+  if(!CP) return;
+  if(e.target===cpEl){cpClose(); return;}
+  const cbE=e.target.closest('[data-cb]');
+  if(cbE){const b=CP.bars[CP.sel]; if(cbAct(cbE,b,CP.ui,{id:'modal'})) cbRedraw(cpEl,cpRender); return;}
+  const x=e.target.closest('[data-cpx]');
+  if(x){CP.bars.splice(+x.dataset.cpx,1); CP.sel=Math.min(CP.sel,CP.bars.length-1); CP.ui.step=CP.bars[CP.sel].fr?3:1; cpRender(); return;}
+  const bar=e.target.closest('[data-cpbar]');
+  if(bar){CP.sel=+bar.dataset.cpbar; CP.ui.step=CP.bars[CP.sel].fr?3:1; cpRender(); const f=cpEl.querySelector(`[data-cpbar="${CP.sel}"]`); if(f) f.focus({preventScroll:true}); return;}
+  const a=e.target.closest('[data-cp]'); if(!a) return;
+  const k=a.dataset.cp;
+  if(k==='close') cpClose();
+  else if(k==='add'){const L=CP.bars[CP.bars.length-1]; CP.bars.push({...L,spot:L.spot&&{...L.spot},fr:L.fr&&L.fr.slice()}); CP.sel=CP.bars.length-1; CP.ui.step=CP.bars[CP.sel].fr?3:1; cpRender();}
+  else if(k==='use') cpSave();
+  else if(k==='del'){
+    if(!CP.msg.startsWith('Delete')){CP.msg=`Delete ${CP.name}? Click Delete again to remove it.`; cpRender(); return;}
+    const id=CP.id; LOG.progs[id]={...LOG.progs[id],gone:true,updated:now()}; saveLog();
+    if(D.prog===id){D.prog=PROG_BY[CP.from]?CP.from:'pop'; refresh(); fillSelects(); save(); regen();}
+    if(st.cedit&&st.cedit.d.prog===id) cchoose('prog',PROG_BY[CP.from]?CP.from:'pop');
+    cpEl.hidden=true; CP=null; render();
+  }
+});
+cpEl.addEventListener('keydown',e=>{
+  if(!CP) return;
+  if(e.key==='Escape'){e.stopPropagation(); cpClose(); return;}
+  const t=e.target;
+  if((e.key==='Enter'||e.key===' ')&&t.matches&&(t.matches('[data-cpbar]')||t.matches('.cb-ring'))){e.preventDefault(); t.click();}
+});
+cpEl.addEventListener('input',e=>{if(CP&&e.target.id==='cpName') CP.name=e.target.value;});
+cpEl.addEventListener('change',e=>{
+  if(!CP) return;
+  if(e.target.classList.contains('cb-rootsel')){const b=CP.bars[CP.sel]; b.root=+e.target.value; b.spot=null; b.fr=null; CP.ui.step=1; cpRender(); return;}
+  if(e.target.id==='cpFrom'){CP.from=e.target.value; if(!CP.id) CP.name=`My ${progName(CP.from)}`; CP.bars=cpBarsOf(CP.from); CP.sel=0; CP.ui.step=CP.bars[0].fr?3:1; cpRender();}
+});
+
+window.__fretDebug={cbVoicings,cbSpots,cbFing,cbNameIt,cbFrom,cbMove,cbSuf,cbHTML,mineBars,mineProg,mineList,cpOpen,get CP(){return CP},cbXShown,setLoop,loopOn,lkFingList,stdOpen,lkChords,lkPairs,lkSel,lkWin,shapeFits,ivShapeList,fingering,fingerMoves,tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,EXS,EX_BY,exStart,exGo,routines,openRoutine,chipDone,exProgress,fillSet,editStart,ceditStart,runOf,setupSkill,stepState,followKey,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule,setWhere,setPlan,passEnd,cycleShapes,techMarks,regen};
 fillSelects();
 render();
 setTimeout(syncNow,300); // does nothing without a token

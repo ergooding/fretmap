@@ -776,6 +776,37 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
    ok(X.setupSkill({key:0,fam:'major',mode:0,pos:0,line:'prog',prog:'pop',plan:'strum',rpat:'faithful',sbg:'',pick:'arp'})===sid&&sb&&sb.bpm===100&&ss.done&&ss.best.bpm===100,'best-strum-bpm',JSON.stringify([sb,ss]));
    ok(lb&&lb.bpm===60&&lb.sub===4,'best-line-notes',JSON.stringify(lb));
    X.LOG.sessions.pop();}
+  // your own progressions: build one in the pop-up from the Chords row, play its shapes, move it with the key, edit and delete it
+  {X.F.key=0; X.F.fam='major'; X.F.mode=0; X.refresh(); mode('explore'); mode('drill'); bc('prog','pop'); bc('plan','strum');
+   const M=d.getElementById('cpm');
+   click(d.querySelector('#exhead [data-act=cpnew]'));
+   ok(!M.hidden&&X.CP&&X.CP.bars.length===4,'cp-open',X.CP&&X.CP.bars.length);
+   ok(X.CP.bars.map(b=>b.fr.join()).join('|')===X.cur.prog.map(p=>p.voicing.frets.join()).join('|'),'cp-starts-from-drill');
+   click(M.querySelector('[data-cpbar="1"]')); click(M.querySelector('[data-cb=step][data-n="1"]'));
+   const spots=[...M.querySelectorAll('.cb-rlist .chip')].map(x=>x.textContent).join('|');
+   ok(spots==='6th string, fret 3|5th string, fret 10|4th string, fret 5','cp-spot-order',spots);
+   click(M.querySelector('.cb-rlist [data-s="0"][data-f="3"]')); click(M.querySelector('.cb-cc[data-suf="7"]'));
+   const v=X.CP.bars[1].fr; ok(X.CP.bars[1].root===7&&X.CP.bars[1].suf==='7'&&v[0]===3,'cp-bar-chord',JSON.stringify(X.CP.bars[1]));
+   const nm=M.querySelector('#cpName'); nm.value='Mine test'; nm.dispatchEvent(new w.Event('input',{bubbles:true}));
+   click(M.querySelector('[data-cp=use]'));
+   const id=X.D.prog, P=X.LOG.progs[id];
+   ok(/^mine-/.test(id)&&M.hidden&&P&&P.name==='Mine test'&&P.key===0&&P.bars[1].name==='G7','cp-saved',JSON.stringify(P));
+   ok(X.cur.prog[1].ch.name==='G7'&&X.cur.prog[1].voicing.frets.join()===v.join()&&X.cur.prog[1].voicing.own,'cp-plays-shape',X.cur.prog.map(p=>p.ch.name).join());
+   ok(d.querySelector(`#exhead [data-act=bchip][data-row=prog][data-v="${id}"]`),'cp-in-chords-row');
+   X.F.key=2; X.refresh();
+   ok(X.cur.prog[1].ch.name==='A7'&&X.cur.prog[1].voicing.frets.join()===v.map(f=>f==null?null:f+2).join(),'cp-moves-with-key',X.cur.prog[1].ch.name+' '+X.cur.prog[1].voicing.frets);
+   X.F.key=0; X.refresh(); mode('explore'); mode('drill');
+   click(d.querySelector('[data-act=cpedit]')); ok(X.CP&&X.CP.id===id,'cp-edit-yours');
+   click(M.querySelector('[data-cp=del]')); click(M.querySelector('[data-cp=del]'));
+   ok(X.D.prog==='pop'&&X.LOG.progs[id].gone&&!X.mineList().length&&M.hidden,'cp-delete',X.D.prog);}
+  // Explore's chord builder: Root rings the root's spots on the 6th, 5th and 4th strings, a ring picks the spot, a chord card hands the neck back
+  {X.F.key=0; X.F.fam='major'; X.F.mode=0; X.refresh(); mode('drill'); mode('explore');
+   const cx=d.getElementById('cbX'); ok(cx&&!d.querySelector('.dot.rpick'),'cbx-card');
+   click(cx.querySelector('[data-cb=step][data-n="1"]')); ok(d.querySelectorAll('.dot.rpick').length===3,'cbx-rings',d.querySelectorAll('.dot.rpick').length);
+   click(d.querySelector('.cell[data-s="1"][data-f="3"]'));
+   ok(X.st.cbx.b.fr&&X.st.cbx.b.fr.join()===',3,2,0,1,0'&&X.st.cbx.on&&X.cbXShown()&&X.cbXShown().ch.name==='C'&&!d.querySelector('.dot.rpick'),'cbx-ring-picks',JSON.stringify(X.st.cbx.b));
+   click(d.querySelector('#cbX .cb-cc[data-suf="maj7"]')); ok(X.cbXShown().ch.name==='Cmaj7','cbx-chord',X.cbXShown().ch.name);
+   click(d.querySelector('[data-act=lkch]')); ok(!X.st.cbx.on&&!X.cbXShown(),'cbx-hands-back');}
   // phone layout text
   B.mode('practice'); ok(!/undefined|NaN|\[object/.test(B.d.querySelector('.app').textContent),'phone-text-path');
   console.log('log checks done, bad',bad); process.exit(bad?1:0);
