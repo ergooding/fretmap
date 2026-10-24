@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fretmap</title>
+<title>Tab loop mockup</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
@@ -330,6 +330,25 @@ html.wide{font-size:19px}
 .tcol.strumcol.ghost .dg{opacity:.22;font-weight:400}
 .tcol.strumcol.acc .dg{color:var(--gold)}
 .app.wide .tcol.strumcol .dg{font-size:16px}
+
+/* loop a section of the tab: two gold edges you drag, the rest of the tab fades */
+.tabin{position:relative}
+.lp{position:absolute;top:0;bottom:0;left:0;width:100%;pointer-events:none;z-index:2}
+.lp-shade{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--surface) 72%,transparent);
+  background-image:repeating-linear-gradient(135deg,transparent 0 6px,color-mix(in srgb,var(--line) 45%,transparent) 6px 7px)}
+.lp-band{position:absolute;top:0;bottom:0;border-top:3px solid var(--gold);border-bottom:3px solid var(--gold);background:color-mix(in srgb,var(--gold) 7%,transparent)}
+.lp.off .lp-band{border-color:transparent;background:none}
+.lp-h{position:absolute;top:-2px;bottom:-2px;width:22px;margin-left:-11px;pointer-events:auto;cursor:ew-resize;touch-action:none;display:grid;place-items:center}
+.lp-h::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:4px;margin-left:-2px;border-radius:2px;background:var(--gold)}
+.lp-h::after{content:"";position:relative;width:14px;height:30px;border-radius:7px;background:var(--gold);box-shadow:0 1px 3px rgba(0,0,0,.35);
+  background-image:linear-gradient(90deg,transparent 4px,rgba(20,17,13,.45) 4px 5px,transparent 5px 9px,rgba(20,17,13,.45) 9px 10px,transparent 10px)}
+.lp.off .lp-h{opacity:.45}
+.lp-h:hover,.lp-h.drag,.lp-h:focus-visible{opacity:1!important;outline:none}
+.lp-h:focus-visible::after{box-shadow:0 0 0 3px var(--ink)}
+.lp-note{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-4px 0 0;font-size:.8rem;color:var(--muted);min-height:28px}
+.lp-note b{color:var(--ink)}
+.lp-note .chip{padding:3px 11px;font-size:.78rem}
+.tab.lpdrag{cursor:ew-resize;user-select:none}
 #tip{position:fixed;left:0;top:0;z-index:1000;max-width:290px;background:var(--ink);color:var(--bg);font-size:.8rem;line-height:1.4;
   padding:7px 10px;border-radius:8px;pointer-events:none;opacity:0;transition:opacity .12s;box-shadow:0 6px 18px rgba(0,0,0,.28)}
 #tip.on{opacity:1}
@@ -1958,7 +1977,8 @@ const timerHTML=()=>`<select class="tsel" data-tm="1" aria-label="Timer">${TIMES
 function timeUp(t){met.done=true; met.queue.push({t,end:true});}
 function startMet(fromK=0){
   ensureAC();
-  if(!st.seq.length||(!fromK&&st.pbar)){st.pbar=0; st.seq=genSeq();}
+  if(!st.seq.length||(!fromK&&st.pbar&&!loopOn())){st.pbar=0; st.seq=genSeq();}
+  if(loopOn()&&(fromK<st.loop.a||fromK>st.loop.b)) fromK=st.loop.a; // play starts at the loop's first note
   if(!st.seq.length) return;
   logStop(); logStart();
   met.tlen=st.paused&&st.tLeft!=null?st.tLeft:(saved.timer||0); met.endAt=0; met.ending=false; met.done=false; st.tLeft=null; st.timeUp=0;
@@ -1983,7 +2003,7 @@ function pauseMet(){
   st.tLeft=met.tlen?(met.endAt?Math.max(0.001,met.endAt-ac.currentTime):met.tlen):null; met.ending=false; met.done=false;
   clearInterval(met.timer); cancelAnimationFrame(met.raf);
   st.playing=false; st.paused=true; st.count=0; met.queue=[];
-  st.resumeK=Math.max(0,k);
+  st.resumeK=Math.max(loopOn()?st.loop.a:0,k);
   render();
 }
 function togglePlay(){
@@ -2000,8 +2020,8 @@ function schedule(){
     else{
       if(met.tlen&&!met.endAt) met.endAt=t+met.tlen;
       const late=met.endAt&&t>=met.endAt-0.001; if(late&&!met.ending){met.ending=true; met.queue.push({t,ending:true});}
-      if(met.k>=st.seq.length){ if(late){timeUp(t); return;} passEnd(t); } // time's up: the run plays to its end, which is the root
-      const n=st.seq[met.k], lastRoot=late&&n&&!n.rest&&!n.chord&&st.seq.slice(met.k+1).every(x=>x.rest); // the run's last note rings
+      if(met.k>=loopEnd()){ if(late){timeUp(t); return;} passEnd(t); } // time's up: the run (or the loop) plays to its end
+      const n=st.seq[met.k], lastRoot=late&&n&&!n.rest&&!n.chord&&st.seq.slice(met.k+1,loopEnd()).every(x=>x.rest); // the run's last note rings
       if(n&&n.chord) strum(t,0.2);
       else if(n&&!n.rest&&D.notes) toneAt(MIDI[n.s]+capo()+n.f,t,lastRoot?0.9:n.sl?0.18:0.26); // a hammer-on or pull-off sounds softer than a picked note; the last root rings
       met.queue.push({t,k:met.k}); met.k++;
@@ -2013,6 +2033,11 @@ function passEnd(t){
   // after each pass: each shape in turn moves to the next shape, a chord-tone walk makes up a new line, a scale line run
   // through the changes picks the chords up where it left them, and the tempo ramp adds its bpm
   met.k=0; logPass();
+  if(loopOn()){ // a loop repeats the same notes: no new line, no next shape, but the tempo ramp still climbs each time round
+    met.k=st.loop.a;
+    if(D.ramp){saved.bpm=Math.min(260,saved.bpm+D.ramp); met.queue.push({t,bpm:true});}
+    return;
+  }
   let fresh=D.pattern==='walk'&&(D.line==='scale'||D.plan==='tones'), shape=false;
   if(D.line==='prog'&&D.plan==='line'&&D.over!=='restart'&&cur.prog&&cur.nbars>1){
     const last=st.seq[st.seq.length-1]; st.pbar=((st.pbar||0)+(last?last.bar+1:0))%cur.nbars; fresh=true;}
@@ -2037,7 +2062,7 @@ function pschedule(){
     }
     if(met.tlen&&!met.endAt) met.endAt=t0+met.tlen;
     if(met.endAt&&t0>=met.endAt-0.001&&!met.ending){met.ending=true; met.queue.push({t:t0,ending:true});}
-    if(met.k>=st.seq.length){ if(met.ending){timeUp(t0); return;} passEnd(t0); }
+    if(met.k>=loopEnd()){ if(met.ending){timeUp(t0); return;} passEnd(t0); }
     const n=st.seq[met.k], dur=60/saved.bpm*4/n.n, per=n.n/4;
     const t=t0+((n.sw??R.swing)&&(n.n===8||n.n===16)&&n.k%2===1?dur/3:0); // shuffle: the second of each pair lands two thirds of the way through
     if(n.k%per===0&&D.click) click(t,n.k===0?1760:1175,n.k===0?0.4:0.25);
@@ -2768,7 +2793,7 @@ function progTab(el){
 }
 function renderTab(){
   const el=document.getElementById('tab'); if(!el) return;
-  if(D.line==='prog'){ if(cur.prog) progTab(el); else el.innerHTML=''; updateTab(); return; }
+  if(D.line==='prog'){ if(cur.prog) progTab(el); else el.innerHTML=''; drawLoop(); updateTab(); return; }
   const sub=D.sub;
   el.innerHTML='<div class="tabin">'+st.seq.map((n,j)=>{
     const cls=j===0?'':(j%(sub*4)===0?' bar':(j%sub===0?' beat':''));
@@ -2781,15 +2806,17 @@ function renderTab(){
     let rows=''; for(let s=5;s>=0;s--) rows+=`<span class="ln">${s===n.s?`<b>${n.sl?`<i class="sl">${n.sl}</i>`:''}${n.f}</b>`:''}</span>`;
     return `<div class="tcol${cls}" data-j="${j}">${rows}<span class="dg" style="color:${cur.chordPcs.has(pc(n.s,n.f))?COL[ref]:'var(--muted)'}">${t}</span><span class="fg">${n.pk||''}${finger(n)}</span></div>`;
   }).join('')+'</div>';
-  updateTab();
+  drawLoop(); updateTab();
 }
 function updateTab(){
   const el=document.getElementById('tab'); if(!el) return;
   el.querySelectorAll('.tcol.now').forEach(c=>c.classList.remove('now'));
-  if((!st.playing&&!st.paused)||st.idx<0){el.scrollLeft=0;return;}
+  if((!st.playing&&!st.paused)||st.idx<0){ if(!st.lpDrag) el.scrollLeft=loopOn()?Math.max(0,loopX(st.loop.a)-40):0; return;}
+  if(st.lpDrag) return;
   const c=el.querySelector(`[data-j="${st.idx}"]`);
+  if(c&&st.lpDrag){c.classList.add('now'); return;} // while an edge is dragged, the tab stays where you hold it
   // follow along: when the note now nears an edge, slide so it sits a third of the way in, with what's next in view
-  if(c){c.classList.add('now'); const R=el.getBoundingClientRect(), r=c.getBoundingClientRect();
+  if(c&&!st.lpDrag){c.classList.add('now'); const R=el.getBoundingClientRect(), r=c.getBoundingClientRect();
     if(r.left<R.left+8||r.right>R.left+R.width*.8){const x=Math.max(0,el.scrollLeft+r.left-R.left-R.width/3); try{el.scrollTo({left:x,behavior:'smooth'});}catch(e){el.scrollLeft=x;}}}
 }
 // Quiz's toolbar: Name it or Find it on the left, the score and Reset on the right
@@ -4848,6 +4875,88 @@ document.addEventListener('keydown',e=>{const t=e.target.closest&&e.target.close
 addEventListener('scroll',hideTip,true);
 addEventListener('resize',hideTip);
 
+
+// ---------- loop a section of the tab ----------
+// Drag the gold edges at either end of the tab to choose a section; Play then repeats only those notes.
+// The loop belongs to the tab it was drawn on: a new line (a new key, pattern or box) clears it.
+const loopOn=()=>!!(st.loop&&st.loop.seq===st.seq&&st.loop.b<st.seq.length);
+const loopEnd=()=>loopOn()?st.loop.b+1:st.seq.length;
+const tabCols=()=>{const el=document.getElementById('tab'); return el?[...el.querySelectorAll('.tcol')]:[];};
+function colEdges(){ // the left edge of each column, and of the end of the tab, measured inside .tabin; edges sit midway in the gaps
+  const C=tabCols(); if(!C.length) return [];
+  const L=C.map(c=>c.offsetLeft), R=C.map(c=>c.offsetLeft+c.offsetWidth), E=[L[0]-3];
+  for(let j=1;j<C.length;j++) E.push((R[j-1]+L[j])/2);
+  E.push(R[C.length-1]+3); return E;
+}
+const loopX=j=>{const E=colEdges(); return E[j]||0;};
+function lpWhere(j){ // bar and beat of note j, counted from 1
+  const n=st.seq[j]; if(!n) return '';
+  if(D.line==='prog'&&n.bar!=null) return `bar ${n.bar-(st.seq[0].bar||0)+1}, beat ${Math.floor(n.k/(n.n/4))+1}`;
+  const per=4*D.sub; return `bar ${Math.floor(j/per)+1}, beat ${Math.floor((j%per)/D.sub)+1}`;
+}
+function loopText(){
+  if(!loopOn()) return `<span>Drag the gold edges of the tab to loop part of it.</span>`;
+  const {a,b}=st.loop, cnt=st.seq.slice(a,b+1).filter(n=>!n.rest).length, all=st.seq.filter(n=>!n.rest).length;
+  return `<span>Looping <b>${lpWhere(a)}</b> to <b>${lpWhere(b)}</b> · ${cnt} of ${all} ${st.seq.some(n=>n.chord)?'steps':'notes'}</span><button class="chip" data-lp="clear">Whole tab</button>`;
+}
+function drawLoop(){
+  const el=document.getElementById('tab'); if(!el) return;
+  const tin=el.querySelector('.tabin'); if(!tin||!st.seq.length) return;
+  const E=colEdges(), on=loopOn(), a=on?st.loop.a:0, b=on?st.loop.b:st.seq.length-1, x0=E[a], x1=E[b+1], W=tin.scrollWidth;
+  let lp=tin.querySelector('.lp');
+  if(!lp){lp=document.createElement('div'); lp.className='lp';
+    lp.innerHTML=`<div class="lp-shade l"></div><div class="lp-shade r"></div><div class="lp-band"></div>
+      <div class="lp-h" data-h="a" tabindex="0" role="slider" aria-label="Loop start"></div><div class="lp-h" data-h="b" tabindex="0" role="slider" aria-label="Loop end"></div>`;
+    tin.appendChild(lp);}
+  lp.classList.toggle('off',!on); lp.style.width=W+'px';
+  const q=s=>lp.querySelector(s);
+  Object.assign(q('.lp-shade.l').style,{left:'0px',width:(on?x0:0)+'px'});
+  Object.assign(q('.lp-shade.r').style,{left:x1+'px',width:(on?Math.max(0,W-x1):0)+'px'});
+  Object.assign(q('.lp-band').style,{left:x0+'px',width:(x1-x0)+'px'});
+  q('[data-h="a"]').style.left=x0+'px'; q('[data-h="b"]').style.left=x1+'px';
+  q('[data-h="a"]').setAttribute('aria-valuetext',lpWhere(a)); q('[data-h="b"]').setAttribute('aria-valuetext',lpWhere(b));
+  let note=el.nextElementSibling;
+  if(!note||!note.classList.contains('lp-note')){note=document.createElement('p'); note.className='lp-note'; el.after(note);}
+  note.innerHTML=loopText();
+}
+function setLoop(a,b){
+  const N=st.seq.length; a=Math.max(0,Math.min(a,N-1)); b=Math.max(a,Math.min(b,N-1));
+  st.loop=a===0&&b===N-1?null:{a,b,seq:st.seq};
+  if(st.paused&&loopOn()&&(st.resumeK<a||st.resumeK>b)) st.resumeK=a; // a paused drill resumes inside the loop
+  drawLoop();
+}
+document.addEventListener('pointerdown',e=>{
+  const h=e.target.closest('.lp-h'); if(!h) return;
+  e.preventDefault(); h.setPointerCapture(e.pointerId);
+  const el=document.getElementById('tab'), side=h.dataset.h;
+  st.lpDrag={side,x:e.clientX}; h.classList.add('drag'); el.classList.add('lpdrag');
+  const cur0=()=>loopOn()?st.loop:{a:0,b:st.seq.length-1};
+  const pick=()=>{ // snap the edge to the gap nearest the pointer
+    const tin=el.querySelector('.tabin'), x=st.lpDrag.x-tin.getBoundingClientRect().left, E=colEdges(), {a,b}=cur0();
+    let best=0,bd=1e9; E.forEach((v,i)=>{const d=Math.abs(v-x); if(d<bd){bd=d;best=i;}});
+    if(side==='a') setLoop(Math.min(best,b),b); else setLoop(a,Math.max(best-1,a));
+  };
+  const roll=()=>{ // near an edge of the strip, the tab scrolls so the loop can reach notes out of view
+    if(!st.lpDrag) return; const R=el.getBoundingClientRect(), x=st.lpDrag.x;
+    const v=x<R.left+40?-Math.ceil((R.left+40-x)/4):x>R.right-40?Math.ceil((x-R.right+40)/4):0;
+    if(v){el.scrollLeft+=v; pick();}
+    st.lpRaf=requestAnimationFrame(roll);
+  };
+  const move=ev=>{st.lpDrag.x=ev.clientX; pick();};
+  const up=()=>{h.removeEventListener('pointermove',move); h.removeEventListener('pointerup',up); h.removeEventListener('pointercancel',up);
+    cancelAnimationFrame(st.lpRaf); st.lpDrag=null; h.classList.remove('drag'); el.classList.remove('lpdrag'); drawLoop();};
+  h.addEventListener('pointermove',move); h.addEventListener('pointerup',up); h.addEventListener('pointercancel',up);
+  roll();
+});
+document.addEventListener('keydown',e=>{ // arrow keys move a focused edge one note
+  const h=e.target.closest&&e.target.closest('.lp-h'); if(!h||!/^Arrow(Left|Right)$/.test(e.key)) return;
+  e.preventDefault(); const d=e.key==='ArrowLeft'?-1:1, {a,b}=loopOn()?st.loop:{a:0,b:st.seq.length-1};
+  if(h.dataset.h==='a') setLoop(Math.min(a+d,b),b); else setLoop(a,Math.max(b+d,a));
+  const n=document.querySelector(`.lp-h[data-h="${h.dataset.h}"]`); if(n) n.focus();
+});
+document.addEventListener('click',e=>{if(e.target.closest('[data-lp="clear"]')){st.loop=null; drawLoop(); const el=document.getElementById('tab'); if(el&&!st.playing) el.scrollLeft=0;}});
+window.addEventListener('resize',()=>drawLoop());
+window.__lp={st:()=>st,met,saved,loopOn};
 window.__fretDebug={lkFingList,stdOpen,lkChords,lkPairs,lkSel,lkWin,shapeFits,ivShapeList,fingering,fingerMoves,tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,EXS,EX_BY,exStart,exGo,routines,openRoutine,chipDone,exProgress,fillSet,editStart,ceditStart,runOf,setupSkill,stepState,followKey,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule,setWhere,setPlan,passEnd,cycleShapes,techMarks,regen};
 fillSelects();
 render();

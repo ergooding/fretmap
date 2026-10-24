@@ -101,6 +101,22 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
    for(let i=0;i<600&&X.st.playing;i++){advance(0.25); await sleep(15); if(X.st.playing){k=X.met.k; len=X.st.seq.length; ending=ending||X.met.ending;}}
    ok(!X.st.playing&&ending&&k===len,'timer-prog-ends-with-changes',JSON.stringify({k,len,ending,p:X.st.playing}));
    t.value='0'; t.dispatchEvent(new w.Event('change',{bubbles:true}));}
+  // loop a section of the tab: Play repeats only the notes between the two edges, pause resumes inside it, and the timer finishes the loop
+  {X.saved.bpm=160; const N=X.st.seq.length, a=Math.floor(N/4), b=Math.floor(N/2); X.setLoop(a,b);
+   ok(X.loopOn()&&/Looping bar \d+, beat \d to bar \d+, beat \d/.test(d.querySelector('.lp-note').textContent)&&d.querySelector('.lp:not(.off)'),'loop-set',d.querySelector('.lp-note')&&d.querySelector('.lp-note').textContent);
+   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); const seen=new Set();
+   for(let i=0;i<400;i++){advance(0.02); for(const e of X.met.queue) if('k' in e) seen.add(e.k); X.met.queue.length=0;}
+   const S=[...seen]; ok(S.length===b-a+1&&Math.min(...S)===a&&Math.max(...S)===b&&X.st.seq.length===N,'loop-repeats-section',JSON.stringify({a,b,S:S.sort((x,y)=>x-y)}));
+   click(d.querySelector('[data-act=play]')); ok(X.st.paused&&X.st.resumeK>=a&&X.st.resumeK<=b,'loop-pause-inside',X.st.resumeK);
+   click(d.querySelector('[data-act=restart]')); w.clearInterval(X.met.timer); ok(X.met.k===a,'loop-restart-at-start',X.met.k);
+   click(d.querySelector('[data-act=play]')); const t=d.querySelector('.tsel'); t.value='30'; t.dispatchEvent(new w.Event('change',{bubbles:true}));
+   click(d.querySelector('[data-act=restart]')); w.clearInterval(X.met.timer); let k=-1, out=false;
+   for(let i=0;i<600&&X.st.playing;i++){advance(0.25); await sleep(5); if(X.st.playing){k=X.met.k; for(const e of X.met.queue) if('k' in e&&(e.k<a||e.k>b)) out=true;}}
+   ok(!X.st.playing&&k===b+1&&!out,'loop-timer-finishes-loop',JSON.stringify({k,b,out,p:X.st.playing}));
+   t.value='0'; t.dispatchEvent(new w.Event('change',{bubbles:true}));
+   click(d.querySelector('[data-lp=clear]')); ok(!X.loopOn()&&d.querySelector('.lp.off')&&/Drag the gold edges/.test(d.querySelector('.lp-note').textContent),'loop-clear');
+   X.setLoop(a,b); X.st.seq=X.st.seq.slice(); ok(!X.loopOn(),'loop-new-tab-clears');
+   X.setLoop(0,X.st.seq.length-1); ok(!X.st.loop,'loop-whole-is-none');}
   // a gap of more than 20 minutes starts a new session
   const nS=X.LOG.sessions.length; w.__clock+=25*60e3;
   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(30); click(d.querySelector('[data-act=play]'));
