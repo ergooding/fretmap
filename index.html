@@ -4956,8 +4956,7 @@ document.addEventListener('keydown',e=>{ // arrow keys move a focused edge one n
 });
 document.addEventListener('click',e=>{if(e.target.closest('[data-lp="clear"]')){st.loop=null; drawLoop(); const el=document.getElementById('tab'); if(el&&!st.playing) el.scrollLeft=0;}});
 window.addEventListener('resize',()=>drawLoop());
-window.__lp={st:()=>st,met,saved,loopOn};
-window.__fretDebug={lkFingList,stdOpen,lkChords,lkPairs,lkSel,lkWin,shapeFits,ivShapeList,fingering,fingerMoves,tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,EXS,EX_BY,exStart,exGo,routines,openRoutine,chipDone,exProgress,fillSet,editStart,ceditStart,runOf,setupSkill,stepState,followKey,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule,setWhere,setPlan,passEnd,cycleShapes,techMarks,regen};
+window.__fretDebug={setLoop,loopOn,lkFingList,stdOpen,lkChords,lkPairs,lkSel,lkWin,shapeFits,ivShapeList,fingering,fingerMoves,tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,EXS,EX_BY,exStart,exGo,routines,openRoutine,chipDone,exProgress,fillSet,editStart,ceditStart,runOf,setupSkill,stepState,followKey,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule,setWhere,setPlan,passEnd,cycleShapes,techMarks,regen};
 fillSelects();
 render();
 setTimeout(syncNow,300); // does nothing without a token
