@@ -894,6 +894,62 @@ span.blab::before{content:none}
 button.bar:hover .bar-ed,button.bar:focus-visible .bar-ed,button.bar[aria-pressed="true"] .bar-ed{display:inline-block}
 .bar-ed:hover{color:var(--ink);border-color:var(--gold)}
 @media (max-width:860px){.cpm-body{grid-template-columns:1fr}.cpm-side{position:static}.cb-ph .hint{margin-left:0}}
+/* phone upright: the page scrolls as one, the tabs sit in a bar at the bottom and Drill's play bar stays just above them */
+html.port,html.port body{height:auto}
+.app.port{height:auto;min-height:100vh;min-height:100dvh;--tabh:calc(52px + env(safe-area-inset-bottom,0px));padding-bottom:calc(var(--tabh) + var(--pbarh,0px) + 14px)}
+.app.port .panel{overflow:visible!important;flex:none!important;min-height:0}
+.app.port .modes{position:fixed;left:0;right:0;bottom:0;z-index:60;margin:0 auto;max-width:520px;border-radius:14px 14px 0 0;border-bottom:0;padding:4px 6px calc(4px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 14px rgba(0,0,0,.14)}
+.app.port .modes button{padding:11px 2px;font-size:.84rem}
+.app.port .pbar{position:fixed;left:0;right:0;bottom:var(--tabh);margin:0 auto;max-width:520px;z-index:55;padding:6px 12px;border-top:1px solid var(--line);box-shadow:0 -4px 12px rgba(0,0,0,.08)}
+.app.port header .icon{width:34px;height:34px}
+/* the neck: taller, bigger dots and labels, fret numbers you can read */
+.app.port:not(.wide) .neck{height:clamp(232px,35vh,300px)}
+.app:not(.wide) .fnum{font-size:.8rem}
+.app.port .prompt{margin-bottom:4px}
+/* Explore: each label in one column with its switch beside it; all the degree chips fit on one row */
+.app.port .xtool{flex-direction:column;align-items:stretch;gap:6px}
+.app.port .xtool .tl,.app.port .xtool .tr{flex-direction:column;align-items:stretch;gap:6px;margin-left:0}
+.app.port .xtool .segw{display:flex;align-items:center;gap:8px}
+.app.port .xtool .seglab,.app.port .degrow .seglab{flex:none;width:6.2rem}
+.app:not(.wide) .degrow{gap:4px;overflow:visible}
+.app:not(.wide) .degrow .ivchip{flex:1 1 0;width:auto;min-width:0;max-width:44px;padding:0}
+/* Explore chords: the switches get their own row, the chord shapes scroll sideways at a readable size */
+.app:not(.wide) .xch-top{flex-direction:column;gap:6px}
+.app:not(.wide) .xch-top .xsw{display:flex;flex-wrap:wrap;gap:6px 16px}
+.app:not(.wide) .xshapes{display:flex;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:thin;padding-bottom:4px}
+.app:not(.wide) .xshapes>.xshape{flex:0 0 158px;scroll-snap-align:start}
+/* Exercises: Start sits beside the exercise's name and the progress line gets the card's full width */
+.app.port .exi:not(.edit):not(.open){grid-template-columns:auto minmax(0,1fr) auto;row-gap:4px;align-items:center}
+.app.port .exi:not(.edit):not(.open) .tx{display:contents}
+.app.port .exi:not(.edit):not(.open) .tx>*{grid-column:2/-1}
+.app.port .exi:not(.edit):not(.open) .tx>b{grid-column:2;grid-row:1}
+.app.port .exi:not(.edit):not(.open)>.mk{grid-row:1}
+.app.port .exi:not(.edit):not(.open)>.btn{grid-column:3;grid-row:1}
+.app.port .exprog .bar{width:90px}
+/* Songs: the Songsterr link and Practice each get a full row, the rating its own row */
+.app.port .se-head .field.grow,.app.port .se-head .se-go{flex:1 1 100%}
+.app.port .se-meta .field:has(.stars){flex-basis:100%}
+/* sideways: the neck stays put on the left while the right column scrolls as one page; the play bar is pinned to the column's foot */
+html.land,html.land body{height:auto}
+.app.land{height:auto;min-height:100vh;min-height:100dvh;align-items:start;padding-bottom:calc(var(--pbarh,0px) + 8px);
+  grid-template-rows:auto auto auto auto 1fr;grid-template-areas:"neck modes" "neck head" "neck goal" "neck prompt" "neck panel"}
+.app.land.has-ex{grid-template-rows:auto auto auto auto auto auto 1fr;grid-template-areas:"neck modes" "neck head" "neck goal" "neck strip" "neck exh" "neck prompt" "neck panel"}
+.app.land .neck-box{position:sticky;top:6px;height:calc(100vh - 12px);height:calc(100dvh - 12px);align-self:start}
+.app.land .panel,.app.land .exhead{overflow:visible!important;max-height:none!important;min-height:0}
+.app.land .pbar{position:fixed;bottom:0;right:max(10px,env(safe-area-inset-right,0px));width:max(290px,calc((100vw - 20px)*.4));z-index:55;padding:6px 0 max(6px,env(safe-area-inset-bottom,0px))}
+.app.land .bwrap>summary{white-space:normal;line-height:1.35}
+/* the progression pop-up on a phone: bigger neck labels, steps on one row */
+@media (max-width:600px){
+  .cb-nsvg{min-width:700px}
+  .cb-step{padding-right:10px;gap:6px}
+  .cb-step small{display:none}
+  .cb-sep{display:none}
+}
+/* touch: a long press shows a control's tip; nothing pops up from a plain tap */
+@media (hover:none){button,[data-tip]{-webkit-touch-callout:none}}
+/* nothing may widen an upright phone's page: a wide row would shrink the whole page and push the tab bar off the bottom */
+.app.port{overflow-x:clip}
+.cb-dh{flex-wrap:wrap;row-gap:6px}
 </style>
 </head>
 <body>
@@ -1523,7 +1579,7 @@ function layoutNeck(){
 }
 function sizeDots(){
   const r=neck.getBoundingClientRect(), n=zoom[1]-zoom[0]+1;
-  const d=horiz?Math.min(r.width/n,(r.height-26)/6)*0.72:Math.min((r.width-26)/6,r.height/n)*0.8;
+  const d=horiz?Math.min(r.width/n,(r.height-26)/6)*(!wide&&!land?0.84:0.72):Math.min((r.width-26)/6,r.height/n)*0.8;
   neck.style.setProperty('--dot',Math.max(16,Math.min(horiz?64:38,d))+'px');
   if(lineEl) requestAnimationFrame(()=>lkLines());
 }
@@ -1565,6 +1621,7 @@ function applyLayout(){
   land=!wide&&mqLand.matches; horiz=true; // the neck lies sideways in every layout, high e on top like the tab
   appEl.classList.toggle('wide',wide); document.documentElement.classList.toggle('wide',wide);
   appEl.classList.toggle('land',land); document.documentElement.classList.toggle('land',land);
+  appEl.classList.toggle('port',!wide&&!land); document.documentElement.classList.toggle('port',!wide&&!land); // an upright phone: the page scrolls, tabs at the bottom
   const nav=document.getElementById('modes'), hd=appEl.querySelector('header');
   if(wide) hd.insertBefore(nav,hd.querySelector('.stats')); else appEl.insertBefore(nav,document.getElementById('exstrip'));
   const L={auto:'Layout: automatic',wide:'Layout: desktop',compact:'Layout: phone'}[saved.layout];
@@ -2467,7 +2524,16 @@ function render(){
   document.getElementById('goal').hidden=st.mode==='songs'; // a song has its own key, so the focus bar steps aside
   appEl.classList.toggle('m-practice',st.mode==='practice'||st.mode==='songs'); appEl.classList.toggle('m-songs',st.mode==='songs'); appEl.classList.toggle('m-drill',st.mode==='drill');
   if(saved.fmode==='song'&&!focusSong()) saved.fmode='key'; // the song was removed
-  fillSongSel(); renderStats(); focusText(); renderBoard(); renderPrompt(); renderPanel(); renderSheet(); renderVoice(); renderHowto(); renderEx(); updateLive(); navSync();
+  fillSongSel(); renderStats(); focusText(); renderBoard(); renderPrompt(); renderPanel(); renderSheet(); renderVoice(); renderHowto(); renderEx(); updateLive(); navSync(); padForBar();
+}
+let pbarSeen=null, pbarRO=null;
+function padForBar(){
+  // on a phone Drill's play bar is pinned (above the tabs upright, at the foot of the right column sideways), so the page keeps that much room at the bottom
+  const pb=!wide?panel.querySelector('.pbar'):null;
+  if(pb===pbarSeen) return; pbarSeen=pb;
+  if(pbarRO) pbarRO.disconnect();
+  const set=()=>appEl.style.setProperty('--pbarh',pb?pb.offsetHeight+'px':'0px'); set();
+  if(pb&&window.ResizeObserver){pbarRO=pbarRO||new ResizeObserver(()=>{if(pbarSeen) appEl.style.setProperty('--pbarh',pbarSeen.offsetHeight+'px');}); pbarRO.observe(pb);}
 }
 const picking=()=>st.mode==='drill'&&st.picking;
 function drillLabel(p){
@@ -2521,6 +2587,11 @@ function lineDot(s,f){
 }
 function renderBoard(){drawBoard(); keepInView();}
 let viewKey='';
+function snapFret(w,R,x){ // the nearest fret edge to a scroll position, so the first fret shown is whole
+  let best=x, d=1e9;
+  for(let f=zoom[0];f<=zoom[1];f++){const L=cells[0][f].getBoundingClientRect().left-R.left+w.scrollLeft; if(Math.abs(L-x)<d){d=Math.abs(L-x); best=L;}}
+  return Math.max(0,Math.min(w.scrollWidth-w.clientWidth,best));
+}
 function keepInView(){
   // when the neck scrolls sideways: keep the hand's reach in view while the drill plays (the note now and the next few),
   // and show the focus box, or the start of a whole-neck run, when the view changes
@@ -2541,7 +2612,7 @@ function keepInView(){
   if(q){ // a quiz question: center the R, and the ? beside it
     const k2=key+`:${q.root.s}/${q.root.f}`; if(k2===viewKey) return; viewKey=k2;
     const fs=[q.root.f].concat(st.mode==='name'?[q.target.f]:[]), a=cells[0][Math.min(...fs)].getBoundingClientRect(), b=cells[0][Math.max(...fs)].getBoundingClientRect();
-    to(w.scrollLeft+(a.left+b.right)/2-R.left-R.width/2); return;}
+    to(snapFret(w,R,w.scrollLeft+(a.left+b.right)/2-R.left-R.width/2)); return;}
   if(key===viewKey) return; viewKey=key;
   const c=cells[0][Math.max(zoom[0],cur.whole?0:cur.lo-1)]; if(c) to(w.scrollLeft+c.getBoundingClientRect().left-R.left);
 }
@@ -4336,7 +4407,7 @@ function renderPanel(){
   if(st.mode==='explore'){
     // one toolbar under the neck: how the neck looks on the left, what a click does on the right; then the degrees shown
     const ivs=cur.allowed.map(i=>`<button class="ivchip" style="--c:${COL[i]}" data-act="iv" data-i="${i}" aria-pressed="${st.visible.has(i)}" aria-label="${lab(i)[1]}">${lab(i)[0]}</button>`).join('');
-    panel.innerHTML=`<div class="toolbar"><div class="tl">${seg('Show','show',[['all','Whole scale'],['chord','Chord tones']],showChord()?'chord':'all')}
+    panel.innerHTML=`<div class="toolbar xtool"><div class="tl">${seg('Show','show',[['all','Whole scale'],['chord','Chord tones']],showChord()?'chord':'all')}
       ${(()=>{const fs=saved.lkFing&&lkShown(); return seg('Labels','labels',[['iv','Degrees'],['notes','Notes']].concat(fs?[['fing','Fingers']]:[]),fs&&saved.lkFlab?'fing':saved.labels==='notes'?'notes':'iv');})()}</div>
       <div class="tr">${seg('Click a note','lock',[['on','Explain it'],['off','Make it the key']],saved.lkLock===false?'off':'on')}</div></div>
       <div class="row degrow"><span class="seglab">Degrees</span><button class="ivchip" style="--c:${COL[0]}" aria-pressed="true" disabled aria-label="root, always shown" data-tip="R, the root, always shows.">R</button>${ivs}</div>${wide?'':`<div class="xkey">${lkSel()!==null?lkNoteHTML(lkSel()):exploreKey()}</div>`}${lkChordsHTML()}${cbXCard()}`;
@@ -4358,7 +4429,7 @@ function renderPanel(){
 function setMode(m){
   if(m==='quiz') m=saved.quiz==='find'?'find':'name'; // Name it and Find it share the Quiz tab, which remembers the last one
   if(m==='name'||m==='find') saved.quiz=m;
-  clearTimeout(st.timer); stopMet(); st.mode=m; st.q=null; st.sheet=false; st.exTap=null; panel.scrollTop=0;
+  clearTimeout(st.timer); stopMet(); st.mode=m; st.q=null; st.sheet=false; st.exTap=null; panel.scrollTop=0; if(!wide){try{scrollTo(0,0);}catch(e){}}
   if(m==='songs'&&focusSong()&&st.song!==saved.fsong){st.song=saved.fsong; st.vpick=null;} // the Songs tab opens on the song in focus
   if(st.mode==='explore'||st.mode==='practice'||st.mode==='songs') render();
   else if(st.mode==='drill'){st.picking=false; st.seq=genSeq(); render();}
@@ -4985,15 +5056,25 @@ function showTip(el){
   tipEl.style.transform=`translate(${Math.round(x)}px,${Math.round(y)}px)`;
 }
 function hideTip(){clearTimeout(tipTimer); tipTarget=null; tipEl.classList.remove('on');}
+const noHover=matchMedia('(hover: none)').matches; // a touch screen: a tip shows on a long press, never from a tap
+let lpTimer=null, lpShown=false;
+document.addEventListener('pointerdown',e=>{
+  clearTimeout(lpTimer); if(e.pointerType==='mouse') return;
+  const t=e.target.closest&&e.target.closest(TIP_SEL); if(!t||t.closest('[data-term]')) return;
+  lpTimer=setTimeout(()=>{lpShown=true; tipTarget=t; showTip(t);},520);
+},true);
+['pointerup','pointercancel','pointermove'].forEach(ev=>document.addEventListener(ev,e=>{if(ev!=='pointermove'||Math.abs(e.movementX||0)+Math.abs(e.movementY||0)>6) clearTimeout(lpTimer);},true));
+document.addEventListener('click',e=>{if(lpShown){lpShown=false; e.preventDefault(); e.stopPropagation();}},true); // the press only showed the tip
+document.addEventListener('contextmenu',e=>{if(lpShown||(noHover&&e.target.closest&&e.target.closest(TIP_SEL))) e.preventDefault();});
 document.addEventListener('pointerover',e=>{
-  if(e.pointerType&&e.pointerType!=='mouse') return;
+  if(noHover||(e.pointerType&&e.pointerType!=='mouse')) return;
   const t=e.target.closest(TIP_SEL);
   if(t===tipTarget) return;
   hideTip(); if(!t) return;
   tipTarget=t; tipTimer=setTimeout(()=>showTip(t),tipEl.classList.contains('on')?0:380);
 });
 document.addEventListener('pointerout',e=>{if(e.pointerType&&e.pointerType!=='mouse') return; if(tipTarget&&!tipTarget.contains(e.relatedTarget)) hideTip();});
-document.addEventListener('pointerdown',e=>{ if(!tipTarget) return; if(!tipTarget.contains(e.target)){ hideTip(); return;} setTimeout(()=>{if(tipTarget&&document.body.contains(tipTarget)) showTip(tipTarget); else hideTip();},30); });
+document.addEventListener('pointerdown',e=>{ if(!tipTarget||lpShown) return; if(!tipTarget.contains(e.target)){ hideTip(); return;} setTimeout(()=>{if(tipTarget&&document.body.contains(tipTarget)) showTip(tipTarget); else hideTip();},30); });
 document.addEventListener('focusin',e=>{const t=e.target.closest&&e.target.closest(TIP_SEL); if(t&&t.matches(':focus-visible')){tipTarget=t; showTip(t);}});
 document.addEventListener('focusout',e=>{ if(!(e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest('[data-term]'))) hideTip(); });
 document.addEventListener('click',e=>{
