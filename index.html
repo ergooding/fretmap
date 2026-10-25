@@ -890,6 +890,7 @@ span.blab::before{content:none}
 .cpm-foot .btn[disabled]{opacity:.5;cursor:default}
 .sh-edit{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .sh-edit .hint{margin:0}
+.chip.danger{background:var(--bad);border-color:var(--bad);color:#fff}
 .bar-ed{display:none;font-size:.68rem;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 8px;background:var(--surface);align-self:flex-start;cursor:pointer}
 button.bar:hover .bar-ed,button.bar:focus-visible .bar-ed,button.bar[aria-pressed="true"] .bar-ed{display:inline-block}
 .bar-ed:hover{color:var(--ink);border-color:var(--gold)}
@@ -3998,7 +3999,7 @@ function ceditHTML(r,it,k){
   if(isQuiz(E)) ctx.rows=[{k:'quiz',name:'Quiz'}];
   else if(E.id==='songs') ctx.rows=[{k:'song',name:'Song'},...bRows(ctx.V,false).filter(x=>['plan','rpat','pick'].includes(x.k))];
   return `<div class="exi open" data-i="${k}"><span class="mk">${k+1}</span><div class="tx ed"><div class="exh-title"><b>${esc(E.name)}</b><small>Customize · for ${esc(r.name)}</small></div>
-    ${rowsHTML(ctx)}${isQuiz(E)||E.id==='songs'?'':keyLine(ctx,d.key)}${goalLine(E,d.goal,'ecgoal','ecsave','eccancel','Save',`Keep these settings for ${esc(E.name)} in ${esc(r.name)}.`,isQuiz(E)?'':timerSel(d.timer,'data-ectm="1"',timerTip(esc(E.name),`you reach it in ${esc(r.name)}`)))}</div></div>`;
+    ${rowsHTML(ctx)}${mineEditBar(d.prog,'cedit')}${isQuiz(E)||E.id==='songs'?'':keyLine(ctx,d.key)}${goalLine(E,d.goal,'ecgoal','ecsave','eccancel','Save',`Keep these settings for ${esc(E.name)} in ${esc(r.name)}.`,isQuiz(E)?'':timerSel(d.timer,'data-ectm="1"',timerTip(esc(E.name),`you reach it in ${esc(r.name)}`)))}</div></div>`;
 }
 // what an exercise starts with, as the chips it shows in Drill
 function playBits(s,song){
@@ -4308,7 +4309,7 @@ function renderSheet(){
   el.innerHTML=`${songNote()}
     <div class="sh-top">${title}<span class="sh-sub">${sub}</span><span class="sh-no" id="barNo">bar ${cur.prog[cur.pci].bar+1} of ${n}</span></div>
     <div class="sh-bars" role="group" aria-label="Bars, one chord each">${tiles}</div>
-    <div class="sh-edit"><button class="chip" data-act="cpedit" data-tip="Change any bar's chord and where it sits on the neck, in a pop-up. Use it to save it as your own.">✎ Edit progression</button>${mineProg(D.prog)?'':`<span class="hint">Editing makes it your own, starting from ${S?esc(S.name):D.prog==='one'?esc(cur.prog[0].ch.name):esc(progName(D.prog))}.</span>`}</div>
+    ${mineProg(D.prog)?mineEditBar(D.prog,'drill'):`<div class="sh-edit"><button class="chip" data-act="cpedit" data-tip="Change any bar's chord and where it sits on the neck, in a pop-up. Use it to save it as your own.">✎ Edit progression</button><span class="hint">Editing makes it your own, starting from ${S?esc(S.name):D.prog==='one'?esc(cur.prog[0].ch.name):esc(progName(D.prog))}.</span></div>`}
     ${notes?`<p class="hint">${notes}</p>`:''}
     <div id="fkey">${fingOn()?fingKey():''}</div>`;
 }
@@ -4569,7 +4570,8 @@ const onClick=e=>{
     case 'exchip': if(st.ex) bchoose(b.dataset.row,b.dataset.v); return;
     case 'bchip': bchoose(b.dataset.row,b.dataset.v); return;
     case 'cpnew': cpOpen(b.dataset.id==='cedit'?'cedit':'drill',0); return;
-    case 'cpedit': cpOpen('drill',cur.prog&&cur.prog[cur.pci]?cur.prog[cur.pci].bar:0); return;
+    case 'cpedit': st.cpDel=null; if(b.dataset.id==='cedit'){cpOpen('cedit',0); return;} cpOpen('drill',cur.prog&&cur.prog[cur.pci]?cur.prog[cur.pci].bar:0); return;
+    case 'cpdel': if(st.cpDel!==b.dataset.id){st.cpDel=b.dataset.id; render(); return;} mineDelete(b.dataset.id); return;
     case 'bsongpick': bsong(b.dataset.id); return;
     case 'bnew': st.bnew={name:buildText(captureBuild()).replace(/&amp;/g,'&').split(' · ').slice(0,2).join(' · ').slice(0,60)}; st.bmsg=''; renderEx(); {const n=document.getElementById('bName'); if(n){n.focus(); n.select();}} return;
     case 'bnewno': st.bnew=null; renderEx(); return;
@@ -5431,6 +5433,19 @@ function cpOpen(ctx,at){
   cpEl.hidden=false; hideTip(); cpRender();
   const n=document.getElementById('cpName'); if(n) n.focus({preventScroll:true});
 }
+function mineDelete(id){
+  // a deleted progression is marked gone (so the delete syncs); whatever used it goes back to the progression it started from
+  const p=LOG.progs[id]; if(!p) return; const back=PROG_BY[p.from]?p.from:'pop';
+  LOG.progs[id]={...p,gone:true,updated:now()}; saveLog(); st.cpDel=null;
+  if(D.prog===id){D.prog=back; refresh(); fillSelects(); save(); regen();}
+  if(st.cedit&&st.cedit.d.prog===id) cchoose('prog',back);
+  render();
+}
+function mineEditBar(id,ctx){ // Edit and Delete beside one of your own progressions
+  const p=mineProg(id); if(!p) return '';
+  const sure=st.cpDel===id, nm=esc(p.name);
+  return `<div class="sh-edit mine-ed"><button class="chip" data-act="cpedit" data-id="${ctx}" data-tip="Change ${nm}: its name, bars, chords and where each one sits on the neck.">✎ Edit ${nm}</button><button class="chip${sure?' danger':''}" data-act="cpdel" data-id="${esc(id)}" data-tip="Delete ${nm}. ${tapWord()} twice to be sure; anything using it goes back to ${esc(progName(PROG_BY[p.from]?p.from:'pop'))}.">${sure?`${tapWord()} again to delete`:'Delete'}</button><span class="hint">${sure?`This removes ${nm} for good.`:'One of your progressions.'}</span></div>`;
+}
 function cpClose(){cpEl.hidden=true; CP=null; render();}
 function cpRender(){
   if(!CP) return;
@@ -5476,10 +5491,7 @@ cpEl.addEventListener('click',e=>{
   else if(k==='use') cpSave();
   else if(k==='del'){
     if(!CP.msg.startsWith('Delete')){CP.msg=`Delete ${CP.name}? Click Delete again to remove it.`; cpRender(); return;}
-    const id=CP.id; LOG.progs[id]={...LOG.progs[id],gone:true,updated:now()}; saveLog();
-    if(D.prog===id){D.prog=PROG_BY[CP.from]?CP.from:'pop'; refresh(); fillSelects(); save(); regen();}
-    if(st.cedit&&st.cedit.d.prog===id) cchoose('prog',PROG_BY[CP.from]?CP.from:'pop');
-    cpEl.hidden=true; CP=null; render();
+    const id=CP.id; cpEl.hidden=true; CP=null; mineDelete(id);
   }
 });
 cpEl.addEventListener('keydown',e=>{
