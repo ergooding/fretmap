@@ -44,7 +44,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
 (async()=>{
   const A=await device(true); const {w,d,X,click,mode,advance}=A;
   // the builder's dropdown choices; your songs are in the Chords dropdown
-  const bc=(row,v)=>click(d.querySelector(`#exhead [data-act=bchip][data-row=${row}][data-v="${v}"]`));
+  const bc=(row,v)=>(row==='prog'&&v==='one'?click(d.querySelector(`#exhead [data-act=bchip][data-row=chord][data-v="0"]`)):click(d.querySelector(`#exhead [data-act=bchip][data-row=${row}][data-v="${v}"]`)));
   const strum=v=>{const c=d.querySelector(`#exhead [data-act=bchip][data-row=rpat][data-v="${v}"]`); if(c){click(c); return;} // a pattern from the Strum dropdown's menu
     click(d.querySelector('#exhead [data-act=pmenu][data-m=rpat]')); click(d.querySelector(`#exhead .smenu [data-row=rpat][data-v="${v}"]`));};
   const pickProg=v=>{if(/^song:/.test(v)){click(d.querySelector(`#exhead [data-act=bsongpick][data-id="${v}"]`));} else bc('prog',v);};
@@ -131,7 +131,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(X.st.mode==='drill'&&X.st.ex&&X.st.ex.ex==='box'&&X.F.key===9&&X.F.fam==='pent'&&X.F.pos===5&&X.D.line==='scale'&&X.D.pattern==='thirds','ex-box-setup',[X.st.mode,X.F.key,X.F.fam,X.F.pos,X.D.line,X.D.pattern].join(' '));
   ok(!d.getElementById('exhead').hidden&&!d.getElementById('exstrip').hidden&&d.querySelectorAll('#exhead [data-act=bchip][data-row=lpat]').length===5,'ex-panel');
   {const labs=[...d.querySelectorAll('#exhead .brow .blab')].map(e=>e.textContent).join(', ');
-   ok(labs==='Chords, Over, Play each chord, Line, Technique, Where'&&!d.querySelector('#sheet [data-set=pattern]'),'ex-builder-rows',labs);}
+   ok(labs==='Play, Line, Technique, Over, Where'&&!d.querySelector('#sheet [data-set=pattern]'),'ex-builder-rows',labs);}
   ok(/Weeknight/.test(d.getElementById('exstrip').textContent)&&d.querySelector('#exstrip [aria-current=step]').dataset.i==='0','ex-strip');
   ok(/Skip a note/.test(d.getElementById('exhead').textContent),'ex-pent-skip-label');
   bc('lpat','g3'); ok(X.D.pattern==='g3'&&X.st.ex,'ex-chip-switch');
@@ -144,8 +144,8 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   click(d.querySelector('[data-act=exnext]')); ok(X.st.ex.ex==='tech'&&X.D.tech==='altpick'&&X.D.plan==='line'&&X.D.prog==='one'&&d.querySelector('#exstrip .exstep.done[data-i="0"]'),'ex-next');
   click(d.querySelector('[data-act=exnext]'));
   ok(X.st.ex.ex==='prog'&&X.D.line==='prog'&&X.D.prog==='pop'&&X.D.plan==='both'&&X.R.pat==='backbeat'&&X.F.pos===5&&!X.D.sev,'ex-prog-setup',[X.D.line,X.D.prog,X.D.plan,X.R.pat,X.F.pos].join(' '));
-  ok(d.querySelectorAll('#exhead [data-act=bchip][data-row=prog]').length===11&&d.querySelectorAll('#exhead [data-row=plan]').length===6&&d.querySelectorAll('#exhead [data-row=rpat]').length===22&&d.querySelectorAll('#exhead [data-row=pick]').length===3&&/0 of 26 clean/.test(d.getElementById('exhead').textContent),'ex-prog-rows',d.getElementById('exhead').textContent.match(/\d+ of \d+ clean/)[0]);
-  {const labs=[...d.querySelectorAll('#exhead .brow .blab')].map(e=>e.textContent).join(', '); ok(X.cur.prog.map(p=>p.ch.name).join(' ')==='Am Em F Dm'&&labs==='Chords, Play each chord, Strum, Pick, Where','ex-prog-chords',X.cur.prog.map(p=>p.ch.name).join(' ')+' / '+labs);}
+  ok(d.querySelectorAll('#exhead [data-act=bchip][data-row=prog]').length===10&&d.querySelectorAll('#exhead [data-row=plan]').length===7&&d.querySelectorAll('#exhead [data-row=rpat]').length===22&&d.querySelectorAll('#exhead [data-row=pick]').length===3&&/0 of 27 clean/.test(d.getElementById('exhead').textContent),'ex-prog-rows',d.getElementById('exhead').textContent.match(/\d+ of \d+ clean/)[0]);
+  {const labs=[...d.querySelectorAll('#exhead .brow .blab')].map(e=>e.textContent).join(', '); ok(X.cur.prog.map(p=>p.ch.name).join(' ')==='Am Em F Dm'&&labs==='Play, Strum, Pick, Over, Where','ex-prog-chords',X.cur.prog.map(p=>p.ch.name).join(' ')+' / '+labs);}
   click(d.querySelector('#exhead [data-row=prog][data-v="50s"]')); ok(X.D.prog==='50s'&&X.R.pat==='backbeat'&&X.cur.prog.map(p=>p.ch.name).join(' ')==='Am F Dm Em','ex-doowop',X.cur.prog.map(p=>p.ch.name).join(' '));
   // boom-chuck is a strum and moves Where to the open position; a strum pattern again goes back to the box
   bc('rpat','boom'); ok(X.D.plan==='both'&&X.D.sbg==='boom'&&X.D.where==='open'&&X.F.pos===X.cur.pos[0].lo&&d.querySelector('#exhead [data-row=rpat][data-v=boom]').getAttribute('aria-pressed')==='true'&&d.querySelector('#exhead [data-row=where][data-v=open]').getAttribute('aria-pressed')==='true','ex-boom',X.F.pos);
@@ -158,7 +158,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   bc('plan','strum');
   // a strum pattern, a progression and a way of playing each count as soon as any run with them is clean at the goal
   runClean(80,20);
-  ok(['[data-row=rpat][data-v=gallop]','[data-row=prog][data-v="50s"]','[data-row=plan][data-v=strum]'].every(q=>/ ✓$/.test(d.querySelector('#exhead '+q).textContent))&&!/✓/.test(d.querySelector('#exhead [data-row=prog][data-v=pop]').textContent),'ex-prog-chips-done');
+  ok(['[data-row=rpat][data-v=gallop]','[data-row=prog][data-v="50s"]','[data-row=plan][data-v=strum]'].every(q=>/ ✓/.test(d.querySelector('#exhead '+q).textContent))&&!/✓/.test(d.querySelector('#exhead [data-row=prog][data-v=pop]').textContent),'ex-prog-chips-done');
   // leave, then resume where you stopped
   // a run logged before Strum and Pick had rows of their own counts for the strum or pick it is now
   {const E=X.EX_BY.prog, s=X.fillSet('prog'); X.LOG.sessions[X.LOG.sessions.length-1].entries.push({id:'old1',skill:'prog:9:pent:1:5:pop:thumb:-',t:w.__clock,secs:60,bpm:[90,90],sub:2,passes:4,clean:90},{id:'old2',skill:'prog:9:pent:1:5:pop:boom:-',t:w.__clock,secs:60,bpm:[90,90],sub:2,passes:4,clean:90});
@@ -201,7 +201,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   {const s=X.openRoutine().items[2].set; ok(s.prog==='blues'&&s.plan==='arp'&&s.pick==='thumb'&&s.goal===75&&!s.chips&&!d.querySelector('.exi.open'),'cust-save',JSON.stringify(s));}
   ok([...d.querySelectorAll('.exi')][2].querySelector('.sumc').textContent==='12-bar bluesPickTravis','cust-summary',[...d.querySelectorAll('.exi')][2].querySelector('.sumc').textContent);
   click(d.querySelector('[data-act=exdone]')); click(d.querySelector('[data-act=exitem][data-i="2"]'));
-  ok(X.D.prog==='blues'&&X.D.plan==='arp'&&X.D.pick==='thumb'&&X.D.where==='open'&&X.F.pos===X.cur.pos[0].lo&&d.querySelectorAll('#exhead [data-act=bchip][data-row=prog]').length===11&&/goal 75/.test(d.getElementById('exhead').textContent),'cust-applied',[X.D.prog,X.D.plan,X.D.where,X.F.pos,X.cur.pos[0].lo,d.querySelectorAll('#exhead [data-act=bchip][data-row=prog]').length,/goal 75/.test(d.getElementById('exhead').textContent)].join(' '));
+  ok(X.D.prog==='blues'&&X.D.plan==='arp'&&X.D.pick==='thumb'&&X.D.where==='open'&&X.F.pos===X.cur.pos[0].lo&&d.querySelectorAll('#exhead [data-act=bchip][data-row=prog]').length===10&&/goal 75/.test(d.getElementById('exhead').textContent),'cust-applied',[X.D.prog,X.D.plan,X.D.where,X.F.pos,X.cur.pos[0].lo,d.querySelectorAll('#exhead [data-act=bchip][data-row=prog]').length,/goal 75/.test(d.getElementById('exhead').textContent)].join(' '));
   // Customize as you play: the rows edit in place, and Cancel puts Drill back as it was
   click(d.querySelector('#exhead [data-act=excust]')); ok(X.st.edit&&/Customize/.test(d.querySelector('#exhead .exh-top').textContent)&&d.querySelector('#exhead [data-act=edsave]').textContent==='Save to Weeknights "short"','edit-open');
   bc('pick','roll'); click(d.querySelector('#exhead [data-act=exgoal][data-v="5"]')); ok(X.D.pick==='roll','edit-live');
@@ -243,7 +243,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     const cell=(s,f)=>d.querySelector(`.cell[data-s="${s}"][data-f="${f}"]`), lbl=(s,f)=>{const e=cell(s,f).querySelector('.dot'); return e?e.textContent:'';};
     setP(9,'major',5,5); const lk=v=>d.querySelector(`#panel [data-act=lock][data-v=${v}]`);
     ok(lk('on')&&lk('on').getAttribute('aria-pressed')==='true'&&!d.getElementById('lockBtn'),'lk-button');
-    ok(X.lkChords().map(x=>x.ch.name).join(' ')==='Am B° C Dm Em F G'&&/Chords of A Aeolian/.test(d.querySelector('.xch').textContent),'lk-all-chords',X.lkChords().map(x=>x.ch.name).join(' '));
+    ok(X.lkChords().map(x=>x.ch.name).join(' ')==='Am B° C Dm Em F G'&&/Chords in A Aeolian/.test(d.querySelector('.xtabs').textContent),'lk-all-chords',X.lkChords().map(x=>x.ch.name).join(' '));
     click(d.querySelector('[data-act=lkch][data-k=Dm]')); ok(lbl(1,5)==='R'&&lbl(4,6)==='♭3'&&lbl(0,0)==='×','lk-all-on-neck',[lbl(1,5),lbl(4,6),lbl(0,0)].join(' '));
     click(cell(3,5)); ok(X.F.key===9&&X.lkSel()===0,'lk-keeps-key',X.F.key);
     const vc=d.getElementById('voiceCard').textContent;
@@ -312,8 +312,8 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok([...d.querySelectorAll('#cchips0 .cchip')].map(e=>e.dataset.n).join(' ')==='A E6 Dmaj7 D','song-chord-chips');
   click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]'));
   ok(X.D.prog==='song:here-pavement'&&X.F.key===9&&X.cur.prog.length===10&&X.cur.prog.map(p=>p.ch.roman).slice(0,3).join(' ')==='I V6 IVmaj7'&&X.cur.prog.every(p=>p.voicing),'song-chords-drill',X.cur.prog.map(p=>p.ch.roman+(p.voicing?'':'!')).join(' '));
-  ok(/^Here · Pavement/.test(d.querySelector('#exhead [data-act=pmenu][data-m=prog]').textContent)&&[...d.querySelectorAll('.sh-bars .nm,.sh-bars .ct-h b')].slice(0,3).map(e=>e.firstChild.textContent).join(' ')==='A E6 Dmaj7','song-in-prog-menu');
-  ok(d.querySelectorAll('.sh-bars .bar').length===10,'song-sheet-tiles');
+  ok(/^Here · Pavement/.test(d.querySelector('#exhead [data-act=pmenu][data-m=prog]').textContent)&&[...d.querySelectorAll('.sc-chart .sc-bar b')].slice(0,3).map(e=>e.firstChild.textContent).join(' ')==='A E6 Dmaj7','song-in-prog-menu');
+  ok(d.querySelectorAll('.sc-chart .sc-bar').length===10,'song-sheet-tiles'); // a song on a desktop: a compact chart, one cell a bar
   click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer); advance(30); click(d.querySelector('[data-act=play]'));
   ok(entries(X).slice(-1)[0].skill.includes(':song:here-pavement:'),'song-chords-logged',entries(X).slice(-1)[0].skill);
   // parts: edit the verse in place, add a chorus; the song plays them one after another
@@ -332,7 +332,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   d.getElementById('vType').value='000220'; click(d.querySelector('[data-act=vtype]'));
   ok(X.LOG.skills['song:here-pavement'].voicings.Dmaj7==='000220'&&d.querySelector('[data-act=vpick][data-n="Dmaj7"]').classList.contains('own'),'voicing-saved',JSON.stringify(X.LOG.skills['song:here-pavement'].voicings));
   click(d.querySelector('[data-act=songplay][data-id="song:here-pavement"]'));
-  const dm=X.cur.prog.find(p=>p.ch.name==='Dmaj7'); ok(dm&&dm.voicing.own&&dm.voicing.frets.join()==='0,0,0,2,2,0'&&d.querySelector('.sh-bars .bar.own'),'voicing-in-drill',dm&&JSON.stringify(dm.voicing));
+  const dm=X.cur.prog.find(p=>p.ch.name==='Dmaj7'); ok(dm&&dm.voicing.own&&dm.voicing.frets.join()==='0,0,0,2,2,0','voicing-in-drill',dm&&JSON.stringify(dm.voicing));
   // the strum pattern edited while playing a song is kept with the song
   ok(/Saved with Here/.test(d.getElementById('panel').textContent),'song-strum-hint');
   click(d.querySelector('[data-act=rstep][data-i="1"]'));
@@ -371,7 +371,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   click(d.querySelector('[data-fm=song]'));
   ok(X.saved.fmode==='song'&&X.F.key===X.LOG.skills[X.saved.fsong].key&&d.getElementById('focusTitle').textContent===X.LOG.skills[X.saved.fsong].name,'focus-song',X.saved.fsong+' '+d.getElementById('focusTitle').textContent);
   setF('#selSong','song:here-pavement'); ok(X.D.prog==='song:here-pavement'&&X.D.line==='prog'&&X.F.key===9&&X.saved.bpm===92&&/92 bpm/.test(d.getElementById('focusSub').textContent),'focus-song-pick');
-  mode('drill'); ok(d.querySelectorAll('.sh-bars .bar').length===3,'focus-song-drill');
+  mode('drill'); ok(d.querySelectorAll('.sc-chart .sc-bar').length===3,'focus-song-drill');
   setF('#selSong','song:song-b'); ok(X.D.prog==='song:song-b'&&X.F.key===7&&X.st.mode==='drill','focus-song-switch',X.F.key);
   // Explore in Song mode explains the song
   mode('explore'); setF('#selSong','song:here-pavement');
@@ -447,8 +447,8 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     ok(/\bpass\b/.test(dt(4,1).className)&&/\bhome\b/.test(dt(4,1).className)&&!/\bpass\b/.test(dt(2,3).className),'audit-neck-chord-tones',dt(4,1).className+' / '+dt(2,3).className);
     // positions are the CAGED shapes of the home chord, and the whole neck runs up through all of them
     const posAt=(key,fam,m)=>{Object.assign(X.F,{key,fam,mode:m,pos:-1}); X.refresh(); return X.cur.pos.map(p=>p.label).join(' | ');};
-    ok(posAt(0,'major',0)==='C shape, frets 0–4 | A shape, frets 2–6 | G shape, frets 5–9 | E shape, frets 7–11','caged-c',posAt(0,'major',0));
-    ok(posAt(9,'pent',1)==='Am shape, frets 0–4 | Gm shape, frets 2–6 | Em shape, frets 5–9 | Dm shape, frets 7–11','caged-am',posAt(9,'pent',1));
+    ok(posAt(0,'major',0)==='C shape, frets 0–4 | A shape, frets 2–6 | G shape, frets 5–9 | E shape, frets 7–11 | D shape, frets 9–13','caged-c',posAt(0,'major',0));
+    ok(posAt(9,'pent',1)==='Am shape, frets 0–4 | Gm shape, frets 2–6 | Em shape, frets 5–9 | Dm shape, frets 7–11 | Cm shape, frets 9–13','caged-am',posAt(9,'pent',1));
     posAt(0,'major',0); Object.assign(X.D,{prog:'one',plan:'line',pattern:'updown'}); X.refresh(); mode('drill');
     const run=X.genSeq().filter(n=>!n.chord&&!n.rest), pcOf=n=>(n.s===undefined?-1:([4,9,2,7,11,4][n.s]+n.f)%12);
     ok(!X.st.picking&&!d.querySelector('[data-act=keepbox]')&&run.length>20&&pcOf(run[0])===0&&pcOf(run[run.length-1])===0&&Math.max(...run.map(n=>n.f))>=10&&Math.min(...run.map(n=>n.f))<=3,'whole-neck-run',run.map(n=>n.s+'/'+n.f).join(' '));
@@ -488,7 +488,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   X.saveParts('song:here-pavement',[{name:'Verse',text:'(A, E6, Dmaj7) x2'},{name:'Chorus',text:'D A E A'}]); X.refresh(); mode('drill');
   ok(X.cur.prog.length===10&&d.querySelectorAll('#exhead [data-row=spart]').length===3,'part-whole',X.cur.prog.length);
   bc('spart','1');
-  ok(X.cur.prog.map(p=>p.ch.name).join(' ')==='D A E A'&&/Chorus · 4 bars/.test(d.querySelector('#sheet .sh-sub').textContent)&&d.querySelectorAll('#sheet .sh-bars .bar').length===4,'part-chorus',X.cur.prog.map(p=>p.ch.name).join(' '));
+  ok(X.cur.prog.map(p=>p.ch.name).join(' ')==='D A E A'&&/Chorus/.test(d.querySelector('#sheet .sh-sub').textContent)&&/bar 1 of 4/.test(d.getElementById('barNo').textContent)&&d.querySelectorAll('#sheet .sc-bar').length===4,'part-chorus',X.cur.prog.map(p=>p.ch.name).join(' '));
   mode('explore'); mode('drill'); ok(X.cur.prog.length===4,'part-remembered');
   X.saveParts('song:here-pavement',[{name:'Verse',text:'(A, E6, Dmaj7) x2, A, E6, D, A'}]); X.refresh(); ok(X.cur.prog.length===10,'part-gone-falls-back',X.cur.prog.length);
   // split bars and a strum pattern per part
@@ -496,8 +496,19 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(X.parseChords('[. G]').bad.length===1&&X.parseChords('[C Q7]').bad.join()==='Q7','split-bad');
   X.saveParts('song:here-pavement',[{name:'Verse',text:'[A E] D'},{name:'Chorus',text:'G A'}]); X.saved.spart={}; X.refresh(); mode('drill');
   X.D.plan='strum'; X.refresh(); X.st.seq=X.genSeq();
-  ok(X.cur.prog.length===5&&X.cur.nbars===4&&/4 bars/.test(d.querySelector('#sheet .sh-sub').textContent)&&d.querySelectorAll('#sheet .bar.split').length===2,'split-drill',X.cur.prog.length+' '+X.cur.nbars);
+  ok(X.cur.prog.length===5&&X.cur.nbars===4&&d.querySelectorAll('#sheet .sc-bar').length===4&&d.querySelectorAll('#sheet .sc-bar')[0].querySelectorAll('span').length===2,'split-drill',X.cur.prog.length+' '+X.cur.nbars);
   {const b0=X.st.seq.filter(n=>n.bar===0), h=b0.length/2; ok(b0.slice(0,h).every(n=>n.ci===0)&&b0.slice(h).every(n=>n.ci===1)&&b0[0].head&&b0[h].head&&!b0[1].head,'split-steps',b0.map(n=>n.ci).join(''));}
+  // triads: the chord's three notes, one a string; their inversions and CAGED shapes, and Closest through Pop in C's A shape box
+  {const kD={...X.D}, kF={...X.F}, kM=X.saved.fmode; Object.assign(X.F,{key:0,fam:'major',mode:0,pos:2}); X.saved.fmode='key'; Object.assign(X.D,{prog:'pop',plan:'triads',tstr:'gbe',tinv:'close',sev:false,where:'focus'}); X.refresh();
+   const c=X.cur.chords[0], L=X.triadList(c,'gbe').map(v=>v.frets.slice(3).join('-')+':'+v.inv+v.shape).join(' ');
+   ok(L==='0-1-0:2C 5-5-3:0A 9-8-8:1E 12-13-12:2D','triad-c-gbe',L);
+   const P=X.cur.prog.map(p=>p.ch.name+' '+p.voicing.frets.slice(3).join('')+' '+p.voicing.tri.inv+p.voicing.tri.shape).join(', ');
+   ok(P==='C 553 0A, G 433 1E, Am 555 1E, F 565 2D','triad-pop-closest',P);
+   ok(X.triadList(X.cur.chords[5],'gbe').every(v=>{const ps=v.frets.map((f,s)=>f===null?null:(([4,9,2,7,11,4][s]+f)%12)).filter(x=>x!==null); return new Set(ps).size===3&&ps.every(x=>[9,0,4].includes(x));}),'triad-am-notes');
+   X.D.tinv='1st'; X.refresh(); ok(X.cur.prog.every(p=>p.voicing.tri.inv===1),'triad-1st');
+   X.D.tplay='once'; X.st.seq=X.genSeq(); ok(X.st.seq.filter(n=>n.chord).length===4&&X.st.seq.length===16,'triad-strum-once',X.st.seq.length);
+   X.D.tplay='pick'; X.st.seq=X.genSeq(); ok(X.st.seq.length>0&&X.st.seq.every(n=>!n.chord),'triad-pick');
+   Object.assign(X.D,kD); Object.assign(X.F,kF); X.saved.fmode=kM; X.refresh();}
   const songPatBefore=JSON.stringify(X.LOG.skills['song:here-pavement'].strum||null);
   mode('songs'); click(d.querySelector('[data-act=songopen][data-id="song:here-pavement"]')); click(d.querySelector('[data-act=pown][data-part="1"]'));
   ok(!!X.LOG.skills['song:here-pavement'].parts[1].strum&&d.querySelector('[data-sg=pat][data-sp="1"]'),'part-own-on');
@@ -525,8 +536,8 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   // the builder: scale lines and chord tones over the changes, technique on any line, each shape in turn
   { mode('explore'); click(d.querySelector('[data-fm=key]')); Object.assign(X.F,{key:0,fam:'major',mode:0,pos:0}); X.D.sev=true; X.refresh(); mode('drill');
     const pc=n=>([4,9,2,7,11,4][n.s]+n.f)%12, notes=q=>q.filter(n=>!n.chord&&!n.rest), chordPcs=ci=>{const c=X.cur.prog[ci].ch; return c.rel.map(r=>(c.root+r)%12);};
-    bc('where','focus'); bc('prog','one'); bc('plan','line');
-    ok(d.querySelector('#exhead [data-row=chord][data-v="0"]').textContent==='I Cmaj7'&&d.querySelector('#exhead [data-row=chord][data-v="4"]').textContent==='V G7','over-chip-labels',d.querySelector('#exhead [data-row=chord][data-v="0"]').textContent);
+    bc('where','focus'); bc('chord','0'); bc('plan','line');
+    ok(d.querySelector('#exhead [data-row=chord][data-v="0"]').textContent==='Cmaj7 · I'&&d.querySelector('#exhead [data-row=chord][data-v="4"]').textContent==='G7 · V','over-chip-labels',d.querySelector('#exhead [data-row=chord][data-v="0"]').textContent);
     ok(!d.querySelector('#exhead [data-row=over]'),'over-switch-hidden-on-one-chord');
     bc('prog','pop'); bc('lpat','thirds'); bc('over','through');
     let q=X.genSeq(), n=notes(q);
@@ -548,7 +559,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     ok(q.some(x=>x.sl)&&q.every((x,i)=>!x.sl||(i>0&&!q[i-1].rest&&!q[i-1].chord&&q[i-1].s===x.s&&(x.sl==='h')===(x.f>q[i-1].f))),'tech-slurs',q.slice(0,8).map(x=>x.rest?'-':x.s+'/'+x.f+(x.sl||'')).join(' '));
     bc('tech','any');
     // each shape in turn moves to the next shape after a pass
-    bc('prog','one'); bc('plan','both'); bc('where','cycle'); ok(d.querySelectorAll('#exhead [data-row=pos]').length===X.cur.pos.length,'cycle-shapes-row');
+    bc('chord','0'); bc('plan','both'); bc('where','cycle'); ok(d.querySelectorAll('#exhead [data-row=pos]').length===X.cur.pos.length,'cycle-shapes-row');
     const p0=X.F.pos; X.st.seq=X.genSeq(); X.met.queue=[]; X.passEnd(0); const all=X.cur.pos.map(p=>p.lo);
     ok(X.F.pos===all[(all.indexOf(p0)+1)%all.length]&&X.met.queue.some(e=>e.newSeq&&e.shape),'cycle-next',p0+' → '+X.F.pos);
     bc('where','whole'); ok(X.F.pos===-1,'where-whole'); bc('where','focus');
@@ -701,7 +712,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     ok(!kd.querySelector('#exhead select')&&!!dd('prog')&&!!dd('plan')&&!menu(),'menu-rows');
     kc(dd('plan')); ok(!!menu()&&dd('plan').getAttribute('aria-expanded')==='true'&&[...menu().querySelectorAll('.mi')].every(b=>b.dataset.tip&&b.dataset.tip.length>20),'menu-open-tips');
     kc(menu().querySelector('[data-v=strum]')); ok(KX.D.plan==='strum'&&!menu()&&/^Strum/.test(dd('plan').textContent)&&/Strum each chord/.test(dd('plan').dataset.tip),'menu-pick',dd('plan').dataset.tip);
-    kc(dd('rpat')); kc(menu().querySelector('[data-v=tresillo]')); ok(KX.R.pat==='tresillo'&&/3-3-2|tresillo/i.test(dd('rpat').textContent),'menu-strum',dd('rpat').textContent);
+    kc(dd('rpat')); kc(menu().querySelector('[data-v=tresillo]')); ok(KX.R.pat==='tresillo'&&dd('rpat').textContent.trim()===KX.strumArrows(KX.RPAT.tresillo)&&/3-3-2|tresillo/i.test(dd('rpat').dataset.tip),'menu-strum',dd('rpat').textContent); // the dropdown shows the strum as arrows
     kc(dd('prog')); K.w.document.dispatchEvent(new K.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true})); ok(!menu(),'menu-escape');
     // one chord card on desktop, its explainers folded; a whole-neck scale line shows about 7 frets and scrolls
     Object.assign(KX.F,{key:0,fam:'major',mode:0,pos:-1}); Object.assign(KX.D,{prog:'one',plan:'line',chord:0,pattern:'updown'}); KX.refresh(); K.mode('explore'); K.mode('drill');
@@ -710,21 +721,21 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     // the neck key draws the neck's own dots, and the chord diagram is a little sideways neck in the same colors
     const nlook=new Set([...kd.querySelectorAll('#neck .dot')].map(x=>x.className.replace(/\s*\bnow\b/,'').trim()+'|'+x.textContent+'|'+x.style.getPropertyValue('--c')));
     const klook=[...vc.querySelectorAll('.nk .dot')].map(x=>x.className.trim()+'|'+x.textContent+'|'+x.style.getPropertyValue('--c'));
-    ok(klook.length>=4&&klook.every(k=>nlook.has(k))&&/high e on top/.test(vc.querySelector('.vc-diag svg').getAttribute('aria-label')),'neck-key-matches',klook.filter(k=>!nlook.has(k)).join(', '));
-    ok(kd.querySelector('.neck-wrap').classList.contains('roll')&&/px$/.test(kd.getElementById('neck').style.minWidth),'whole-neck-rolls');
+    ok(klook.length>=4&&klook.every(k=>nlook.has(k))&&/Chord diagram/.test(vc.querySelector('.vc-diag svg').getAttribute('aria-label')),'neck-key-matches',klook.filter(k=>!nlook.has(k)).join(', '));
+    ok(!kd.querySelector('.neck-wrap').classList.contains('roll'),'whole-neck-fits-stopped'); // stopped, the whole neck shows every fret
     // Explore draws the neck the same way: the whole neck in a 7-fret window, a card with the key, Chord tones as solid dots over pearl passing tones
     Object.assign(KX.F,{key:0,fam:'major',mode:0,pos:-1}); KX.refresh(); K.mode('drill'); K.mode('explore');
     const xlook=()=>{const n=new Set([...kd.querySelectorAll('#neck .dot')].map(x=>x.className.trim()+'|'+x.textContent+'|'+x.style.getPropertyValue('--c').replace('var(--pearl)','')));
       const k=[...vc.querySelectorAll('.nk .dot')].map(x=>x.className.trim()+'|'+x.textContent+'|'+x.style.getPropertyValue('--c').replace('var(--pearl)',''));
       return k.length>=4&&k.every(x=>n.has(x))?'':k.filter(x=>!n.has(x)).join(', ')||'empty';};
-    ok(kd.querySelector('.neck-wrap').classList.contains('roll')&&!vc.hidden&&kd.getElementById('prompt').hidden&&/What the neck shows/.test(vc.textContent)&&!xlook(),'explore-whole-card',xlook());
+    ok(!vc.hidden&&kd.getElementById('prompt').hidden&&/What the neck shows/.test(vc.textContent)&&!xlook(),'explore-whole-card',xlook());
     kc(kd.querySelector('[data-act=show][data-v=chord]'));
     ok(kd.querySelectorAll('#neck .dot.pass').length>10&&/chord tones of Cmaj7/.test(vc.textContent)&&/Passing tones/.test(vc.textContent)&&!xlook(),'explore-chord-tones',xlook());
     kc(kd.querySelector('[data-act=show][data-v=all]')); K.mode('drill');
     // the quiz too: a 7-fret window over the whole neck centered on the question, and a key drawn from the quiz's own dots
     const hw=kd.getElementById('howto'), qlook=()=>{const n=new Set([...kd.querySelectorAll('#neck .dot')].map(x=>x.className.trim()+'|'+x.textContent));
       const k=[...hw.querySelectorAll('.nk .dot')].map(x=>x.className.trim()+'|'+x.textContent); return k.length>=2&&k.every(x=>n.has(x))?'':k.filter(x=>!n.has(x)).join(', ')||'empty';};
-    K.mode('name'); ok(kd.querySelector('.neck-wrap').classList.contains('roll')&&!hw.hidden&&/What the neck shows/.test(hw.textContent)&&kd.querySelector('#neck .dot.ask')&&!qlook(),'quiz-whole-key',qlook());
+    K.mode('name'); ok(!hw.hidden&&/What the neck shows/.test(hw.textContent)&&kd.querySelector('#neck .dot.ask')&&!qlook(),'quiz-whole-key',qlook());
     KX.F.pos=KX.cur.pos[0].lo; KX.refresh(); K.mode('explore'); K.mode('name'); ok(kd.querySelectorAll('#neck .cell.out').length>20&&!kd.querySelector('.neck-wrap').classList.contains('roll')&&/outside the position/.test(hw.textContent),'quiz-box-shaded');
     KX.F.pos=-1; KX.refresh(); K.mode('drill');
     KX.F.pos=KX.cur.pos[1].lo; KX.refresh(); K.mode('explore'); K.mode('drill'); ok(!kd.querySelector('.neck-wrap').classList.contains('roll'),'box-no-roll');
@@ -787,7 +798,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
    ok(spots==='6th string, fret 3|5th string, fret 10|4th string, fret 5','cp-spot-order',spots);
    click(M.querySelector('.cb-rlist [data-s="0"][data-f="3"]')); click(M.querySelector('.cb-cc[data-suf="7"]'));
    const v=X.CP.bars[1].fr; ok(X.CP.bars[1].root===7&&X.CP.bars[1].suf==='7'&&v[0]===3,'cp-bar-chord',JSON.stringify(X.CP.bars[1]));
-   const nm=M.querySelector('#cpName'); nm.value='Mine test'; nm.dispatchEvent(new w.Event('input',{bubbles:true}));
+   click(M.querySelector('[data-cp=name]')); const nm=M.querySelector('#cpName'); nm.value='Mine test'; nm.dispatchEvent(new w.Event('input',{bubbles:true}));
    click(M.querySelector('[data-cp=use]'));
    const id=X.D.prog, P=X.LOG.progs[id];
    ok(/^mine-/.test(id)&&M.hidden&&P&&P.name==='Mine test'&&P.key===0&&P.bars[1].name==='G7','cp-saved',JSON.stringify(P));
@@ -800,13 +811,13 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
    click(M.querySelector('[data-cp=del]')); click(M.querySelector('[data-cp=del]'));
    ok(X.D.prog==='pop'&&X.LOG.progs[id].gone&&!X.mineList().length&&M.hidden,'cp-delete',X.D.prog);}
   // Explore's chord builder: Root rings the root's spots on the 6th, 5th and 4th strings, a ring picks the spot, a chord card hands the neck back
-  {X.F.key=0; X.F.fam='major'; X.F.mode=0; X.refresh(); mode('drill'); mode('explore');
+  {X.F.key=0; X.F.fam='major'; X.F.mode=0; X.refresh(); mode('drill'); mode('explore'); click(d.querySelector('[data-act=xtab][data-v=build]'));
    const cx=d.getElementById('cbX'); ok(cx&&!d.querySelector('.dot.rpick'),'cbx-card');
    click(cx.querySelector('[data-cb=step][data-n="1"]')); ok(d.querySelectorAll('.dot.rpick').length===3,'cbx-rings',d.querySelectorAll('.dot.rpick').length);
    click(d.querySelector('.cell[data-s="1"][data-f="3"]'));
    ok(X.st.cbx.b.fr&&X.st.cbx.b.fr.join()===',3,2,0,1,0'&&X.st.cbx.on&&X.cbXShown()&&X.cbXShown().ch.name==='C'&&!d.querySelector('.dot.rpick'),'cbx-ring-picks',JSON.stringify(X.st.cbx.b));
    click(d.querySelector('#cbX .cb-cc[data-suf="maj7"]')); ok(X.cbXShown().ch.name==='Cmaj7','cbx-chord',X.cbXShown().ch.name);
-   click(d.querySelector('[data-act=lkch]')); ok(!X.st.cbx.on&&!X.cbXShown(),'cbx-hands-back');}
+   click(d.querySelector('[data-act=xtab][data-v=chords]')); click(d.querySelector('[data-act=lkch]')); ok(!X.st.cbx.on&&!X.cbXShown(),'cbx-hands-back');}
   // phone layout text
   B.mode('practice'); ok(!/undefined|NaN|\[object/.test(B.d.querySelector('.app').textContent),'phone-text-path');
   console.log('log checks done, bad',bad); process.exit(bad?1:0);

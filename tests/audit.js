@@ -77,7 +77,7 @@ setTimeout(async()=>{
      const cur=X.cur;
      click(d.querySelector('[data-mode=explore]'));
      if(key>=0){ const dots=d.querySelectorAll('.cell .dot').length;
-       let expect=0; for(let s=0;s<6;s++)for(let f=0;f<=12;f++) if(cur.set.has((pc(s,f)-cur.key+12)%12)) expect++;
+       let expect=0; for(let s=0;s<6;s++)for(let f=0;f<=15;f++) if(cur.set.has((pc(s,f)-cur.key+12)%12)) expect++;
        if(dots!==expect) fail('explore-dots',`${fam}/${m}/${key}/${p} ${dots} vs ${expect}`); }
      for(const mode of ['name','find']){ goMode(d,click,mode);
       for(let k=0;k<6;k++){ const q=X.st.q; nQuiz++;

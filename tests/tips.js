@@ -9,7 +9,7 @@ async function run(wide){
  await new Promise(r=>setTimeout(r,60));
  const X=w.__fretDebug, click=el=>{if(!el){bad++; console.log('MISSING',new Error().stack.split('\n')[2].trim()); return;} if(el&&el.tagName==='OPTION'){el.selected=true; el.closest('select').dispatchEvent(new w.Event('change',{bubbles:true})); return;} el.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));};
  {const ga=w.Element.prototype.getAttribute; w.Element.prototype.getAttribute=function(n){if(n==='aria-pressed'){if(this.tagName==='OPTION') return String(this.selected); if(ga.call(this,'role')==='menuitemradio') return ga.call(this,'aria-checked');} return ga.call(this,n);};} // a picked dropdown choice reads as a pressed chip
- const bc=(row,v)=>click(d.querySelector(`#exhead [data-act=bchip][data-row=${row}][data-v="${v}"]`));
+ const bc=(row,v)=>(row==='prog'&&v==='one'?click(d.querySelector(`#exhead [data-act=bchip][data-row=chord][data-v="0"]`)):click(d.querySelector(`#exhead [data-act=bchip][data-row=${row}][data-v="${v}"]`)));
  const check=(label)=>{
    const els=[...d.querySelectorAll(X.TIP_SEL)].filter(e=>!e.closest('[hidden]'));
    for(const el of els){ const t=X.tipFor(el); count++;
@@ -84,18 +84,18 @@ async function run(wide){
      for(const v of ['open','cycle','whole','focus']){bc('where',v); check('where '+v);}
      if(wide) for(const m of [...d.querySelectorAll('#exhead [data-act=pmenu]')].map(b=>b.dataset.m)){click(d.querySelector(`#exhead [data-act=pmenu][data-m=${m}]`)); check('menu open '+m); click(d.querySelector(`#exhead [data-act=pmenu][data-m=${m}]`));}
      click(d.querySelector('#exhead [data-act=bnew]')); check('save as new'); click(d.querySelector('#exhead [data-act=bnewok]')); check('saved new'); goMode(d,click,'practice'); check('exercises with yours'); goMode(d,click,'drill');
-     bc('prog','one'); bc('plan','line'); for(const v of ['1','4']){bc('chord',v); check('over chord '+v);} bc('chord','0'); bc('prog','pop'); bc('plan','both');
+     bc('chord','0'); bc('plan','line'); for(const v of ['1','4']){bc('chord',v); check('over chord '+v);} bc('chord','0'); bc('prog','pop'); bc('plan','both');
      const pc=d.querySelector('[data-pci="1"]'); if(pc){click(pc); check('prog chord preview');}
      d.getElementById('selFam').value='pent'; d.getElementById('selFam').dispatchEvent(new w.Event('change',{bubbles:true})); check('prog pentatonic');
      d.getElementById('selFam').value='major'; d.getElementById('selFam').dispatchEvent(new w.Event('change',{bubbles:true}));
-     bc('prog','one'); bc('plan','line'); check('back to scale lines');}
+     bc('chord','0'); bc('plan','line'); check('back to scale lines');}
  }
  // sample some content
  click(d.querySelector('[data-mode=drill]')); (()=>{const sp=d.getElementById('selPos'); sp.value='5'; sp.dispatchEvent(new w.Event('change',{bubbles:true}));})();
  console.log(wide?'wide':'phone','samples:');
  bc('prog','pop'); bc('plan','both');
  for(const sel of ['#exhead [data-row=prog][data-v=pop]','#exhead [data-row=lpat]','.tcol[data-j="0"]','.tcol[data-j="3"]','.tcol[data-j="9"]','[data-pci]']){const e=d.querySelector(sel); if(e) console.log('  ',sel,'→',X.tipFor(e).replace(/<[^>]+>/g,''));}
- bc('prog','one'); bc('plan','line');
+ bc('chord','0'); bc('plan','line');
  for(const sel of ['.cell[data-s="2"][data-f="5"]','.tcol[data-j="0"]','.tcol[data-j="3"]','#selMode','#exhead [data-row=chord]','#exhead [data-row=lpat][data-v=thirds]','#exhead [data-row=tech][data-v=slurs]','.fchip','[data-rn]']){const e=d.querySelector(sel); if(e) console.log('  ',sel,'→',X.tipFor(e).replace(/<[^>]+>/g,''));}
 }
 (async()=>{await run(true); await run(false); console.log('tips checked',count,'bad',bad); process.exit();})();

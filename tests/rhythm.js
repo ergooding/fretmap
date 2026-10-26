@@ -28,7 +28,7 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
   {const ga=w.Element.prototype.getAttribute; w.Element.prototype.getAttribute=function(n){if(n==='aria-pressed'){if(this.tagName==='OPTION') return String(this.selected); if(ga.call(this,'role')==='menuitemradio') return ga.call(this,'aria-checked');} return ga.call(this,n);};} // a picked dropdown choice reads as a pressed chip
     const change=(sel,v)=>{const e=d.querySelector(sel); e.value=v; e.dispatchEvent(new w.Event('change',{bubbles:true}));};
     const L=wide?'wide':'phone';
-    const bc=(row,v)=>{const e=d.querySelector(`#exhead [data-act=bchip][data-row=${row}][data-v="${v}"]`); if(!e) fail('ui',`${L} no ${row} chip ${v}`); else click(e);};
+    const bc=(row,v)=>{if(row==='prog'&&v==='one'){row='chord'; v='0';} const e=d.querySelector(`#exhead [data-act=bchip][data-row=${row}][data-v="${v}"]`); if(!e) fail('ui',`${L} no ${row} chip ${v}`); else click(e);};
     const strum=v=>bc('rpat',v); // every pattern is a choice in the Strum dropdown
     click(d.querySelector('[data-mode=drill]'));
     {const sp=d.getElementById('selPos'); sp.value='5'; sp.dispatchEvent(new w.Event('change',{bubbles:true}));}
@@ -178,7 +178,7 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
     d.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true}));
     if(X.st.playing) fail('space','did not pause');
     // back to scale lines brings the old controls back
-    bc('prog','one'); bc('plan','line');
+    bc('chord','0'); bc('plan','line');
     if(!d.querySelector('#exhead [data-row=lpat]')||X.D.line!=='scale'||X.cur.prog) fail('scale','scale lines not restored');
     if(wide){
       const tip=el=>el?X.tipFor(el).replace(/<[^>]+>/g,''):'';
@@ -241,7 +241,7 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
        const want={'G7 323003':'1:2','Fmaj7 1x221x':'1:3','Gmaj7 3x443x':'1:5','Emaj7 0x110x':'1:2','C x32010':'0:3','Am x02210':'0:0','Bm x24432':'0:2','G 320003':'2:0'};
        for(const [nm,v] of Object.entries(want)) if(alt[nm]&&alt[nm]!==v) fail('alt-bass-known',`${nm} ${alt[nm]} want ${v}`);
        if(!alt['C x32010']||!alt['G 320003']) fail('alt-bass-coverage',Object.keys(alt).length);}
-      bc('plan','both'); bc('pick','arp'); strum('faithful'); bc('prog','one'); bc('plan','line');
+      bc('plan','both'); bc('pick','arp'); strum('faithful'); bc('chord','0'); bc('plan','line');
     }
   }
   console.log('progression combos checked',checked,'played',played,'bad',bad);
