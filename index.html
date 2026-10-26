@@ -240,20 +240,16 @@ html.wide{font-size:19px}
 .xf-top .seglab{display:none}.xf-top .sp{flex:1}
 .ct-inv{display:block;font-size:.78rem;color:var(--muted);text-align:center;line-height:1.3}
 .fv .ct-inv{text-align:left}
-.cmapb{margin:4px 2px 0;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:7px;display:flex;justify-content:space-between;align-items:center;gap:6px;padding:0 10px;font:inherit;font-size:.85rem;cursor:pointer;min-width:0;overflow:hidden;white-space:nowrap}
+.cmapb{margin:1px 2px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:7px;display:flex;justify-content:space-between;align-items:center;gap:6px;padding:0 8px;font:inherit;font-size:.8rem;line-height:1;cursor:pointer;min-width:0;overflow:hidden;white-space:nowrap}
 .cmapb .cm-f{color:var(--muted);font-size:.8rem}
 .cmapb .cm-t{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);margin-right:6px;vertical-align:1px}
 .cmapb[aria-pressed=true]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .cmapb[aria-pressed=true] .cm-f{color:inherit;opacity:.8}
 .cmapb:hover,.cmapb.hl{border-color:var(--ink)}
-.cmapb.cm-wrap{border-style:dashed;background:transparent}
-.cmapb.cm-wrap[aria-pressed=true]{background:var(--ink);border-style:solid}
-.cmapb.cm-1 .cm-f{display:none}
-.cmapb.cm-1{justify-content:center;padding:0 4px}
 .neck.narrow .cmapb .cm-w{display:none}
-.app.wide .neck-box.map{height:calc(clamp(240px,42vh,620px) + 68px)}
-.app:not(.wide):not(.land) .neck.map{height:calc(clamp(210px,32vh,280px) + 68px)}
-.app.port:not(.wide) .neck.map{height:calc(clamp(232px,35vh,300px) + 68px)}
+.app.wide .neck-box.map{height:calc(clamp(240px,42vh,620px) + var(--maph,68px))}
+.app:not(.wide):not(.land) .neck.map{height:calc(clamp(210px,32vh,280px) + var(--maph,68px))}
+.app.port:not(.wide) .neck.map{height:calc(clamp(232px,35vh,300px) + var(--maph,68px))}
 .neck-wrap.roll{overflow-x:auto;overflow-y:hidden;display:block;scrollbar-width:thin;overscroll-behavior-x:contain}
 .neck-wrap.roll .neck{max-width:none}
 .app.wide .panel{grid-area:panel;min-height:0;overflow:auto;gap:12px;align-content:start}
@@ -1744,7 +1740,7 @@ function layoutNeck(){
     inlays.forEach(i=>place(i.el,`${i.a+2}/${i.b+3}`,String(i.f+1)));
     for(let s=0;s<6;s++)for(let f=0;f<=NF;f++) place(cells[s][f],String(s+2),String(f+1));
   }else{
-    neck.style.gridTemplateRows='repeat(6,minmax(0,1fr)) 26px'+(neck.classList.contains('map')?' 34px 34px':'');
+    neck.style.gridTemplateRows='repeat(6,minmax(0,1fr)) 26px'+(neck.classList.contains('map')?` 6px repeat(${cmapN},22px)`:'');
     place(woodEl,`2/${NF+2}`,'1/7'); place(strsEl,`1/${NF+2}`,'1/7');
     for(let f=0;f<=NF;f++){place(fnums[f],String(f+1),'7'); place(frets[f],String(f+1),'1/7');}
     inlays.forEach(i=>place(i.el,String(i.f+1),`${6-i.b}/${7-i.a}`));
@@ -1754,7 +1750,7 @@ function layoutNeck(){
 }
 function sizeDots(){
   const r=neck.getBoundingClientRect(), n=zoom[1]-zoom[0]+1;
-  const mh=neck.classList.contains('map')?68:0; neck.classList.toggle('narrow',r.width/n<56);
+  const mh=neck.classList.contains('map')?6+22*cmapN:0; neck.classList.toggle('narrow',r.width/n<56);
   const d=horiz?Math.min(r.width/n,(r.height-26-mh)/6)*(!wide&&!land?0.84:0.72):Math.min((r.width-26)/6,r.height/n)*0.8;
   neck.style.setProperty('--dot',Math.max(16,Math.min(horiz?64:38,d))+'px');
   if(lineEl) requestAnimationFrame(()=>lkLines());
@@ -1769,7 +1765,7 @@ function setZoom(a,b,force){
   inlays.forEach(i=>hide(i.el,i.f));
   sizeDots();
 }
-let cmapK='';
+let cmapK='', cmapN=2;
 function drawCmap(){ // the CAGED map under the neck in Explore: a button for each shape's box, lined up with its frets, in two lanes so overlaps show
   // in Drill it shows while triads play; a gold dot marks each box that holds a triad of the chord (Drill's chord now, Explore's triad view)
   const dr=st.mode==='drill'&&D.line==='prog'&&D.plan==='triads'&&!!cur.prog&&!picking();
@@ -1777,30 +1773,21 @@ function drawCmap(){ // the CAGED map under the neck in Explore: a button for ea
   const tch=!on?null:dr?{ch:cur.prog[cur.pci].ch,str:D.tstr}:(()=>{const X=lkShown(); return X&&X.tri?{ch:X.ch,str:saved.lkTstr}:null;})();
   const TL=tch?triadList(tch.ch,tch.str):[], has=p=>TL.some(v=>triadInBox(v,p.lo,p.hi));
   const k=on?cur.pos.map(p=>p.lo+p.shape+(has(p)?'*':'')).join()+'|'+F.pos:'';
-  if(neck.classList.contains('map')!==on){neck.classList.toggle('map',on); neck.closest('.neck-box').classList.toggle('map',on); layoutNeck(); sizeDots();}
+  const n=on?cur.pos.length:2;
+  if(neck.classList.contains('map')!==on||n!==cmapN){cmapN=n; neck.classList.toggle('map',on); const nb=neck.closest('.neck-box'); nb.classList.toggle('map',on);
+    [neck,nb].forEach(e=>e.style.setProperty('--maph',(6+22*n)+'px')); layoutNeck(); sizeDots();}
   if(k===cmapK) return; cmapK=k;
   neck.querySelectorAll('.cmapb').forEach(b=>b.remove());
   if(!on) return;
-  // the top row reads the shapes in order along the neck: each starts at its first fret and runs until the next shape starts;
-  // the row below carries the rest of each box, the frets it shares with the next shape
-  let low=-1; const P=cur.pos;
-  P.forEach((p,i)=>{
-    const act=F.pos===p.lo, nx=P[i+1], topEnd=nx?Math.min(p.hi,nx.lo-1):p.hi, w0=Math.max(nx&&nx.lo<=p.hi?nx.lo:p.hi+1,low+1);
-    const tip=act?`<b>${esc(p.shape)} shape</b>, frets ${p.lo}–${p.hi}. Click again for the whole neck.`:`Show the <b>${esc(p.shape)} shape</b> box, frets ${p.lo}–${p.hi}.`+(has(p)?` The gold dot: a ${esc(triName(tch.ch))} triad on ${tSetName(tch.str)} fits in it.`:'');
-    const mk=(a,z,row,wrap)=>{
-      const b=document.createElement('button');
-      b.className='cmapb'+(wrap?' cm-wrap':'')+(z-a<1?' cm-1':''); b.dataset.lo=p.lo; b.setAttribute('aria-pressed',String(act));
-      b.innerHTML=wrap?`<b>${esc(p.shape.replace(/m$/,''))}</b><span class="cm-f">to ${p.hi}</span>`
-        :`<b>${esc(p.shape.replace(/m$/,''))}<span class="cm-w"> shape</span></b><span class="cm-f">${has(p)?'<i class="cm-t" aria-label="holds a triad"></i>':''}${p.lo}–${p.hi}</span>`;
-      b.dataset.tip=tip; if(wrap) b.setAttribute('aria-label',`${p.shape} shape continued, frets ${a}–${z}`);
-      place(b,`${a+1}/${z+2}`,String(row));
-      b.onclick=()=>{F.pos=act?-1:p.lo; st.picking=false; focusPosChanged(); focusChanged();};
-      b.onmouseenter=()=>neck.querySelectorAll(`.cmapb[data-lo="${p.lo}"]`).forEach(x=>x.classList.add('hl'));
-      b.onmouseleave=()=>neck.querySelectorAll('.cmapb.hl').forEach(x=>x.classList.remove('hl'));
-      neck.appendChild(b);
-    };
-    mk(p.lo,topEnd,8,false);
-    if(w0<=p.hi){mk(w0,p.hi,9,true); low=p.hi;}
+  // one bar per shape at its true frets, a row each, stepping down the neck in order like a timeline, so overlaps show as shared frets
+  cur.pos.forEach((p,i)=>{
+    const act=F.pos===p.lo, b=document.createElement('button');
+    b.className='cmapb'; b.dataset.lo=p.lo; b.setAttribute('aria-pressed',String(act));
+    b.innerHTML=`<b>${esc(p.shape.replace(/m$/,''))}<span class="cm-w"> shape</span></b><span class="cm-f">${has(p)?'<i class="cm-t" aria-label="holds a triad"></i>':''}${p.lo}–${p.hi}</span>`;
+    b.dataset.tip=act?`<b>${esc(p.shape)} shape</b>, frets ${p.lo}–${p.hi}. Click again for the whole neck.`:`Show the <b>${esc(p.shape)} shape</b> box, frets ${p.lo}–${p.hi}.`+(has(p)?` The gold dot: a ${esc(triName(tch.ch))} triad on ${tSetName(tch.str)} fits in it.`:'');
+    place(b,`${p.lo+1}/${p.hi+2}`,String(i+9));
+    b.onclick=()=>{F.pos=act?-1:p.lo; st.picking=false; focusPosChanged(); focusChanged();};
+    neck.appendChild(b);
   });
 }
 function rollNeck(){
