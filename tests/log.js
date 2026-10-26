@@ -619,7 +619,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     const fr=QX.cur.voicing.frets.map(f=>f===null?'x':f).join('');
     ok(fr==='x32010'&&cell(1,3).textContent==='3'&&cell(2,2).textContent==='2'&&cell(4,1).textContent==='1'&&cell(0,0).classList.contains('mute')&&cell(3,0).classList.contains('openv'),'fing-neck-C',fr);
     const tag=qd.getElementById('nextTag');
-    ok(qd.querySelectorAll('#neck .dot').length===6&&!qd.querySelector('#neck .dot.nextv,#neck .dot.fadeprev')&&!tag.hidden&&tag.textContent==='Show next: G'&&!qd.getElementById('fhint'),'fing-one-chord',qd.querySelectorAll('#neck .dot').length+' '+tag.textContent);
+    ok(qd.querySelectorAll('#neck .dot:not(.under)').length===6&&qd.querySelector('#neck .dot.under')&&!qd.querySelector('#neck .dot.nextv,#neck .dot.fadeprev')&&!tag.hidden&&tag.textContent==='Show next: G'&&!qd.getElementById('fhint'),'fing-one-chord',qd.querySelectorAll('#neck .dot:not(.under)').length+' '+tag.textContent);
     { const k=qd.getElementById('fkey').textContent; ok(/1 index/.test(k)&&/Don’t play/.test(k)&&/An open string/.test(k)&&/G, the next chord/.test(k)&&!/dashed/.test(k)&&!/barre/.test(k),'fing-key',k); }
     qc(tag); // G 320003: fingers 2 1 . . . 3, the D, G and B strings open; C fades back
     ok(cell(1,2).classList.contains('nextv')&&cell(1,2).textContent==='1'&&cell(0,3).textContent==='2'&&cell(5,3).textContent==='3'&&qd.querySelectorAll('#neck .dot.nextv').length===3
@@ -640,9 +640,9 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
       QX.st.paused=true; QX.st.idx=k; qc(qd.getElementById('nextTag')); qc(qd.getElementById('nextTag')); const a=lit();
       QX.st.paused=false; QX.st.idx=-1; qc(qd.getElementById('nextTag')); qc(qd.getElementById('nextTag'));
       ok(k>=0&&a==='001000'&&lit()==='000000','string-lit',k+' '+a+' '+lit()); }
-    // Dot labels: picking Key turns Fingers off for chords, Fingers turns it back on
+    // Dot labels: Key keeps the chord's shape on the neck and labels it with degrees; Fingers puts the finger numbers back
     qc(qd.querySelector('[data-act=sheet]')); qc(qd.querySelector('[data-act=lbl][data-v=key]'));
-    ok(QX.saved.fing===false&&!qd.querySelector('.dot.fing')&&qd.getElementById('nextTag').hidden&&br.style.display==='none','fing-off');
+    ok(QX.saved.fing===false&&qd.querySelectorAll('#neck .dot.fing').length===6&&cell(0,1).textContent==='4'&&!qd.getElementById('nextTag').hidden&&br.style.display!=='none','fing-off-keeps-shape',[QX.saved.fing,qd.querySelectorAll('.dot.fing').length,cell(0,1).textContent,qd.getElementById('nextTag').hidden,br.style.display].join(' '));
     qc(qd.querySelector('[data-act=lbl][data-v=fing]')); ok(QX.saved.fing===true&&qd.querySelector('.dot.fing'),'fing-on');
     qc(qd.querySelector('[data-act=sheetclose]'));
     // Strum, then scale: a strum bar, then a scale run from the chord's root, one scale step at a time, to a note of the next chord

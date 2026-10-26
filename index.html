@@ -2905,7 +2905,7 @@ function drawBoard(){
       const out=!inWin(f); c.classList.toggle('out',out);
       const inV=cur.voicing&&cur.voicing.frets[s]===f;
       if(PV&&PV.voicing.frets[s]===f){ // the next chord's preview sits on top
-        dot(c,f>0?{t:PF?PF.fing[s]:'',c:COL[(pc(s,f)-(D.ref==='chord'?PV.ch.root:cur.key)+12)%12],cls:'nextv'}:inV&&FA?{t:'',c:COL[drillLabel({s,f}).ref],cls:'openv nexto'}:{t:'',cls:'blank nexto'});
+        dot(c,f>0?{t:fingLab()?(PF?PF.fing[s]:''):chordLab(PV.ch,s,f),c:COL[(pc(s,f)-(D.ref==='chord'?PV.ch.root:cur.key)+12)%12],cls:'nextv'}:inV&&FA?{t:'',c:COL[drillLabel({s,f}).ref],cls:'openv nexto'}:{t:'',cls:'blank nexto'});
         continue;}
       const put=(c,d)=>dot(c,d&&PV?{...d,cls:(d.cls||'')+' fadeprev'}:d);
       const isNow=same(nowN,s,f)||(nowN&&nowN.chord&&inV), isNext=same(nextN,s,f)||(nextN&&nextN.chord&&inV);
@@ -2913,12 +2913,13 @@ function drawBoard(){
       if(FA){
         if(hideAll){dot(c,null);continue;}
         const {ref,t}=drillLabel({s,f}), ok=F.fam!=='chrom'&&!cur.set.has(ivK)?' outk':'';
-        if(inV){ // the neck holds only the chord you play
-          const more=(isNow?' now':'')+(st.flashUntil>Date.now()?' vc':'')+ok;
-          put(c,f===0?{t:'',c:COL[ref],cls:'openv'+more}:{t:FA.fing[s],c:COL[ref],cls:'fing'+(ref===0?' root':'')+more});
+        if(inV){ // the chord you hold stands out; Labels only changes what its dots say
+          const more=(isNow?' now':'')+(st.flashUntil>Date.now()?' vc':'')+ok, FL=fingLab();
+          put(c,f===0?{t:FL?'':t,c:COL[ref],cls:'openv'+more}:{t:FL?FA.fing[s]:t,c:COL[ref],cls:'fing'+(ref===0?' root':'')+more});
           continue;
         }
-        put(c,f===zoom[0]&&cur.voicing.frets[s]===null?{t:'×',cls:'mute'}:null);
+        if(f===zoom[0]&&cur.voicing.frets[s]===null){put(c,{t:'×',cls:'mute'}); continue;}
+        put(c,!out&&inS?{t:'',c:COL[ref],cls:'under'+ok}:null); // the rest of the scale, faded and unlabeled behind the chord
         continue;
       }
       if(!isNow&&!isNext&&(out||!inS||(played&&!(inV&&D.pad)&&!played.has(s+':'+f)))){dot(c,null);continue;}
@@ -3083,7 +3084,12 @@ function fingerMoves(v1,v2){
   return {keep,move,lift,put,A,B};
 }
 const chordPlay=()=>st.mode==='drill'&&D.line==='prog'&&!!cur.prog&&['strum','arp','both','mix','triads'].includes(D.plan);
-const fingOn=()=>chordPlay()&&saved.fing!==false&&!!cur.voicing&&!picking();
+const fingOn=()=>chordPlay()&&!!cur.voicing&&!picking(); // a held chord: its shape stands out on the neck, the scale faded behind it, whatever the labels say
+const fingLab=()=>fingOn()&&saved.fing!==false; // Labels: Fingers puts finger numbers on the shape's dots
+function chordLab(ch,s,f){ // a dot's label for a chord that isn't the one held (the next chord's preview), as the Labels choice reads it
+  const p=pc(s,f); if(saved.labels==='notes') return noteName(p);
+  if(D.ref==='chord'){const iv=(p-ch.root+12)%12; return chordIv(ch,iv)[0];} return lab((p-cur.key+12)%12)[0];
+}
 const progSame=(a,b)=>!!a&&!!b&&a.ch.name===b.ch.name&&(a.voicing?a.voicing.frets.join():'')===(b.voicing?b.voicing.frets.join():''); // the same chord in the same shape
 const nextProg=()=>{ // the next chord that differs from the one you hold (another bar of the same chord is no change)
   if(!cur.prog||cur.prog.length<2) return null;
@@ -3332,11 +3338,12 @@ function fingKey(){ // the key for a strummed or picked chord with Fingers on, f
   const ch=cur.chord, root=[], tones=[], open=[], out=[]; let mute=false;
   v.frets.forEach((f,s)=>{
     if(f===null){mute=true; return;}
-    const {ref}=drillLabel({s,f}), p=pc(s,f), ok=F.fam!=='chrom'&&!cur.set.has(ivOf({s,f},cur.key))?' outk':'';
-    const d=f===0?{t:'',c:COL[ref],cls:'openv'+ok,p}:{t:FA.fing[s],c:COL[ref],cls:'fing'+(ref===0?' root':'')+ok,p};
+    const {ref,t}=drillLabel({s,f}), p=pc(s,f), ok=F.fam!=='chrom'&&!cur.set.has(ivOf({s,f},cur.key))?' outk':'', FL=fingLab();
+    const d=f===0?{t:FL?'':t,c:COL[ref],cls:'openv'+ok,p}:{t:FL?FA.fing[s]:t,c:COL[ref],cls:'fing'+(ref===0?' root':'')+ok,p};
     (f===0?open:ref===0?root:tones).push(d); if(ok&&!out.some(x=>x.p===p)) out.push(d);
   });
-  const fnum='The number is the finger that frets it: 1 index, 2 middle, 3 ring, 4 pinky.';
+  const fnum=fingLab()?'The number is the finger that frets it: 1 index, 2 middle, 3 ring, 4 pinky.':'';
+  const und=(()=>{for(let s=0;s<6;s++)for(let f=Math.max(1,zoom[0]);f<=zoom[1];f++){if(v.frets[s]===f||!inWin(f)) continue; const iv=ivOf({s,f},cur.key); if(dset().has(iv)){const {ref}=drillLabel({s,f}); return [{t:'',c:COL[ref],cls:'under'}];}} return [];})();
   const first=l=>(l.filter(d=>!/outk/.test(d.cls)).concat(l)).slice(0,1), scale=`${keyName()} ${modeName()}`, B=cur.borrow;
   const rootTxt=D.ref==='chord'?`the root of ${ch.name}`:'the root of the key';
   const nx=nextProg(), nxOn=nx&&nx.voicing&&nx.ch.name!==ch.name&&D.guide!=='blind';
@@ -3346,11 +3353,12 @@ function fingKey(){ // the key for a strummed or picked chord with Fingers on, f
     ${nkRow(first(root),`${noteName(root[0]?root[0].p:ch.root)}, ${rootTxt}. ${fnum}`)}
     ${nkRow(first(tones),`The ${root.length?'other ':''}notes of ${ch.name}, each degree in its own color.${root.length?'':' '+fnum}`)}
     ${nkRow(first(open),'An open string: let it ring without fretting it.')}
+    ${nkRow(und,`Faded: the rest of ${scale}, behind the chord.`)}
     ${mute?nkRow([{t:'×',cls:'mute'}],'Don’t play this string.'):''}
     ${FA.barre?`<div class="nk"><span class="nk-d"><span class="nk-bar"></span></span><span>A ${term('barre','barre')}: finger 1 lies flat across these strings at fret ${FA.barre.f}.</span></div>`:''}
     ${nkRow(first(out),`A dashed edge marks a note from outside ${scale}: ${and(outNames)}${chordSrc()?`, which ${ch.name} borrows from ${chordSrc()}`:''}.`)}
-    ${nxOn?`<div class="nk"><span class="nk-d"><span class="dot nextv" style="--c:var(--pearl)">${nfin}</span><span class="dot blank nexto"></span></span><span>${esc(nx.ch.name)}, the next chord: dark dots show its fingers and dark rings its open strings. They show in the last beat before the change, while ${ch.name} fades back. Show next in the neck’s corner holds them.</span></div>`:''}
-    </div><p class="hint">${D.ref==='chord'?`Colors count from each chord’s root.`:`Colors count from ${keyName()}, the key.`}${D.plan==='mix'?' In the scale-run bar the dots show degrees instead of fingers.':''}</p>`);
+    ${nxOn?`<div class="nk"><span class="nk-d"><span class="dot nextv" style="--c:var(--pearl)">${nfin}</span><span class="dot blank nexto"></span></span><span>${esc(nx.ch.name)}, the next chord: dark dots show ${fingLab()?'its fingers':'its notes'} and dark rings its open strings. They show in the last beat before the change, while ${ch.name} fades back. Show next in the neck’s corner holds them.</span></div>`:''}
+    </div><p class="hint">${D.ref==='chord'?`Colors count from each chord’s root.`:`Colors count from ${keyName()}, the key.`}${D.plan==='mix'&&fingLab()?' In the scale-run bar the dots show degrees instead of fingers.':''}</p>`);
 }
 // ---------- Explore, locked: a click explains the note against the key's root and lists the chords of the key that use it ----------
 function lkLocked(){return st.mode==='explore'&&!exSong()&&saved.lkLock!==false;}
@@ -5406,7 +5414,7 @@ const TIPS=[
  ['[data-act="lbl"][data-v="key"]',()=>`Label degrees from the key root, ${keyName()}.`],
  ['[data-act="lbl"][data-v="chord"]',()=>`Label degrees from the chord root, ${rootName(cur.chord)}, so the same notes read as chord tones and extensions.`],
  ['[data-act="lbl"][data-v="notes"]',()=>'Label each note by name.'],
- ['[data-act="lbl"][data-v="fing"]',()=>'<b>Fingers</b>: number the notes of the chord shape by the finger that frets them (1 index to 4 pinky), fade the rest of the chord, and show where each finger goes for the next chord.'],
+ ['[data-act="lbl"][data-v="fing"]',()=>'<b>Fingers</b>: number the chord shape’s dots by the finger that frets them: 1 index to 4 pinky.'],
  ['[data-set="ramp"]',()=>'Raise the tempo automatically after every full pass.'],
  ['[data-act="strum"]',()=>'Hear the chord voicing and see it on the neck.'],
  ['[data-act="move"]',()=>'Pick a new box by clicking the neck.'],
