@@ -5766,7 +5766,7 @@ const mineList=()=>!logReady()?[]:Object.values(LOG.progs||{}).filter(p=>p&&!p.g
 function mineProg(id){if(id==='mine-sketch') return st.sketch||null; if(!/^mine-/.test(id||'')||!logReady()) return null; const p=LOG.progs&&LOG.progs[id]; return p&&!p.gone?p:null;}
 function mineBars(p,key=cur.key){ // its chords in a key, one per bar or two in a split bar: each chord's root and shape move by the same distance
   let d=((key-p.key)%12+12)%12; if(d>6) d-=12;
-  const sp=key===cur.key?cbSp:spellIn(key,MAJ);
+  const sp=key===cur.key?spellIn(cur.key,cur.A7):spellIn(key,MAJ); // the same spelling as cbSp, which isn't defined yet when the page first loads
   const one=x=>{const c=parseChord(x.name), suf=x.name.replace(/^[A-G][♯♭]?/,'').replace(/\/.*/,''), root=((c?c.root:0)+d+12)%12, fr=parseFrets(x.frets);
     return {name:sp(root)+suf,frets:fr?cbMove(fr,d):null};};
   return p.bars.flatMap((x,bar)=>{const S=x.segs&&x.segs.length>1?x.segs:[x];

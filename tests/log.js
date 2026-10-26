@@ -24,9 +24,10 @@ function fakeFetch(w){
     return res(400,{});
   };
 }
-async function device(wide=true,store){
+async function device(wide=true,store,log){
   const dom=new JSDOM(html,{url:'https://ergooding.github.io/fretmap/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){
     if(store) w.localStorage.setItem('fret-iv-v1',JSON.stringify(store));
+    if(log) w.localStorage.setItem('fret-log-v1',JSON.stringify(log));
     w.matchMedia=q=>({matches:wide&&!/max-height/.test(q),addEventListener(){}}); w.__now=0; w.__clock=Date.UTC(2026,9,13,15,0,0);
     w.Date.now=()=>w.__clock; w.fetch=fakeFetch(w);
     const node=()=>({type:'',connect(){},start(){},stop(){},frequency:{value:0,setValueAtTime(){},exponentialRampToValueAtTime(){}},gain:{value:0,setValueAtTime(){},exponentialRampToValueAtTime(){}}});
@@ -818,6 +819,10 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
    ok(X.st.cbx.b.fr&&X.st.cbx.b.fr.join()===',3,2,0,1,0'&&X.st.cbx.on&&X.cbXShown()&&X.cbXShown().ch.name==='C'&&!d.querySelector('.dot.rpick'),'cbx-ring-picks',JSON.stringify(X.st.cbx.b));
    click(d.querySelector('#cbX .cb-cc[data-suf="maj7"]')); ok(X.cbXShown().ch.name==='Cmaj7','cbx-chord',X.cbXShown().ch.name);
    click(d.querySelector('[data-act=xtab][data-v=chords]')); click(d.querySelector('[data-act=lkch]')); ok(!X.st.cbx.on&&!X.cbXShown(),'cbx-hands-back');}
+  // a page opened with your own progression playing in Drill starts up (its chord names were spelled with code that loads later)
+  {const P={id:'mine-t',name:'T',key:0,from:'pop',bars:[{name:'C',frets:'x32010'},{name:'G',frets:'320003'}],updated:1};
+   const C=await device(true,{focus:{key:7,fam:'major',mode:0,pos:-1},drill:{b2:1,line:'prog',prog:'mine-t',plan:'strum',where:'whole'}},{v:1,sessions:[],skills:{},progs:{'mine-t':P}});
+   ok(C.X&&C.d.getElementById('selKey').options.length===13&&C.X.cur.prog&&C.X.cur.prog.map(p=>p.ch.name).join()==='G,D','mine-startup',C.X&&C.X.cur.prog&&C.X.cur.prog.map(p=>p.ch.name).join());}
   // phone layout text
   B.mode('practice'); ok(!/undefined|NaN|\[object/.test(B.d.querySelector('.app').textContent),'phone-text-path');
   console.log('log checks done, bad',bad); process.exit(bad?1:0);
