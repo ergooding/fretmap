@@ -263,15 +263,15 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     // Fingerings: a chord's common shapes up the neck, with fingers and the barre on the neck
     X.saved.lkSev=false; X.st.lkSel=null; X.st.lkAt=null; setP(0,'major',0,-1);
     const fvb=()=>[...d.querySelectorAll('.xfing [data-act=lkfv]')], barre=()=>d.querySelector('.neck .barre');
-    click(d.querySelector('[data-act=lkfing]')); ok(X.saved.lkFing&&/Click a chord above/.test(d.querySelector('.xfing').textContent),'fing-on');
+    click(d.querySelector('[data-act=labels][data-v=fing]')); ok(X.saved.lkFing&&!d.querySelector('[data-act=lkfing]')&&/Click a chord above/.test(d.querySelector('.xfing').textContent),'fing-on');
     click(d.querySelector('[data-act=lkch][data-k=C]'));
     ok(fvb().map(b=>b.getAttribute('aria-label')).join(' / ')==='C, Open, x32010 / C, A shape fret 3, x35553 / C, G shape fret 5, 875558 / C, E shape fret 8, 8 10 10 9 8 8','fing-list',fvb().map(b=>b.getAttribute('aria-label')).join(' / '));
     {const bx=X.lkChords().find(c=>c.ch.name==='C').v.frets, FA=X.fingering(bx), got=bx.map((f,s)=>f===null?null:lbl(s,f)), exp=bx.map((f,s)=>f===null?null:f===0?'0':String(FA.fing[s]));
      ok(got.join()===exp.join()&&barre().style.display===(FA.barre?'':'none')&&d.querySelector('[data-act=labels][data-v=fing]').getAttribute('aria-pressed')==='true','fing-box-shape',bx.join(',')+' '+got.join()+' vs '+exp.join());}
     click(fvb()[1]); ok(X.st.lkFv&&X.st.lkFv.join(',')===',3,5,5,5,3'&&lbl(1,3)==='1'&&lbl(2,5)==='2'&&lbl(3,5)==='3'&&lbl(4,5)==='4'&&lbl(5,3)==='1'&&lbl(0,0)==='×'&&barre().style.display==='','fing-pick-barre',[lbl(1,3),lbl(2,5),lbl(3,5),lbl(4,5),lbl(5,3),barre().style.display].join(' '));
     ok(fvb()[1].getAttribute('aria-pressed')==='true'&&/In your position/.test(fvb()[0].textContent)&&/Barre/.test(fvb()[1].textContent),'fing-tags');
-    click(d.querySelector('[data-act=labels][data-v=iv]')); ok(lbl(1,3)==='R'&&lbl(5,3)==='5'&&barre().style.display==='','fing-degrees-keep-barre',[lbl(1,3),lbl(5,3)].join(' '));
-    click(d.querySelector('[data-act=labels][data-v=fing]')); click(fvb()[1]); ok(!X.st.lkFv&&X.st.lkPin==='C','fing-unpick',JSON.stringify([X.st.lkFv,X.st.lkPin,fvb().length]));
+    click(d.querySelector('[data-act=labels][data-v=iv]')); ok(lbl(1,3)==='R'&&!X.saved.lkFing&&!d.querySelector('.xfing')&&barre().style.display==='none','fing-degrees-off',[lbl(1,3),lbl(5,3)].join(' '));
+    click(d.querySelector('[data-act=labels][data-v=fing]')); click(fvb()[1]); click(fvb()[1]); ok(!X.st.lkFv&&X.st.lkPin==='C','fing-unpick',JSON.stringify([X.st.lkFv,X.st.lkPin,fvb().length]));
     click(d.querySelector('[data-act=lkch][data-k=G]')); ok(!X.st.lkFv&&fvb()[0].getAttribute('aria-label')==='G, Open, 320003','fing-new-chord',fvb()[0].getAttribute('aria-label'));
     {const g7=X.lkFingList(X.chordIn('G7',0),0), d7=X.lkFingList(X.chordIn('D7',0),0), fm=X.lkFingList(X.chordIn('Fmaj7',0),0);
      ok(g7[0].frets.map(f=>f??'x').join('')==='320001'&&d7[0].frets.map(f=>f??'x').join('')==='xx0212'&&fm[0].frets.map(f=>f??'x').join('')==='xx3210','fing-std-open',[g7,d7,fm].map(L=>L[0].frets.join(',')).join(' | '));}
@@ -281,7 +281,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
         for(const v of X.lkFingList(x.ch,k)){ n++; const ps=v.frets.map((f,s)=>f===null?null:(([4,9,2,7,11,4][s])+f)%12).filter(q=>q!==null);
           if(ps[0]!==x.ch.root||!ps.every(q=>want.has(q))||!X.fingering(v.frets)||Math.max(...v.frets.filter(f=>f!==null))>12) badF.push(x.ch.name+' '+v.frets.join(','));}}}
      ok(n>300&&!badF.length,'fing-sweep',n+' '+badF.slice(0,5).join(' | '));}
-    X.saved.lkSev=false; setP(0,'major',0,-1); click(d.querySelector('[data-act=lkfing]')); X.saved.lkFlab=false; }
+    X.saved.lkSev=false; setP(0,'major',0,-1); click(d.querySelector('[data-act=labels][data-v=iv]')); ok(!X.saved.lkFing&&!X.saved.lkFlab,'fing-label-off'); }
   // songs: add in the Songs tab, rate, and play its changes
   const setF=(sel,v)=>{const e=d.querySelector(sel); e.value=v; e.dispatchEvent(new w.Event('change',{bubbles:true}));};
   mode('songs'); click(d.querySelector('[data-act=songform]')); ok(X.st.mode==='songs'&&d.getElementById('sgName'),'add-opens-songs');
@@ -387,11 +387,11 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   ok(/C instead of C♯/.test(d.querySelector('.ex-card,.ex-side').textContent)&&/Borrowed from A minor/.test(d.querySelector('.ex-card,.ex-side').textContent)&&d.querySelector('.cell[data-s="1"][data-f="3"] .dot.outk'),'explore-song-outside',d.querySelector('.ex-card,.ex-side').textContent.slice(0,300));
   // Fingerings in a song: the chosen chord's shapes, fingers and barre on the neck
   {const fvb=()=>[...d.querySelectorAll('.xfing [data-act=lkfv]')];
-   click(d.querySelector('[data-act=lkfing]'));
+   click(d.querySelector('[data-act=exlab][data-v=fing]'));
    ok(X.saved.lkFing&&fvb().length&&fvb()[0].getAttribute('aria-label')==='C, Open, x32010','fing-song',fvb().map(b=>b.getAttribute('aria-label')).join(' / '));
    click(fvb()[1]); ok(lbl(1,3)==='1'&&lbl(4,5)==='4'&&/x35553/.test(d.querySelector('.ex-side .ex-play').textContent)&&/which finger frets each note/.test(d.querySelector('.ex-side').textContent)&&d.querySelector('.neck .barre').style.display===''&&d.querySelector('[data-act=exlab][data-v=fing]').getAttribute('aria-pressed')==='true','fing-song-pick',[lbl(1,3),lbl(4,5)].join(' '));
    click(d.querySelector('.cchips [data-act=exch][data-n="G"]')); ok(!X.st.lkFv&&fvb()[0].getAttribute('aria-label')==='G, Open, 320003','fing-song-switch');
-   click(d.querySelector('[data-act=lkfing]')); ok(!X.saved.lkFing&&!d.querySelector('.xfing')&&d.querySelector('.neck .barre').style.display==='none','fing-off'); X.saved.lkFlab=false;}
+   click(d.querySelector('[data-act=exlab][data-v=chord]')); ok(!X.saved.lkFing&&!d.querySelector('.xfing')&&d.querySelector('.neck .barre').style.display==='none','fing-off'); X.saved.lkFlab=false;}
   // slash chords keep their bass note
   const sl=X.parseChords('C/G, F, F, C/G').chords; ok(sl.join(' ')==='C/G F F C/G','slash-parse',sl.join(' '));
   const fv=f=>f?f.map(x=>x===null?'x':x).join(''):'none';

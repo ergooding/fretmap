@@ -245,7 +245,11 @@ html.wide{font-size:19px}
 .cmapb .cm-t{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);margin-right:6px;vertical-align:1px}
 .cmapb[aria-pressed=true]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .cmapb[aria-pressed=true] .cm-f{color:inherit;opacity:.8}
-.cmapb:hover{border-color:var(--ink)}
+.cmapb:hover,.cmapb.hl{border-color:var(--ink)}
+.cmapb.cm-wrap{border-style:dashed;background:transparent}
+.cmapb.cm-wrap[aria-pressed=true]{background:var(--ink);border-style:solid}
+.cmapb.cm-1 .cm-f{display:none}
+.cmapb.cm-1{justify-content:center;padding:0 4px}
 .neck.narrow .cmapb .cm-w{display:none}
 .app.wide .neck-box.map{height:calc(clamp(240px,42vh,620px) + 68px)}
 .app:not(.wide):not(.land) .neck.map{height:calc(clamp(210px,32vh,280px) + 68px)}
@@ -1777,16 +1781,26 @@ function drawCmap(){ // the CAGED map under the neck in Explore: a button for ea
   if(k===cmapK) return; cmapK=k;
   neck.querySelectorAll('.cmapb').forEach(b=>b.remove());
   if(!on) return;
-  const ends=[-1,-1]; // two lanes: a box goes in a lane that's free at its first fret; when neither is, it starts after the lane's last box
-  cur.pos.forEach((p,i)=>{
-    let ln=ends.findIndex(e=>e<p.lo); if(ln<0) ln=ends[0]<=ends[1]?0:1; const c0=Math.max(p.lo,ends[ln]+1); ends[ln]=p.hi;
-    const b=document.createElement('button'), act=F.pos===p.lo;
-    b.className='cmapb'; b.dataset.lo=p.lo; b.setAttribute('aria-pressed',String(act));
-    b.innerHTML=`<b>${esc(p.shape.replace(/m$/,''))}<span class="cm-w"> shape</span></b><span class="cm-f">${has(p)?'<i class="cm-t" aria-label="holds a triad"></i>':''}${p.lo}–${p.hi}</span>`;
-    b.dataset.tip=act?`<b>${esc(p.shape)} shape</b>, frets ${p.lo}–${p.hi}. Click again for the whole neck.`:`Show the <b>${esc(p.shape)} shape</b> box, frets ${p.lo}–${p.hi}.`+(has(p)?` The gold dot: a ${esc(triName(tch.ch))} triad on ${tSetName(tch.str)} fits in it.`:'');
-    place(b,`${c0+1}/${p.hi+2}`,String(8+ln));
-    b.onclick=()=>{F.pos=act?-1:p.lo; st.picking=false; focusPosChanged(); focusChanged();};
-    neck.appendChild(b);
+  // the top row reads the shapes in order along the neck: each starts at its first fret and runs until the next shape starts;
+  // the row below carries the rest of each box, the frets it shares with the next shape
+  let low=-1; const P=cur.pos;
+  P.forEach((p,i)=>{
+    const act=F.pos===p.lo, nx=P[i+1], topEnd=nx?Math.min(p.hi,nx.lo-1):p.hi, w0=Math.max(nx&&nx.lo<=p.hi?nx.lo:p.hi+1,low+1);
+    const tip=act?`<b>${esc(p.shape)} shape</b>, frets ${p.lo}–${p.hi}. Click again for the whole neck.`:`Show the <b>${esc(p.shape)} shape</b> box, frets ${p.lo}–${p.hi}.`+(has(p)?` The gold dot: a ${esc(triName(tch.ch))} triad on ${tSetName(tch.str)} fits in it.`:'');
+    const mk=(a,z,row,wrap)=>{
+      const b=document.createElement('button');
+      b.className='cmapb'+(wrap?' cm-wrap':'')+(z-a<1?' cm-1':''); b.dataset.lo=p.lo; b.setAttribute('aria-pressed',String(act));
+      b.innerHTML=wrap?`<b>${esc(p.shape.replace(/m$/,''))}</b><span class="cm-f">to ${p.hi}</span>`
+        :`<b>${esc(p.shape.replace(/m$/,''))}<span class="cm-w"> shape</span></b><span class="cm-f">${has(p)?'<i class="cm-t" aria-label="holds a triad"></i>':''}${p.lo}–${p.hi}</span>`;
+      b.dataset.tip=tip; if(wrap) b.setAttribute('aria-label',`${p.shape} shape continued, frets ${a}–${z}`);
+      place(b,`${a+1}/${z+2}`,String(row));
+      b.onclick=()=>{F.pos=act?-1:p.lo; st.picking=false; focusPosChanged(); focusChanged();};
+      b.onmouseenter=()=>neck.querySelectorAll(`.cmapb[data-lo="${p.lo}"]`).forEach(x=>x.classList.add('hl'));
+      b.onmouseleave=()=>neck.querySelectorAll('.cmapb.hl').forEach(x=>x.classList.remove('hl'));
+      neck.appendChild(b);
+    };
+    mk(p.lo,topEnd,8,false);
+    if(w0<=p.hi){mk(w0,p.hi,9,true); low=p.hi;}
   });
 }
 function rollNeck(){
@@ -3503,7 +3517,7 @@ function lkChordsHTML(tabbed){
       <b>${esc(x.ch.name)}<span class="rn">${esc(x.ch.roman)}</span></b>
       ${p===null?`<span class="xrole">${x.ch.rel.map(r=>noteName((x.ch.root+r)%12)).join(' · ')}</span>`:`<span class="xrole"><span class="hdeg" style="--c:${COL[x.ci]}">${R_[0]}</span>${n} is its ${x.ci?R_[1]:'root'}</span>`}${x.v?`<code>${fretText(x.v.frets)}</code>`:''}</button>`;}).join('');
   return `<div class="xch"><div class="xch-top"><div>${tabbed&&p===null?'':`<b>${p===null?`Chords of ${esc(from)}`:`Chords in ${esc(from)} that use ${n}`}</b>`}${p===null?`<p class="hint">${wide?'Click':'Tap'} a note on the neck to see the ones that use it.</p>`:''}${tri.length?`<p class="hint">Same note, different job: ${n} is ${lkAnd(tri)}.</p>`:''}</div>
-    <span class="xsw"><button class="chip" data-act="cpnew" data-id="explore" data-tip="Type a few chords and hear them loop. Nothing is saved until you ask.">Sketch a progression</button>${fingSw()}<span class="swl">Add 7ths<button class="sw sm" data-act="lksev" aria-pressed="${!!saved.lkSev}" aria-label="Add 7ths"></button></span></span></div>
+    <span class="xsw"><button class="chip" data-act="cpnew" data-id="explore" data-tip="Type a few chords and hear them loop. Nothing is saved until you ask.">Sketch a progression</button><span class="swl">Add 7ths<button class="sw sm" data-act="lksev" aria-pressed="${!!saved.lkSev}" aria-label="Add 7ths"></button></span></span></div>
     ${par?`<p class="hint">${esc(lkScale())} sits inside ${esc(from)}, so these are its chords.</p>`:''}
     <div class="shapes xshapes">${cards}</div>
     <p class="hint">${wide?'Hover a chord to see it on the neck; click it to hear it and keep it there.':'Tap a chord to hear it and see it on the neck.'} Each shape stays ${cur.whole?(st.lkAt&&p!==null?'near where you clicked':`inside frets ${w.lo}–${w.hi}`):`inside ${esc(cur.posLabel)}`}.</p>${lkFingHTML(L)}</div>`;
@@ -3538,7 +3552,7 @@ function exFingHTML(E){ // the Fingerings row for the song's chosen chord
   if(!saved.lkFing||!E.c) return '';
   return fingRowHTML(E.c,E.sel,E.key,cur.whole?null:{lo:cur.lo,hi:cur.hi});
 }
-const fingSw=()=>`<span class="swl">Fingerings<button class="sw sm" data-act="lkfing" aria-pressed="${!!saved.lkFing}" aria-label="Fingerings"></button></span>`;
+function fingOff(){saved.lkFing=false; saved.lkFlab=false; st.lkFv=null; st.lkFh=null;} // Degrees or Notes: back to the chord's own shape
 panel.addEventListener('mouseover',e=>{ if(st.mode!=='explore') return;
   if(wide){const fb=e.target.closest&&e.target.closest('[data-act="lkfv"]'), fv=fb?JSON.parse(fb.dataset.j):null; if(JSON.stringify(fv)!==JSON.stringify(st.lkFh??null)){st.lkFh=fv; renderBoard();} if(fb) return;}
   if(!lkLocked()) return;
@@ -4462,9 +4476,9 @@ function exploreSongHTML(E){
       :`<button class="cchip ex-ch${out?' outk':''}" data-act="exch" data-n="${esc(n)}" aria-pressed="${n===E.sel}"><b>${esc(n)}</b><small>${esc(c.roman)}${out?' · outside':''}</small></button>`;}).join('');
   const parts=E.parts.filter(p=>p.chords.length).map(p=>`<div class="ex-part"><span class="seglab">${esc(p.name)}</span><div class="sh-bars ex-bars">${p.chords.map(n=>`<button class="bar" data-act="exch" data-n="${esc(n)}" aria-pressed="${n===E.sel}"><span class="nm">${esc(n)}</span><span class="rn">${esc(chordIn(n,key,letterOf(E.sp(key))).roman)}</span></button>`).join('')}</div></div>`).join('');
   const fs=saved.lkFing&&E.c;
-  return `<div class="toolbar"><div class="tl">${seg('Labels','exlab',[['chord','From the chord'],['key','From the key'],['notes','Notes']].concat(fs?[['fing','Fingers']]:[]),fs&&saved.lkFlab?'fing':saved.exlab||'chord')}</div></div>
-    <div class="ex-song">${sum}${wide?`<div class="xch"><div class="xch-top"><b>Chords in ${esc(sk.name)}</b><span class="xsw">${fingSw()}</span></div><div class="cchips ctiles">${chips}</div><p class="hint">Click a chord to hear it and see what it does; the card beside the neck explains it.</p>${exFingHTML(E)}</div>`
-      :`<div class="cchips">${chips}</div><div class="row exfsw">${fingSw()}</div>${exFingHTML(E)}${exCard(E)}`}<div class="ex-parts">${parts}</div></div>`;
+  return `<div class="toolbar"><div class="tl">${seg('Labels','exlab',[['chord','From the chord'],['key','From the key'],['notes','Notes'],['fing','Fingers']],saved.lkFing&&saved.lkFlab?'fing':saved.exlab||'chord')}</div></div>
+    <div class="ex-song">${sum}${wide?`<div class="xch"><div class="xch-top"><b>Chords in ${esc(sk.name)}</b></div><div class="cchips ctiles">${chips}</div><p class="hint">Click a chord to hear it and see what it does; the card beside the neck explains it.</p>${exFingHTML(E)}</div>`
+      :`<div class="cchips">${chips}</div>${exFingHTML(E)}${exCard(E)}`}<div class="ex-parts">${parts}</div></div>`;
 }
 function saveParts(id,parts){
   const sk=LOG.skills[id]; if(!sk) return;
@@ -4756,7 +4770,7 @@ function renderPanel(){
     // one toolbar under the neck: how the neck looks on the left, what a click does on the right; then the degrees shown
     const ivs=cur.allowed.map(i=>`<button class="ivchip" style="--c:${COL[i]}" data-act="iv" data-i="${i}" aria-pressed="${st.visible.has(i)}" aria-label="${lab(i)[1]}">${lab(i)[0]}</button>`).join('');
     panel.innerHTML=`<div class="toolbar xtool"><div class="tl">${seg('Show','show',[['all','Whole scale'],['chord','Chord tones']],showChord()?'chord':'all')}
-      ${(()=>{const fs=saved.lkFing&&lkShown(); return seg('Labels','labels',[['iv','Degrees'],['notes','Notes']].concat(fs?[['fing','Fingers']]:[]),fs&&saved.lkFlab?'fing':saved.labels==='notes'?'notes':'iv');})()}</div>
+      ${seg('Labels','labels',[['iv','Degrees'],['notes','Notes'],['fing','Fingers']],saved.lkFing&&saved.lkFlab?'fing':saved.labels==='notes'?'notes':'iv')}</div>
       <div class="tr">${seg('Click a note','lock',[['on','Explain it'],['off','Make it the key']],saved.lkLock===false?'off':'on')}</div></div>
       <div class="row degrow"><span class="seglab">Degrees</span><button class="ivchip" style="--c:${COL[0]}" aria-pressed="true" disabled aria-label="root, always shown" data-tip="R, the root, always shows.">R</button>${ivs}</div>${wide?'':`<div class="xkey">${lkSel()!==null?lkNoteHTML(lkSel()):(()=>{const PX=st.lkPin&&lkPinned(); return PX?lkChordCardHTML(PX):keyCardHTML()+exploreKey();})()}</div>`}${xTabsHTML()}`;
   }else if(st.mode==='name'){
@@ -5043,14 +5057,13 @@ const onClick=e=>{
     case 'xtab': saved.xtab=b.dataset.v; if(saved.xtab!=='build') st.cbx.on=false; break;
     case 'lkhear':{const x=st.lkPin&&lkChords().find(c=>c.ch.name===st.lkPin), f=x&&(fingPick(x.ch,cur.key)||(x.v&&x.v.frets)); if(f) hearFrets(f); return;}
     case 'exhear':{const E=exSong(); const f=E&&E.sel&&((st.lkFv&&E.c&&fingPick(E.c,E.key))||exVoicing(E,E.sel)); if(f) hearFrets(f); return;}
-    case 'exlab': if(b.dataset.v==='fing'){saved.lkFlab=true; break;} saved.lkFlab=false; saved.exlab=b.dataset.v; break;
+    case 'exlab': if(b.dataset.v==='fing'){saved.lkFing=saved.lkFlab=true; break;} fingOff(); saved.exlab=b.dataset.v; break;
     case 'lksev': D.sev=!D.sev; st.lkPin=null; st.lkHov=null; refresh(); break;
     case 'lkch':{const k=b.dataset.k; st.cbx.on=false; st.lkPin=st.lkPin===k?null:k; st.lkHov=null; st.lkFv=null; st.lkFh=null;
       const x=st.lkPin&&lkChords().find(c=>c.ch.name===k); if(x&&x.v&&saved.sound) hearFrets(x.v.frets); break;}
     case 'iv': st.visible.has(i)?st.visible.delete(i):st.visible.add(i); break;
     case 'show': st.visible=new Set(b.dataset.v==='chord'?chordTones():cur.allowed); break;
-    case 'labels': if(b.dataset.v==='fing'){saved.lkFlab=true; break;} saved.lkFlab=false; saved.labels=b.dataset.v; break;
-    case 'lkfing': saved.lkFing=!saved.lkFing; st.lkFv=null; st.lkFh=null; if(saved.lkFing) saved.lkFlab=true; break;
+    case 'labels': if(b.dataset.v==='fing'){saved.lkFing=saved.lkFlab=true; break;} fingOff(); saved.labels=b.dataset.v; break; // Fingers: finger numbers on the chord's dots, and its shapes up the neck
     case 'lktri': saved.lkTri=b.dataset.v==='tri'; st.lkFv=null; st.lkFh=null; break;
     case 'lktstr': saved.lkTstr=b.dataset.v; st.lkFv=null; st.lkFh=null; break;
     case 'lkfv':{const t=b.dataset.f; st.cbx.on=false; st.lkFv=st.lkFv&&fretText(st.lkFv)===t?null:JSON.parse(b.dataset.j); st.lkFh=null; if(st.lkFv&&saved.sound) hearFrets(st.lkFv); break;}
@@ -5283,10 +5296,9 @@ const TIPS=[
  ['#modes [data-mode="explore"]',()=>focusSong()?'<b>Explore</b>: what each chord of your song does in its key, and what to play over it. Shortcut: 1.':`<b>Explore</b>: see every degree of the scale around the key. ${saved.lkLock===false?'Click a note to make it the key.':'Click a note to see how it fits the key and the chords that use it.'} Shortcut: 1.`],
  ['[data-act="lock"][data-v="on"]',()=>'<b>Explain it</b>: clicking a note keeps the key and position, explains the note against the root, and shows the chords that use it.'],
  ['[data-act="lock"][data-v="off"]',()=>'<b>Make it the key</b>: clicking a note makes it the new key, keeping the scale and mode.'],
- ['[data-act="lkfing"]',()=>`<b>Fingerings</b>: ${wide?'click':'tap'} a chord to see its common shapes up the neck, with finger numbers and barres on the neck. Currently ${saved.lkFing?'on':'off'}.`],
  ['[data-act="lkfv"]',el=>{const fr=JSON.parse(el.dataset.j), FA=fingering(fr); return `<b>${esc(el.getAttribute('aria-label'))}</b>. Fingers, low E to high e: ${fr.map((f,s)=>f===null?'×':f===0?'open':FA.fing[s]).join(' ')}${FA.barre?`, finger 1 barred across fret ${FA.barre.f}`:''}. ${wide?'Hover to see it on the neck; click to hear it and keep it there.':'Tap to hear it and see it on the neck.'}`;}],
- ['[data-act="labels"][data-v="fing"]',()=>'Label the chord\'s dots by the finger that frets them: 1 index, 2 middle, 3 ring, 4 pinky, 0 for an open string.'],
- ['[data-act="exlab"][data-v="fing"]',()=>'Label the chord\'s dots by the finger that frets them: 1 index, 2 middle, 3 ring, 4 pinky, 0 for an open string.'],
+ ['[data-act="labels"][data-v="fing"]',()=>'<b>Fingers</b>: label a chord\'s dots by the finger that frets them (1 index, 2 middle, 3 ring, 4 pinky, 0 open), with its barre, and list its common shapes up the neck.'],
+ ['[data-act="exlab"][data-v="fing"]',()=>'<b>Fingers</b>: label a chord\'s dots by the finger that frets them (1 index, 2 middle, 3 ring, 4 pinky, 0 open), with its barre, and list its common shapes up the neck.'],
  ['[data-act="lktri"]',el=>el.dataset.v==='tri'?'<b>Triads</b>: the chord as three notes on three neighbouring strings, every inversion up the neck. The others show as rings on the neck.':'<b>Full shapes</b>: the chord’s common shapes up the neck, with fingers.'],
  ['[data-act="lktstr"]',el=>`Triads on the ${esc((TSTR.find(x=>x[0]===el.dataset.v)||TSTR[0])[1])} strings. ${TSTR_TIP[el.dataset.v]||''}`],
  ['select[data-set="tplay"]',()=>'<b>Each triad</b>: strum it once and let it ring, strum it in the pattern from the Strum row, or pick its three notes one at a time.'],
