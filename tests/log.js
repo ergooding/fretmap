@@ -244,7 +244,7 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
     const cell=(s,f)=>d.querySelector(`.cell[data-s="${s}"][data-f="${f}"]`), lbl=(s,f)=>{const e=cell(s,f).querySelector('.dot'); return e?e.textContent:'';};
     setP(9,'major',5,5); const lk=v=>d.querySelector(`#panel [data-act=lock][data-v=${v}]`);
     ok(lk('on')&&lk('on').getAttribute('aria-pressed')==='true'&&!d.getElementById('lockBtn'),'lk-button');
-    ok(X.lkChords().map(x=>x.ch.name).join(' ')==='Am B° C Dm Em F G'&&/Chords in A Aeolian/.test(d.querySelector('.xtabs').textContent),'lk-all-chords',X.lkChords().map(x=>x.ch.name).join(' '));
+    ok(X.lkChords().map(x=>x.ch.name).join(' ')==='Am B° C Dm Em F G'&&/Chords of A Aeolian/.test(d.querySelector('.xch').textContent),'lk-all-chords',X.lkChords().map(x=>x.ch.name).join(' '));
     click(d.querySelector('[data-act=lkch][data-k=Dm]')); ok(lbl(1,5)==='R'&&lbl(4,6)==='♭3'&&lbl(0,0)==='×','lk-all-on-neck',[lbl(1,5),lbl(4,6),lbl(0,0)].join(' '));
     click(cell(3,5)); ok(X.F.key===9&&X.lkSel()===0,'lk-keeps-key',X.F.key);
     const vc=d.getElementById('voiceCard').textContent;
@@ -811,14 +811,25 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
    click(d.querySelector('[data-act=cpedit]')); ok(X.CP&&X.CP.id===id,'cp-edit-yours');
    click(M.querySelector('[data-cp=del]')); click(M.querySelector('[data-cp=del]'));
    ok(X.D.prog==='pop'&&X.LOG.progs[id].gone&&!X.mineList().length&&M.hidden,'cp-delete',X.D.prog);}
-  // Explore's chord builder: Root rings the root's spots on the 6th, 5th and 4th strings, a ring picks the spot, a chord card hands the neck back
-  {X.F.key=0; X.F.fam='major'; X.F.mode=0; X.refresh(); mode('drill'); mode('explore'); click(d.querySelector('[data-act=xtab][data-v=build]'));
-   const cx=d.getElementById('cbX'); ok(cx&&!d.querySelector('.dot.rpick'),'cbx-card');
-   click(cx.querySelector('[data-cb=step][data-n="1"]')); ok(d.querySelectorAll('.dot.rpick').length===3,'cbx-rings',d.querySelectorAll('.dot.rpick').length);
-   click(d.querySelector('.cell[data-s="1"][data-f="3"]'));
-   ok(X.st.cbx.b.fr&&X.st.cbx.b.fr.join()===',3,2,0,1,0'&&X.st.cbx.on&&X.cbXShown()&&X.cbXShown().ch.name==='C'&&!d.querySelector('.dot.rpick'),'cbx-ring-picks',JSON.stringify(X.st.cbx.b));
-   click(d.querySelector('#cbX .cb-cc[data-suf="maj7"]')); ok(X.cbXShown().ch.name==='Cmaj7','cbx-chord',X.cbXShown().ch.name);
-   click(d.querySelector('[data-act=xtab][data-v=chords]')); click(d.querySelector('[data-act=lkch]')); ok(!X.st.cbx.on&&!X.cbXShown(),'cbx-hands-back');}
+  // Explore's Change the chord: a click sets the note its string plays, the card names the chord, ? when the notes make none
+  {Object.assign(X.F,{key:4,fam:'major',mode:0,pos:0}); X.refresh(); mode('drill'); mode('explore'); delete X.saved.fcFr;
+   const cell=(s,f)=>d.querySelector(`.cell[data-s="${s}"][data-f="${f}"]`), lbl=(s,f)=>{const e=cell(s,f).querySelector('.dot'); return e?e.textContent:'';};
+   const head=()=>d.querySelector('#voiceCard .vc-head').textContent, name=()=>{const c=X.fcNow().ch; return c?c.name:'?';};
+   ok(!d.querySelector('[data-act=xtab]')&&!d.getElementById('cbX'),'fc-no-builder');
+   click(d.querySelector('#panel [data-act=lock][data-v=chord]'));
+   ok(X.saved.lkChg&&X.fcNow().fr.join()==='0,2,2,1,0,0'&&name()==='E'&&/^E/.test(head())&&/in E Ionian/.test(head()),'fc-start',X.fcNow().fr.join()+' '+head());
+   click(cell(3,0)); ok(name()==='Em'&&lbl(3,0)==='♭3'&&/outside E Ionian \(major\): G/.test(head()),'fc-e-to-em',name()+' '+lbl(3,0)+' '+head());
+   click(cell(3,0)); ok(X.fcNow().fr[3]===null&&lbl(3,0)==='×'&&name()==='E5','fc-mute',name());
+   click(d.querySelector('[data-act=fcset][data-k=E]')); click(cell(1,1));
+   ok(name()==='?'&&head().startsWith('?')&&cell(1,1).querySelector('.dot.fcq')&&/^(A♯|B♭)$/.test(lbl(1,1))&&!d.querySelector('#voiceCard .updiag'),'fc-not-a-chord',name()+' '+lbl(1,1));
+   click(d.querySelector('[data-act=labels][data-v=fing]')); ok(/^(A♯|B♭)$/.test(lbl(1,1)),'fc-not-a-chord-fingers',lbl(1,1));
+   click(d.querySelector('[data-act=fcset][data-k=B7]')); ok(name()==='B7'&&X.fcNow().fr.join()===',2,4,2,4,2'&&lbl(1,2)==='1'&&lbl(2,4)==='3'&&lbl(4,4)==='4','fc-fingers',X.fcNow().fr.join()+' '+[lbl(1,2),lbl(2,4),lbl(4,4)]);
+   click(d.querySelector('[data-act=labels][data-v=iv]')); ok(lbl(1,2)==='R'&&lbl(3,2)==='♭7','fc-degrees',[lbl(1,2),lbl(3,2)].join());
+   click(d.querySelector('[data-act=lkch][data-k=A]')); ok(name()==='A'&&!X.st.lkPin,'fc-chord-card-loads',name());
+   click(d.querySelector('[data-act=fcset][data-k=""]')); ok(X.fcNow().fr.every(f=>f===null)&&head().startsWith('–'),'fc-clear');
+   const nm=fr=>{X.saved.fcFr=fr; return name();};
+   ok(nm([null,2,0,0,0,3])==='G/B'&&nm([null,3,2,2,3,3])==='C6/9'&&nm([null,0,2,2,1,0])==='Am'&&nm([null,null,0,2,1,1])==='Dm7'&&nm([null,null,0,2,1,2])==='D7'&&nm([0,null,null,null,null,null])==='?','fc-names',[nm([null,2,0,0,0,3]),nm([null,3,2,2,3,3]),nm([null,null,0,2,1,1])].join());
+   click(d.querySelector('#panel [data-act=lock][data-v=on]')); ok(!X.saved.lkChg&&X.saved.lkLock!==false,'fc-off');}
   // a page opened with your own progression playing in Drill starts up (its chord names were spelled with code that loads later)
   {const P={id:'mine-t',name:'T',key:0,from:'pop',bars:[{name:'C',frets:'x32010'},{name:'G',frets:'320003'}],updated:1};
    const C=await device(true,{focus:{key:7,fam:'major',mode:0,pos:-1},drill:{b2:1,line:'prog',prog:'mine-t',plan:'strum',where:'whole'}},{v:1,sessions:[],skills:{},progs:{'mine-t':P}});

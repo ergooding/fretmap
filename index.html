@@ -322,6 +322,8 @@ html.wide{font-size:19px}
 .dot.dim{opacity:.5}
 .dot.ghost.dim{opacity:.18}
 .dot.under{opacity:.2}
+.dot.fcq{background:var(--pearl);color:#14110d;font-weight:700;box-shadow:0 0 0 2px var(--ink)}
+.fc-from .row{flex-wrap:wrap;gap:6px}
 .dot.ghost.under{opacity:.1}
 .exlines{position:absolute;left:0;top:0;pointer-events:none;z-index:4;overflow:visible}
 .exlines line{stroke:#F5F7F2;stroke-width:3;stroke-linecap:round;opacity:.8}
@@ -1185,7 +1187,8 @@ const CHORD_SUF={'':[0,4,7],'maj':[0,4,7],'M':[0,4,7],'m':[0,3,7],'min':[0,3,7],
  'm7':[0,3,7,10],'min7':[0,3,7,10],'-7':[0,3,7,10],'mmaj7':[0,3,7,11],'m(maj7)':[0,3,7,11],
  'sus2':[0,2,7],'sus4':[0,5,7],'sus':[0,5,7],'7sus4':[0,5,7,10],'add9':[0,2,4,7],'madd9':[0,2,3,7],
  '9':[0,2,4,7,10],'m9':[0,2,3,7,10],'maj9':[0,2,4,7,11],'dim':[0,3,6],'°':[0,3,6],'o':[0,3,6],
- 'dim7':[0,3,6,9],'°7':[0,3,6,9],'o7':[0,3,6,9],'m7♭5':[0,3,6,10],'ø':[0,3,6,10],'ø7':[0,3,6,10],'aug':[0,4,8],'+':[0,4,8]};
+ 'dim7':[0,3,6,9],'°7':[0,3,6,9],'o7':[0,3,6,9],'m7♭5':[0,3,6,10],'ø':[0,3,6,10],'ø7':[0,3,6,10],'aug':[0,4,8],'+':[0,4,8],
+ '+7':[0,4,8,10],'add11':[0,4,5,7],'69':[0,2,4,7,9],'m(add9)':[0,2,3,7]};
 const LETTER={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
 // ---------- spelling ----------
 // A note's name depends on its key: each scale uses every letter once, so E major has G♯ (not A♭) and D♭ major has G♭.
@@ -2850,15 +2853,16 @@ function drawBoard(){
   const E=exSong(), EV=E&&E.c?(fingPick(E.c,E.key)||exVoicing(E,E.sel)):null, ERel=E&&E.c?exOverRel(E):null;
   // Fingers: the voicing's dots show which finger frets them, the rest of the chord fades, and the next chord previews as dark dots with pearl rings
   // in Strum, then scale the run bar shows degrees, since a run moves through every finger; the next chord's fingers ring the neck
-  const LKX=st.mode==='explore'?lkShown():null, LK=st.mode==='explore'&&(lkSel()!==null||LKX)?{p:lkSel(),X:LKX}:null;
+  const FC=st.mode==='explore'&&!E&&fcOn()?fcNow():null, FCF=FC&&FC.ch?fingering(FC.fr):null; // Change the chord: the frets you hold
+  const LKX=st.mode==='explore'&&!FC?lkShown():null, LK=st.mode==='explore'&&(lkSel()!==null||LKX)?{p:lkSel(),X:LKX}:null;
   const nowRun=!!(nowN&&nowN.run), FA=st.mode==='drill'&&fingOn()&&!nowRun?fingering(cur.voicing.frets):null;
   const hideAll=FA&&st.playing&&st.idx>=0&&D.guide==='blind';
   const PV=st.mode==='drill'&&D.guide!=='blind'&&previewNow()?nextProg():null, PF=PV?fingering(PV.voicing.frets):null;
   // with Fingerings on, the shape on the neck in Explore shows its fingers and its barre too
   const XF=st.mode==='explore'&&saved.lkFing?(E?(EV?fingering(EV):null):LKX?fingering(LKX.v.frets):null):null, EF=E&&XF&&saved.lkFlab?XF:null;
   // a box picked in Explore's key view: the home chord's shape inside it, big dots in their degree colors, the rest of the box pearl
-  const BS=st.mode==='explore'&&!E&&!LK&&!picking()&&cur.bshape&&!cbXShown()&&!fingPickAny()?cur.bshape:null, BSF=BS?fingering(BS.frets):null;
-  const BA=FA||XF||BSF;
+  const BS=st.mode==='explore'&&!E&&!LK&&!FC&&!picking()&&cur.bshape&&!cbXShown()&&!fingPickAny()?cur.bshape:null, BSF=BS?fingering(BS.frets):null;
+  const BA=FA||XF||BSF||FCF;
   updNextTag(!!PV); barreEl.classList.toggle('fadeprev',!!PV);
   barreEl.style.display=BA&&BA.barre&&!hideAll?'':'none';
   if(BA&&BA.barre){const B=BA.barre; if(horiz) place(barreEl,String(B.f+1),`${6-B.b}/${7-B.a}`); else place(barreEl,`${B.a+2}/${B.b+3}`,String(B.f+1));}
@@ -2883,6 +2887,15 @@ function drawBoard(){
     }
     if(st.mode==='explore'||picking()){
       c.classList.toggle('out',!cur.whole&&!inWin(f)&&!picking());
+      if(FC){ // the notes you hold stand out, in the chord's colors; the rest of the scale fades behind them
+        const n=pc(s,f), kiv=(n-cur.key+12)%12, ok=F.fam!=='chrom'&&!cur.set.has(kiv)?' outk':'';
+        if(FC.fr[s]===f){
+          if(!FC.ch){dot(c,{t:cbSp(n),cls:'fcq'+ok}); continue;} // not a chord: plain dots with their note names
+          const civ=(n-FC.ch.root+12)%12, FL=saved.lkFing&&saved.lkFlab, t=saved.labels==='notes'?fcNote(FC.ch,n):chordIv(FC.ch,civ)[0];
+          dot(c,f===0?{t:FL?'':t,c:COL[civ],cls:'openv'+ok}:{t:FL?(FCF?FCF.fing[s]:''):t,c:COL[civ],cls:'fing'+(civ===0?' root':'')+ok}); continue;}
+        if(f===0&&FC.fr[s]==null){dot(c,{t:'×',cls:'mute'}); continue;}
+        dot(c,(cur.whole||inWin(f))&&cur.set.has(kiv)?{t:'',c:COL[kiv],cls:'under'}:null); continue;
+      }
       if(!st.lkHov&&cbXRing(s,f)){const x=st.cbx.b, on=x.spot&&x.spot.s===s&&x.spot.f===f; dot(c,{t:saved.labels==='notes'?noteName(pc(s,f)):cbSp(x.root),cls:'rpick'+(on?' root':'')}); continue;} // step 1 of the chord builder: the root's spots on the 6th, 5th and 4th strings
       if(BS&&inWin(f)){const iv=ivOf({s,f},cur.key); if(!cur.set.has(iv)){dot(c,null);continue;}
         const t=saved.labels==='notes'?noteName(pc(s,f)):lab(iv)[0];
@@ -2949,6 +2962,7 @@ function renderPrompt(){
     promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${E.sp(E.key)}</span><span>${esc(E.sk.name)} has no chords yet, so this shows the ${songKey(E.sk)} scale.</span>`;
   }else if(st.mode==='explore'){
     if(wide) promptEl.hidden=true; // the card beside the neck says it
+    else if(fcOn()){const X=fcNow(); promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${X.ch?esc(X.ch.name):'?'}</span><span>Tap a fret to change that string’s note.</span>`;}
     else if(lkSel()!==null){const p=lkSel(), iv=(p-cur.key+12)%12, L=lab(iv);
       promptEl.innerHTML=`<span class="big" style="color:${COL[iv]}">${noteName(p)}</span><span>${iv?`The ${L[0]} of ${lkScale()}: a ${L[1]}, ${iv} half step${iv>1?'s':''} above ${keyName()}.`:`The root of ${lkScale()}.`} Tap it again to clear.</span>`;}
     else promptEl.innerHTML=`<span class="big" style="color:var(--gold)">${keyName()}</span><span>${lkLocked()?'Tap any note to see how it fits the key.':'Tap any note to make it the key.'}${cur.whole?'':' Faded notes sit outside the position.'}</span>`;
@@ -3153,6 +3167,7 @@ function renderVoice(){
   const el=document.getElementById('voiceCard');
   if(wide&&exSong()&&exSong().c){el.hidden=false; el.innerHTML=exCard(exSong(),true); return;}
   if(wide&&st.mode==='explore'&&!exSong()){ // Explore's card: the key and how to read the neck
+    if(fcOn()){el.hidden=false; el.innerHTML=fcCardHTML(); return;}
     const PX=lkSel()===null&&st.lkPin&&lkPinned();
     if(PX){el.hidden=false; el.innerHTML=`${lkChordCardHTML(PX)}${exploreKey()}<div class="kc-under">${keyCardHTML(true)}</div>`; return;}
     el.hidden=false; el.innerHTML=lkSel()!==null?lkNoteHTML(lkSel()):`${keyCardHTML()}${exploreKey()}<p class="hint vc-tap">${lkLocked()?'Click any note to see how it fits the key and the chords that use it.':'Click any note to make it the key.'}</p>`; return;}
@@ -3349,6 +3364,38 @@ function fingKey(){ // the key for a strummed or picked chord with Fingers on, f
 }
 // ---------- Explore, locked: a click explains the note against the key's root and lists the chords of the key that use it ----------
 function lkLocked(){return st.mode==='explore'&&!exSong()&&saved.lkLock!==false;}
+// Click a note › Change the chord: a click sets the note its string plays (or mutes it), and the card names what you fretted
+const fcOn=()=>st.mode==='explore'&&!exSong()&&saved.lkChg===true;
+const FC_NONE=[null,null,null,null,null,null];
+function fcFr(){ // the frets you hold, low E first; it starts as the key's first chord in your position
+  if(!Array.isArray(saved.fcFr)||saved.fcFr.length!==6){const x=lkChords().find(c=>c.v); saved.fcFr=x?x.v.frets.slice():FC_NONE.slice();}
+  return saved.fcFr;
+}
+function fcNow(){ // what you fretted, named when the notes make a chord (the lowest note is the root when it can be)
+  const fr=fcFr(), N=fr.map((f,s)=>f==null?null:pc(s,f)).filter(x=>x!=null), nm=cbNameIt(fr);
+  if(!nm) return {fr,N,ch:null};
+  const bass=N[0], R0=cbSp(nm.root)+nm.suf.replace('6/9','69'), ch=chordIn(R0+(bass!==nm.root?'/'+cbSp(bass):''),cur.key,letterOf(cbSp(cur.key)));
+  ch.name=ch.name.replace(/69(?=\/|$)/,'6/9');
+  return {fr,N,ch};
+}
+const fcNote=(ch,n)=>(chordSpell(ch).find(z=>z.p===n)||{name:noteName(n)}).name;
+function fcCardHTML(){
+  const X=fcNow(), fr=X.fr, tap=wide?'Click':'Tap', FL=!!(saved.lkFing&&saved.lkFlab);
+  const starts=lkChords().filter(x=>x.v).map(x=>`<button class="chip" data-act="fcset" data-k="${esc(x.ch.name)}" aria-pressed="${fretText(x.v.frets)===fretText(fr)}">${esc(x.ch.name)}</button>`).join('')
+    +`<button class="chip" data-act="fcset" data-k="">Clear</button>`;
+  const tail=`<p class="hint">${tap} a fret to move that string’s note there. ${tap} a sounding note to mute its string.</p><div class="fc-from"><p class="xn-lab">Start from</p><div class="row">${starts}</div></div>`;
+  if(X.ch){
+    const outs=[...new Set(X.N)].filter(p=>!cur.set.has((p-cur.key+12)%12)).map(p=>fcNote(X.ch,p));
+    return lkChordCardHTML({ch:X.ch,v:{frets:fr}},{sub:outs.length?`outside ${esc(lkScale())}: ${outs.map(esc).join(', ')}`:null,hear:'fchear'})+tail;
+  }
+  if(!X.N.length) return `<div class="vc-head"><b>–</b><span>every string is muted</span></div>${tail}`;
+  const S=fr.map((f,s)=>f==null?null:{s,f}).filter(Boolean);
+  const kd=n=>{const iv=(n-cur.key+12)%12; return cur.set.has(iv)?lab(iv)[0]:'–';};
+  return `<div class="vc-head"><b>?</b><span>not a chord</span></div>
+    <div class="cc-tab" style="--n:${S.length}"><span class="cc-l">String</span>${S.map(n=>`<span>${['E','A','D','G','B','e'][n.s]}</span>`).join('')}<span class="cc-l">Note</span>${S.map(n=>`<b>${esc(cbSp(pc(n.s,n.f)))}</b>`).join('')}<span class="cc-l">In key</span>${S.map(n=>`<span>${kd(pc(n.s,n.f))}</span>`).join('')}</div>
+    <p>Frets <code>${fretText(fr)}</code>. These notes don’t make a chord, so there’s no fingering${FL?' and the dots show note names':''}.</p>
+    <div class="row"><button class="chip" data-act="fchear" data-tip="Hear the notes you fretted, low to high.">▶ Hear it</button></div>${tail}`;
+}
 function lkSel(){ // the note you clicked, while the key is locked and the note is still in the scale
   if(!lkLocked()||st.lkSel==null) return null;
   return cur.set.has((st.lkSel-cur.key+12)%12)?st.lkSel:null;
@@ -3493,11 +3540,7 @@ function lkNoteHTML(p){
     ${at.length?`<div><p class="xn-lab">${cur.whole?'Near where you clicked':'In this position'}</p><p>${at.join(' · ')}</p></div>`:''}
     ${find}<p class="hint">${wide?'Click':'Tap'} ${n} again to clear it.</p>${exploreKey()}</div>`;
 }
-function xTabsHTML(){ // the key's chords and the chord builder share one card under the neck, as two tabs
-  const ch=lkChordsHTML(true), cb=cbXCard(); if(!cb||!ch) return ch||cb;
-  const t=saved.xtab==='build'?'build':'chords', name=F.fam==='chrom'?'Chords':`Chords in ${esc(lkScale())}`;
-  return `<div class="xtabs-card"><div class="xtabs" role="tablist"><button role="tab" data-act="xtab" data-v="chords" aria-selected="${t==='chords'}">${name}</button><button role="tab" data-act="xtab" data-v="build" aria-selected="${t==='build'}">Build a chord</button></div>${t==='build'?cb:ch}</div>`;
-}
+function xTabsHTML(){return lkChordsHTML();} // the key's chords under the neck (Change the chord, under Click a note, builds chords now)
 function lkChordsHTML(tabbed){
   if(!lkLocked()) return '';
   const p=lkSel(), n=p===null?'':noteName(p);
@@ -3511,7 +3554,7 @@ function lkChordsHTML(tabbed){
     return `<button class="shape xshape" data-act="lkch" data-k="${esc(x.ch.name)}" aria-pressed="${on}">${x.v?voiceSVG(x.v,x.ch.root,x.ch,null,p,w.lo):`<span class="xnone">No shape with ${esc(x.ch.name)}’s root in the bass fits frets ${w.lo}–${w.hi}.</span>`}
       <b>${esc(x.ch.name)}<span class="rn">${esc(x.ch.roman)}</span></b>
       ${p===null?`<span class="xrole">${x.ch.rel.map(r=>noteName((x.ch.root+r)%12)).join(' · ')}</span>`:`<span class="xrole"><span class="hdeg" style="--c:${COL[x.ci]}">${R_[0]}</span>${n} is its ${x.ci?R_[1]:'root'}</span>`}${x.v?`<code>${fretText(x.v.frets)}</code>`:''}</button>`;}).join('');
-  return `<div class="xch"><div class="xch-top"><div>${tabbed&&p===null?'':`<b>${p===null?`Chords of ${esc(from)}`:`Chords in ${esc(from)} that use ${n}`}</b>`}${p===null?`<p class="hint">${wide?'Click':'Tap'} a note on the neck to see the ones that use it.</p>`:''}${tri.length?`<p class="hint">Same note, different job: ${n} is ${lkAnd(tri)}.</p>`:''}</div>
+  return `<div class="xch"><div class="xch-top"><div>${tabbed&&p===null?'':`<b>${p===null?`Chords of ${esc(from)}`:`Chords in ${esc(from)} that use ${n}`}</b>`}${p===null?`<p class="hint">${fcOn()?`${wide?'Click':'Tap'} a chord to start from it, then change its notes on the neck.`:`${wide?'Click':'Tap'} a note on the neck to see the ones that use it.`}</p>`:''}${tri.length?`<p class="hint">Same note, different job: ${n} is ${lkAnd(tri)}.</p>`:''}</div>
     <span class="xsw"><button class="chip" data-act="cpnew" data-id="explore" data-tip="Type a few chords and hear them loop. Nothing is saved until you ask.">Sketch a progression</button><span class="swl">Add 7ths<button class="sw sm" data-act="lksev" aria-pressed="${!!saved.lkSev}" aria-label="Add 7ths"></button></span></span></div>
     ${par?`<p class="hint">${esc(lkScale())} sits inside ${esc(from)}, so these are its chords.</p>`:''}
     <div class="shapes xshapes">${cards}</div>
@@ -3583,12 +3626,12 @@ function modeColor(){ // the note that gives the mode in the top bar its sound, 
   const m=modeName().replace(/ \(.*\)/,''), c=MODE_COLOR[m]; return c?{iv:c[0],sym:c[1],mode:m}:null;
 }
 const strName=s=>['6th','5th','4th','3rd','2nd','1st'][s]+' string';
-function lkChordCardHTML(x){ // Explore's card for the chord you clicked: the same card as Drill's, with its notes as a table
+function lkChordCardHTML(x,O={}){ // Explore's card for the chord you clicked: the same card as Drill's, with its notes as a table
   const ch=x.ch, sp=chordSpell(ch), A=new Set(cur.A7), mc=modeColor(), v=x.v;
   const cols=sp.map(n=>`<b style="--c:${COL[(n.p-ch.root+12)%12]}">${esc(n.name)}</b>`).join('');
   const inCh=sp.map(n=>`<span>${n.sym}</span>`).join(''), inKey=sp.map(n=>{const iv=(n.p-cur.key+12)%12; return `<span>${cur.set.has(iv)?lab(iv)[0]:'–'}</span>`;}).join('');
   const holds=mc&&sp.find(n=>(n.p-cur.key+12)%12===mc.iv);
-  let o=`<div class="vc-head"><b>${esc(ch.name)}</b><b class="rn">${esc(ch.roman)}</b><span>in ${esc(lkScale())}</span></div>
+  let o=`<div class="vc-head"><b>${esc(ch.name)}</b><b class="rn">${esc(ch.roman)}</b><span>${O.sub||'in '+esc(lkScale())}</span></div>
     <div class="cc-tab" style="--n:${sp.length}"><span class="cc-l">Note</span>${cols}<span class="cc-l">In ${esc(ch.name)}</span>${inCh}<span class="cc-l">In key</span>${inKey}</div>`;
   if(x.tri){ // a triad: its three strings, low to high, with the note and the degree on each
     const S=x.tri.frets.map((f,s)=>f===null?null:{s,f}).filter(Boolean), nm=n=>{const q=pc(n.s,n.f); return (sp.find(z=>z.p===q)||{name:noteName(q)}).name;};
@@ -3599,7 +3642,7 @@ function lkChordCardHTML(x){ // Explore's card for the chord you clicked: the sa
   else if(holds) o+=`<p class="kc-mode">${esc(holds.name)} is the ${mc.mode} color note.</p>`;
   if(v){const degs=v.frets.map((f,s)=>f===null?'×':chordIv(ch,(pc(s,f)-ch.root+12)%12)[0]);
     o+=fold('vshape',`Chord shape <code>${fretText(v.frets)}</code>`,`<div class="kc-diag">${uprightSVG(v.frets,degs)}<p class="hint">Dots: fingers · below: degrees</p></div>`);
-    o+=`<div class="row"><button class="chip" data-act="lkhear" data-tip="Hear ${esc(ch.name)} in this shape.">▶ Hear it</button></div>`;}
+    o+=`<div class="row"><button class="chip" data-act="${O.hear||'lkhear'}" data-tip="Hear ${esc(ch.name)} in this shape.">▶ Hear it</button></div>`;}
   const keep=cur.chord; cur.chord=ch; const built=chordFormula(v||null); cur.chord=keep;
   o+=fold('vbuilt',`How ${esc(ch.name)} is built`,built);
   return o;
@@ -4766,8 +4809,8 @@ function renderPanel(){
     const ivs=cur.allowed.map(i=>`<button class="ivchip" style="--c:${COL[i]}" data-act="iv" data-i="${i}" aria-pressed="${st.visible.has(i)}" aria-label="${lab(i)[1]}">${lab(i)[0]}</button>`).join('');
     panel.innerHTML=`<div class="toolbar xtool"><div class="tl">${seg('Show','show',[['all','Whole scale'],['chord','Chord tones']],showChord()?'chord':'all')}
       ${seg('Labels','labels',[['iv','Degrees'],['notes','Notes'],['fing','Fingers']],saved.lkFing&&saved.lkFlab?'fing':saved.labels==='notes'?'notes':'iv')}</div>
-      <div class="tr">${seg('Click a note','lock',[['on','Explain it'],['off','Make it the key']],saved.lkLock===false?'off':'on')}</div></div>
-      <div class="row degrow"><span class="seglab">Degrees</span><button class="ivchip" style="--c:${COL[0]}" aria-pressed="true" disabled aria-label="root, always shown" data-tip="R, the root, always shows.">R</button>${ivs}</div>${wide?'':`<div class="xkey">${lkSel()!==null?lkNoteHTML(lkSel()):(()=>{const PX=st.lkPin&&lkPinned(); return PX?lkChordCardHTML(PX):keyCardHTML()+exploreKey();})()}</div>`}${xTabsHTML()}`;
+      <div class="tr">${seg('Click a note','lock',[['on','Explain it'],['off','Make it the key'],['chord','Change the chord']],saved.lkChg?'chord':saved.lkLock===false?'off':'on')}</div></div>
+      <div class="row degrow"><span class="seglab">Degrees</span><button class="ivchip" style="--c:${COL[0]}" aria-pressed="true" disabled aria-label="root, always shown" data-tip="R, the root, always shows.">R</button>${ivs}</div>${wide?'':`<div class="xkey">${fcOn()?fcCardHTML():lkSel()!==null?lkNoteHTML(lkSel()):(()=>{const PX=st.lkPin&&lkPinned(); return PX?lkChordCardHTML(PX):keyCardHTML()+exploreKey();})()}</div>`}${xTabsHTML()}`;
   }else if(st.mode==='name'){
     const n=cur.allowed.length+1, cols=Math.min(n,n>8?6:n);
     const btns=cur.allowed.map(i=>{let cls='ans';
@@ -4805,6 +4848,7 @@ neck.addEventListener('click',e=>{
     return;
   }
   if(st.mode==='explore'&&cbXRing(p.s,p.f)){cbXAct({dataset:{cb:'spot',s:String(p.s),f:String(p.f)}}); return;} // a gold ring: the chord builder's root spot
+  if(fcOn()){const fr=fcFr(); fr[p.s]=fr[p.s]===p.f?null:p.f; if(fr[p.s]!=null) play(p); save(); render(); return;} // Change the chord: the string plays here now, or rests
   play(p);
   if(st.mode==='explore'&&exSong()){st.exTap=pc(p.s,p.f); renderPrompt(); renderVoice(); return;} // a song keeps its key: the tap just says what the note is
   if(st.mode==='explore') st.cbx.on=false; // a note: the neck goes back to the key
@@ -5050,11 +5094,14 @@ const onClick=e=>{
       if(saved.sound){const f=exVoicing(E,b.dataset.n); if(f) hearFrets(f);}
       if(b.closest('.cchips')){const el=[...document.querySelectorAll('.cchips [data-act="exch"]')].find(x=>x.dataset.n===b.dataset.n); if(el) el.focus();} return;}
     case 'xtab': saved.xtab=b.dataset.v; if(saved.xtab!=='build') st.cbx.on=false; break;
+    case 'fcset':{const k=b.dataset.k, x=k&&lkChords().find(c=>c.ch.name===k); saved.fcFr=x&&x.v?x.v.frets.slice():FC_NONE.slice(); if(x&&x.v&&saved.sound) hearFrets(saved.fcFr); break;}
+    case 'fchear':{const fr=fcFr(); if(fr.some(f=>f!=null)) hearFrets(fr); return;}
     case 'lkhear':{const x=st.lkPin&&lkChords().find(c=>c.ch.name===st.lkPin), f=x&&(fingPick(x.ch,cur.key)||(x.v&&x.v.frets)); if(f) hearFrets(f); return;}
     case 'exhear':{const E=exSong(); const f=E&&E.sel&&((st.lkFv&&E.c&&fingPick(E.c,E.key))||exVoicing(E,E.sel)); if(f) hearFrets(f); return;}
     case 'exlab': if(b.dataset.v==='fing'){saved.lkFing=saved.lkFlab=true; break;} fingOff(); saved.exlab=b.dataset.v; break;
     case 'lksev': D.sev=!D.sev; st.lkPin=null; st.lkHov=null; refresh(); break;
-    case 'lkch':{const k=b.dataset.k; st.cbx.on=false; st.lkPin=st.lkPin===k?null:k; st.lkHov=null; st.lkFv=null; st.lkFh=null;
+    case 'lkch':{const k=b.dataset.k; st.cbx.on=false;
+      if(fcOn()){const x=lkChords().find(c=>c.ch.name===k); if(x&&x.v){saved.fcFr=x.v.frets.slice(); if(saved.sound) hearFrets(saved.fcFr);} st.lkHov=null; break;} st.lkPin=st.lkPin===k?null:k; st.lkHov=null; st.lkFv=null; st.lkFh=null;
       const x=st.lkPin&&lkChords().find(c=>c.ch.name===k); if(x&&x.v&&saved.sound) hearFrets(x.v.frets); break;}
     case 'iv': st.visible.has(i)?st.visible.delete(i):st.visible.add(i); break;
     case 'show': st.visible=new Set(b.dataset.v==='chord'?chordTones():cur.allowed); break;
@@ -5062,7 +5109,7 @@ const onClick=e=>{
     case 'lktri': saved.lkTri=b.dataset.v==='tri'; st.lkFv=null; st.lkFh=null; break;
     case 'lktstr': saved.lkTstr=b.dataset.v; st.lkFv=null; st.lkFh=null; break;
     case 'lkfv':{const t=b.dataset.f; st.cbx.on=false; st.lkFv=st.lkFv&&fretText(st.lkFv)===t?null:JSON.parse(b.dataset.j); st.lkFh=null; if(st.lkFv&&saved.sound) hearFrets(st.lkFv); break;}
-    case 'lock': st.cbx.on=false; saved.lkLock=b.dataset.v==='on'; st.lkSel=null; st.lkAt=null; st.lkPin=null; st.lkHov=null; break;
+    case 'lock': st.cbx.on=false; saved.lkChg=b.dataset.v==='chord'; saved.lkLock=b.dataset.v!=='off'; st.lkSel=null; st.lkAt=null; st.lkPin=null; st.lkHov=null; break;
     case 'answer':{const q=st.q;if(q.answered)return;q.picked=i;q.answered=true;record(i===q.iv);play(q.root);play(q.target,.45);break;}
     case 'hear': play(st.q.root);play(st.q.target,.5); return;
     case 'quiz': if(b.dataset.v!==st.mode) setMode(b.dataset.v); return;
@@ -5290,6 +5337,9 @@ const TIPS=[
  ['.tcol',tabTip],
  ['#modes [data-mode="explore"]',()=>focusSong()?'<b>Explore</b>: what each chord of your song does in its key, and what to play over it. Shortcut: 1.':`<b>Explore</b>: see every degree of the scale around the key. ${saved.lkLock===false?'Click a note to make it the key.':'Click a note to see how it fits the key and the chords that use it.'} Shortcut: 1.`],
  ['[data-act="lock"][data-v="on"]',()=>'<b>Explain it</b>: clicking a note keeps the key and position, explains the note against the root, and shows the chords that use it.'],
+ ['[data-act="lock"][data-v="chord"]',()=>'<b>Change the chord</b>: clicking a fret moves that string’s note there, and clicking a sounding note mutes the string. The card names the chord, or shows ? when the notes don’t make one.'],
+ ['[data-act="fcset"]',el=>el.dataset.k?`Start from <b>${esc(el.dataset.k)}</b> as it sits in this position, then change its notes.`:'Mute every string and start from nothing.'],
+ ['[data-act="fchear"]',()=>'Hear the notes you fretted, low to high.'],
  ['[data-act="lock"][data-v="off"]',()=>'<b>Make it the key</b>: clicking a note makes it the new key, keeping the scale and mode.'],
  ['[data-act="lkfv"]',el=>{const fr=JSON.parse(el.dataset.j), FA=fingering(fr); return `<b>${esc(el.getAttribute('aria-label'))}</b>. Fingers, low E to high e: ${fr.map((f,s)=>f===null?'×':f===0?'open':FA.fing[s]).join(' ')}${FA.barre?`, finger 1 barred across fret ${FA.barre.f}`:''}. ${wide?'Hover to see it on the neck; click to hear it and keep it there.':'Tap to hear it and see it on the neck.'}`;}],
  ['[data-act="labels"][data-v="fing"]',()=>'<b>Fingers</b>: label a chord\'s dots by the finger that frets them (1 index, 2 middle, 3 ring, 4 pinky, 0 open), with its barre, and list its common shapes up the neck.'],
@@ -5990,7 +6040,7 @@ cpEl.addEventListener('drop',e=>{const b=e.target.closest('.cpm-bar'); if(!CP||C
   CP.bars=order.flat(); CP.sel=Math.max(0,CP.bars.indexOf(sel)); cpPart();});
 cpEl.addEventListener('dragend',()=>{if(CP) CP.drag=null;});
 
-window.__fretDebug={strumArrows,triadList,triadPick,triadShape,triName,cbVoicings,cbSpots,cbFing,cbNameIt,cbFrom,cbMove,cbSuf,cbHTML,mineBars,mineProg,mineList,cpOpen,get CP(){return CP},cbXShown,setLoop,loopOn,lkFingList,stdOpen,lkChords,lkPairs,lkSel,lkWin,shapeFits,ivShapeList,fingering,fingerMoves,tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,EXS,EX_BY,exStart,exGo,routines,openRoutine,chipDone,exProgress,fillSet,editStart,ceditStart,runOf,setupSkill,stepState,followKey,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule,setWhere,setPlan,passEnd,cycleShapes,techMarks,regen};
+window.__fretDebug={fcNow,fcFr,strumArrows,triadList,triadPick,triadShape,triName,cbVoicings,cbSpots,cbFing,cbNameIt,cbFrom,cbMove,cbSuf,cbHTML,mineBars,mineProg,mineList,cpOpen,get CP(){return CP},cbXShown,setLoop,loopOn,lkFingList,stdOpen,lkChords,lkPairs,lkSel,lkWin,shapeFits,ivShapeList,fingering,fingerMoves,tipFor,skillNow,capo,saveParts,exSong,autoVoicing,chordIn,voicingChoices,parseChord,TIP_SEL,st,get LOG(){return LOG},lg,sync,schedule,mergeLogs,syncNow,bestOf,addSong,importLog,EXS,EX_BY,exStart,exGo,routines,openRoutine,chipDone,exProgress,fillSet,editStart,ceditStart,runOf,setupSkill,stepState,followKey,parseChords,TOKEN_KEY,LOG_KEY,get cur(){return cur},F,D,R,saved,met,genSeq,boxNotes,refresh,RPAT,curPat,counting,PROGS,PROG_BY,PROG_FIX,progLabel,setProgChord,pschedule,setWhere,setPlan,passEnd,cycleShapes,techMarks,regen};
 fillSelects();
 render();
 setTimeout(syncNow,300); // does nothing without a token
