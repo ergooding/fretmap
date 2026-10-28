@@ -1358,6 +1358,7 @@ const fold=(k,sum,body)=>`<details class="fold" data-fold="${k}"${saved.fold[k]?
 if(!FAMS[saved.focus.fam]) saved.focus={key:0,fam:'major',mode:0,pos:-1};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
 const F=saved.focus, D=saved.drill, R=saved.rhythm;
+if(D.prog==='mine-sketch') D.prog='pop'; // a sketch isn't saved, so a reload can't come back to it
 // one Add 7ths switch: Explore's chords and Drill's share D.sev
 delete saved.lkSev; Object.defineProperty(saved,'lkSev',{get(){return !!D.sev;},set(v){D.sev=!!v;},enumerable:false,configurable:true});
 // One builder: what you play over (one chord, a progression or a song), how you play each chord (strummed, picked,
@@ -5840,7 +5841,7 @@ panel.addEventListener('change',e=>{if(e.target.classList.contains('cb-rootsel')
 
 // ---------- your own progressions: saved in the log, so they sync; each keeps the key it was built in and moves with the focus key ----------
 const mineList=()=>!logReady()?[]:Object.values(LOG.progs||{}).filter(p=>p&&!p.gone).sort((a,b)=>a.created-b.created);
-function mineProg(id){if(id==='mine-sketch') return st.sketch||null; if(!/^mine-/.test(id||'')||!logReady()) return null; const p=LOG.progs&&LOG.progs[id]; return p&&!p.gone?p:null;}
+function mineProg(id){if(id==='mine-sketch'){try{return st.sketch||null;}catch(e){return null;}} /* before start-up finishes there's no sketch yet */ if(!/^mine-/.test(id||'')||!logReady()) return null; const p=LOG.progs&&LOG.progs[id]; return p&&!p.gone?p:null;}
 function mineBars(p,key=cur.key){ // its chords in a key, one per bar or two in a split bar: each chord's root and shape move by the same distance
   let d=((key-p.key)%12+12)%12; if(d>6) d-=12;
   const sp=key===cur.key?spellIn(cur.key,cur.A7):spellIn(key,MAJ); // the same spelling as cbSp, which isn't defined yet when the page first loads
