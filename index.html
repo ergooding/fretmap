@@ -446,8 +446,13 @@ html.wide{font-size:19px}
 /* strum grid with counting under each step (Drill progressions) */
 .rgrid{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:6px 0;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:6px 4px;flex:none}
 .rstep{border:0;background:none;padding:2px 0 3px;margin:0 1px;border-radius:7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0}
-.rstep.beat{border-left:2px solid var(--line);border-radius:0 7px 7px 0;margin-left:2px}
-.rstep:first-child{border-left:0}
+.rcell{display:flex;flex-direction:column;align-items:stretch;min-width:0}
+.rcell.beat{border-left:2px solid var(--line);margin-left:2px}
+.rcell:first-child{border-left:0}
+.rcell.beat .rstep{border-radius:0 7px 7px 0}
+.rdir{border:0;background:none;font:inherit;font-size:.78rem;line-height:1.1;color:var(--muted);cursor:pointer;padding:1px 0;border-radius:6px;opacity:.55}
+.rdir:hover:not(:disabled){opacity:1;background:color-mix(in srgb,var(--gold) 18%,transparent)}
+.rdir:disabled{cursor:default}
 .rstep b{font-size:1.35rem;line-height:1.2;height:1.2em;font-weight:700}
 .rstep.ghost b{opacity:.2;font-weight:400}
 .rstep.mute b{color:var(--bad)}
@@ -2203,7 +2208,7 @@ function genProg(){
       for(let k=0;k<4;k++){const ci=at(k/4); seq.push(ci!==prev?{chord:true,strum:'x',ci,bar,k,n:4,head:true,down:true}:{rest:true,ci,bar,k,n:4}); prev=ci;} bar++; continue;}
     if(doStrum&&bgS&&one){seq.push(...withChord(i,()=>bgBar('boom',cur.prog[i],nxt,bar,i,true))); bar++;} // in Strum, then pick the next bar is the same chord, so no walk
     else if(doStrum&&voiced){ let prev=-1;
-      for(let k=0;k<P.res;k++){const ci=at(k/P.res); seq.push({chord:true,strum:P.steps[k],ci,bar,k,n:P.res,sw:P.swing,live:!!P.live,head:ci!==prev}); prev=ci;} bar++; }
+      for(let k=0;k<P.res;k++){const ci=at(k/P.res); seq.push({chord:true,strum:stepKind(P.steps[k]),down:stepDown(P.steps[k],k),ci,bar,k,n:P.res,sw:P.swing,live:!!P.live,head:ci!==prev}); prev=ci;} bar++; }
     if(doPick&&bgP&&one){seq.push(...withChord(i,()=>bgBar(D.pick,cur.prog[i],null,bar,i,true))); bar++; continue;}
     if(doPick||!voiced){
       const A={}, L=4*D.sub; idx.forEach(i=>A[i]=withChord(i,()=>arpNotes(cur.prog[i])));
@@ -2482,7 +2487,8 @@ function draw(){
 
 // ---------- strum patterns ----------
 // Strum patterns on a grid of 8ths or 16ths. The strumming hand moves in constant motion: even steps are downstrokes, odd steps upstrokes.
-// x strum, > accented strum, m muted strum (chuck), . the hand moves past without touching the strings (ghost)
+// x strum, > accented strum, m muted strum (chuck), . the hand moves past without touching the strings (ghost).
+// X, A and M are a strum, accent and chuck the other way: a downstroke on an & in 8ths, say, or an upstroke on a beat.
 const RPATS=[
  ['Quarters and 8ths',[
   ['quarters','Quarter notes',8,'x.x.x.x.'],
@@ -2513,6 +2519,16 @@ const RPATS=[
 const RPAT={}; RPATS.forEach(([g,list])=>list.forEach(([id,name,res,steps,swing])=>RPAT[id]={id,name,res,steps,swing:!!swing,group:g}));
 if(R.pat!=='custom'&&!RPAT[R.pat]) R.pat='faithful';
 const STEP_NAME={x:'strum','>':'accented strum',m:'muted strum (chuck)','.':'ghost, the hand moves past the strings'};
+const FLIP_OF={x:'X','>':'A',m:'M',X:'x',A:'>',M:'m'}, stepKind=c=>({X:'x',A:'>',M:'m'}[c]||c); // a step's kind, whichever way it goes
+const stepDown=(c,k)=>(k%2===0)!==/[XAM]/.test(c); // which way the hand strums on step k
+const stepArrow=(c,k)=>stepKind(c)==='m'?'×':stepDown(c,k)?'↓':'↑';
+const nextStep=c=>({'.':'x',x:'>','>':'m',m:'.',X:'A',A:'M',M:'.'}[c]||'x'); // click: strum, accent, chuck, ghost; a flipped step stays flipped
+// 8ths to 16ths and back: every step keeps its count and its stroke, so an up on the & in 8ths stays an up in 16ths
+function reGrid(steps,res){
+  const keep=(c,from,to)=>{const kd=stepKind(c); return kd==='.'||stepDown(c,from)===stepDown(kd,to)?kd:FLIP_OF[kd];};
+  if(res===16) return steps.split('').map((c,j)=>keep(c,j,2*j)+'.').join('');
+  return steps.split('').filter((c,j)=>j%2===0).map((c,i)=>keep(c,2*i,i)).join('');
+}
 // while Drill plays a song's chords, its strum pattern is the song's own and is kept with the song
 const songNow=()=>D.line==='prog'&&songProg(D.prog)?D.prog:null;
 function keepSongStrum(){const key=strumKey(); if(key) writeStrum(key,{pat:R.pat,swing:!!R.swing,custom:{...R.custom}});}
@@ -2530,7 +2546,7 @@ function curPat(){return R.pat==='custom'?{id:'custom',name:'Your pattern',res:R
 function countLabels(res){const sub={4:[],8:['&'],12:['trip','let'],16:['e','&','a']}[res]||['&']; return [1,2,3,4].flatMap(b=>[String(b),...sub]);}
 function counting(P){const L=countLabels(P.res); return P.steps.split('').map((c,k)=>c==='.'?`(${L[k]})`:L[k]).join(' ');}
 function rstrum(t,ch,down,c,dur){
-  if(c==='m'){click(t,150,0.32); click(t+0.004,2600,0.05); return;}
+  c=stepKind(c); if(c==='m'){click(t,150,0.32); click(t+0.004,2600,0.05); return;}
   const vol=c==='>'?0.2:0.12, len=Math.min(1.2,dur*2+0.15), gap=Math.min(0.012,dur/10);
   let j=0; (down?[0,1,2,3,4,5]:[5,4,3,2]).forEach(s=>{const f=ch.frets[s]; if(f!==null) toneAt(MIDI[s]+capo()+f,t+(j++)*gap,down?vol:vol*0.8,len);});
 }
@@ -3258,8 +3274,9 @@ function opts(list,v){return list.map(([k,l])=>`<option value="${k}"${String(k)=
 function rgridHTML(P,act='rstep',extra=''){
   const per=P.res/4, L=countLabels(P.res);
   return P.steps.split('').map((c,k)=>{
-    const cls=(k%per===0?' beat onbeat':'')+({'.':' ghost',m:' mute','>':' acc'}[c]||'');
-    return `<button class="rstep${cls}" data-act="${act}" data-i="${k}"${extra} aria-label="${L[k]}, ${k%2?'up':'down'}: ${STEP_NAME[c]}"><b>${c==='m'?'×':k%2?'↑':'↓'}</b><small>${L[k]}</small></button>`;
+    const kd=stepKind(c), dn=stepDown(c,k), cls=(k%per===0?' beat onbeat':'')+({'.':' ghost',m:' mute','>':' acc'}[kd]||'')+(kd!=='.'&&dn!==(k%2===0)?' flip':'');
+    const dir=`<button class="rdir" data-act="${act==='rstep'?'rdir':'sgdir'}" data-i="${k}"${extra}${kd==='.'?' disabled':''} aria-label="${L[k]}: make it ${dn?'an upstroke':'a downstroke'}">${kd==='.'?'':dn?'↑':'↓'}</button>`;
+    return `<div class="rcell${k%per===0?' beat':''}"><button class="rstep${cls}" data-act="${act}" data-i="${k}"${extra} aria-label="${L[k]}, ${dn?'down':'up'}: ${STEP_NAME[kd]}"><b>${kd==='.'?(k%2?'↑':'↓'):stepArrow(c,k)}</b><small>${L[k]}</small></button>${dir}</div>`;
   }).join('');
 }
 function markProgChord(){
@@ -3276,7 +3293,7 @@ function updateRGrid(){
   const g=document.getElementById('rgrid'); if(!g) return;
   g.querySelectorAll('.rstep.now').forEach(e=>e.classList.remove('now'));
   const n=st.playing&&st.idx>=0?st.seq[st.idx]:null;
-  if(n&&n.chord&&n.strum!==undefined&&n.live){const e=g.querySelector(`[data-i="${n.k}"]`); if(e) e.classList.add('now');}
+  if(n&&n.chord&&n.strum!==undefined&&n.live){const e=g.querySelector(`.rstep[data-i="${n.k}"]`); if(e) e.classList.add('now');}
 }
 function transportHTML(){
   return `<button class="icon" data-act="slower" aria-label="Slower">−</button>
@@ -3698,7 +3715,7 @@ const pats=list=>()=>list.map(v=>[v,patLabel(v)]);
 const TECH_CH=[['any','Any picking'],['altpick','Strict alternate'],['slurs','Hammer-ons and pull-offs']];
 const OVER_CH=[['through','Run through'],['restart','Restart each chord']];
 const RPAT_DEF=['eighths','backbeat','chuck8','faithful','tresillo']; // the strum chips the Strum row shows; its All 21 patterns menu has the rest
-const strumArrows=P=>P&&P.steps?P.steps.split('').map((c,k)=>c==='.'?' ':k%2?'↑':'↓').join('').replace(/ +/g,'  ').trim():''; // D DU UDU as ↓ ↓↑ ↑↓↑: a gap where the hand misses
+const strumArrows=P=>P&&P.steps?P.steps.split('').map((c,k)=>c==='.'?' ':stepDown(c,k)?'↓':'↑').join('').replace(/ +/g,'  ').trim():''; // D DU UDU as ↓ ↓↑ ↑↓↑: a gap where the hand misses
 const rowName=n=>n.replace(/^8ths, (.)/,(m,c)=>c.toUpperCase()); // in the Strum row, the 8ths patterns go by their accents
 const STRUM_ROW=()=>[...RPAT_LIST.filter(([v])=>RPAT_DEF.includes(v)).map(([v,n])=>[v,rowName(n)]),['boom','Boom-chuck']];
 // Every exercise is a setup of the one builder. The six starting points keep their names, and each counts its ✓ over the
@@ -4733,7 +4750,7 @@ function strumCard(){
   // the pattern is picked in the Strum row; the card shows its steps, and clicking a step makes it your own
   const P=curPat();
   return `<div class="strum-card"><div class="row sc-top"><span class="seglab">Strum</span><b class="scname" id="scname">${R.pat==='custom'?'Your pattern':esc(P.name)}</b>${R.pat==='custom'?seg('Grid','rres',[['8','8ths'],['16','16ths']],String(P.res)):''}${strumOwnerHTML()}</div>
-    <div class="rgrid r${P.res}" id="rgrid" style="--n:${P.res}">${rgridHTML(P)}</div><p class="hint">Click a step to change it.${pk||run?' '+(pk||run):''}</p></div>`;
+    <div class="rgrid r${P.res}" id="rgrid" style="--n:${P.res}">${rgridHTML(P)}</div><p class="hint">Click a step to change it, or the small arrow under it to make it a downstroke or an upstroke.${pk||run?' '+(pk||run):''}</p></div>`;
 }
 const subUsed=()=>!(D.line==='prog'&&cur.prog)||isLinePlan(D.plan)||D.plan==='mix'||picks(D)&&D.pick==='arp'||D.plan==='triads'&&D.tplay==='pick'; // notes a beat matters: a line, a run or a picked chord
 const SUB_FACE={1:'Quarters',2:'8ths',3:'Triplets',4:'16ths'};
@@ -5050,10 +5067,10 @@ const onClick=e=>{
       if(f) hearFrets(f); render(); return;}
     case 'vhear':{const sk=LOG.skills[st.song], n=b.dataset.n, typed=parseFrets((document.getElementById('vType')||{}).value);
       const f=typed||(sk.voicings&&sk.voicings[n]&&parseFrets(sk.voicings[n]))||autoVoicing(n,sk.key??0); if(f) hearFrets(f); return;}
-    case 'sgstep': case 'sgres': case 'sgswing':{ // the song's strum pattern, or a part's own (data-sp)
+    case 'sgstep': case 'sgdir': case 'sgres': case 'sgswing':{ // the song's strum pattern, or a part's own (data-sp)
       const sk=LOG.skills[st.song]; if(!sk) return; const k=b.dataset.sp!==undefined?+b.dataset.sp:-1, sp=(k>=0?partStrum(st.song,k):sk.strum)||null, P=patOf(sp);
-      if(act==='sgstep'){const nx={'.':'x',x:'>','>':'m',m:'.'}[P.steps[i]]; setSongStrum(st.song,{pat:'custom',swing:P.swing,custom:{res:P.res,steps:P.steps.slice(0,i)+nx+P.steps.slice(i+1)}},k);}
-      else if(act==='sgres'){const res=+b.dataset.v; if(res===P.res) return; setSongStrum(st.song,{pat:'custom',swing:P.swing,custom:{res,steps:res===16?P.steps.split('').map(c=>c+'.').join(''):P.steps.split('').filter((c,j)=>j%2===0).join('')}},k);}
+      if(act==='sgstep'||act==='sgdir'){const c=P.steps[i], nx=act==='sgstep'?nextStep(c):FLIP_OF[c]; if(!nx) return; setSongStrum(st.song,{pat:'custom',swing:P.swing,custom:{res:P.res,steps:P.steps.slice(0,i)+nx+P.steps.slice(i+1)}},k);}
+      else if(act==='sgres'){const res=+b.dataset.v; if(res===P.res) return; setSongStrum(st.song,{pat:'custom',swing:P.swing,custom:{res,steps:reGrid(P.steps,res)}},k);}
       else setSongStrum(st.song,{...(sp&&sp.pat?sp:{pat:P.id}),swing:!P.swing},k);
       if(songNow()===st.song) regen(); else render(); return;}
     case 'pown':{const k=+b.dataset.part; if(!LOG.skills[st.song]) return; setPartOwn(st.song,k,!partStrum(st.song,k)); if(songNow()===st.song) regen(); else render(); return;}
@@ -5063,16 +5080,17 @@ const onClick=e=>{
     case 'lgforget': setToken(''); sync.state=''; render(); return;
     case 'lgexport': exportLog(); return;
     case 'lgimport': document.getElementById('lgFile').click(); return;
-    case 'rstep':{
-      const P=curPat(); if(R.pat!=='custom'){R.custom={res:P.res,steps:P.steps}; R.pat='custom';}
-      const c=R.custom.steps[i], nx={'.':'x',x:'>','>':'m',m:'.'}[c];
+    case 'rstep': case 'rdir':{ // a step's kind (strum, accent, chuck, ghost), or the way it's strummed
+      const P=curPat(), c0=P.steps[i]; if(act==='rdir'&&!FLIP_OF[c0]) return;
+      if(R.pat!=='custom'){R.custom={res:P.res,steps:P.steps}; R.pat='custom';}
+      const c=R.custom.steps[i], nx=act==='rdir'?FLIP_OF[c]:nextStep(c);
       R.custom.steps=R.custom.steps.slice(0,i)+nx+R.custom.steps.slice(i+1); save(); keepSongStrum();
       st.seq=genSeq(); if(st.playing){logStop(); logStart();} render(); // same length, so a running drill carries on with the new pattern
-      if(D.notes&&nx!=='.'&&cur.voicing&&!st.playing) try{ensureAC(); rstrum(ac.currentTime+0.02,cur.voicing,i%2===0,nx,0.3);}catch(err){} // hear the new step
+      if(D.notes&&nx!=='.'&&cur.voicing&&!st.playing) try{ensureAC(); rstrum(ac.currentTime+0.02,cur.voicing,stepDown(nx,i),nx,0.3);}catch(err){} // hear the new step
       return;}
     case 'rres':{
       const res=+b.dataset.v, sp=R.custom.steps; if(res===R.custom.res) return;
-      R.custom={res,steps:res===16?sp.split('').map(c=>c+'.').join(''):sp.split('').filter((c,j)=>j%2===0).join('')};
+      R.custom={res,steps:reGrid(sp,res)};
       save(); keepSongStrum(); regen(); return;}
     case 'feel':{ // the practice bar's Feel: straight or shuffled
       R.swing=b.dataset.v==='shuffle'; save(); keepSongStrum(); if(st.playing){logStop(); logStart();} render(); return;}
@@ -5208,7 +5226,7 @@ const GLOSS_GROUPS=[
   ['countin','Count-in','A bar of clicks before the drill starts so you can feel the tempo.'],
   ['tab','Tab','Guitar notation: six lines for the strings, high E on top, with fret numbers showing where to play.'],
   ['strum','Strumming pattern','Which beats and in-between beats you strike the strings on, and in which direction. Here a pattern sits on a grid of 8ths or 16ths.'],
-  ['motion','Constant motion','The strumming hand never stops: down on the beats (and on the & in 16ths), up on the steps in between: the & in 8ths, the e and a in 16ths, even when it misses the strings. It keeps your time steady and makes the direction of every strum automatic.'],
+  ['motion','Constant motion','The strumming hand never stops: down on the beats (and on the & in 16ths), up on the steps in between: the & in 8ths, the e and a in 16ths, even when it misses the strings. It keeps your time steady and makes the direction of every strum automatic. To strum against it, say all downstrokes, flip a step with the small arrow under it in the strum grid: the hand still moves, coming back up past the strings.'],
   ['counting','Counting 8ths and 16ths','Say the beat number on each beat. 8ths add “and” (&) between beats: 1 & 2 &. 16ths add “e” and “a” as well: 1 e & a 2 e & a.'],
   ['ghost','Ghost strum','The hand keeps moving through the strum but misses the strings, so the motion stays even. Faded in the grid and in brackets when counted.'],
   ['chuck','Chuck (muted strum)','A percussive strum with the fretting hand resting on the strings so they don’t ring. Shown as × in the grid.'],
@@ -5383,7 +5401,9 @@ const TIPS=[
  ['[data-act="vhear"]',()=>'Hear the typed shape, or the current one.'],
  ['[data-act="vclear"]',()=>'Forget your voicing and let Fretmap pick a shape for each box.'],
  ['[data-sg="pat"]',()=>{const sk=LOG.skills[st.song], P=sk&&songPat(sk); return P?`<b>${P.name}</b>: ${counting(P)}. Saved with this song.`:'';}],
- ['[data-act="sgstep"]',el=>{const sk=LOG.skills[st.song], P=songPat(sk), k=+el.dataset.i; return `<b>${countLabels(P.res)[k]}</b>, ${k%2?'up':'down'}: ${STEP_NAME[P.steps[k]]}. Click to cycle strum, accent, chuck, ghost.`;}],
+ ['[data-act="sgstep"]',el=>{const sk=LOG.skills[st.song], P=songPat(sk), k=+el.dataset.i; const c=P.steps[k]; return `<b>${countLabels(P.res)[k]}</b>, ${stepDown(c,k)?'down':'up'}: ${STEP_NAME[stepKind(c)]}. Click to cycle strum, accent, chuck, ghost. The arrow under it flips the stroke.`;}],
+ ['[data-act="sgdir"],[data-act="rdir"]',el=>{const k=+el.dataset.i, P=el.dataset.act==='rdir'?curPat():(()=>{const sk=LOG.skills[st.song], sp=el.dataset.sp!==undefined?partStrum(st.song,+el.dataset.sp):sk.strum; return patOf(sp);})(), c=P.steps[k], dn=stepDown(c,k);
+   return c==='.'?'A ghost has no stroke. Click the step above to strum it.':`Make <b>${countLabels(P.res)[k]}</b> ${dn?'an upstroke':'a downstroke'}. ${dn===(k%2===0)?'The hand still moves in constant motion, so it goes '+(dn?'up':'down')+' past the strings before it.':'That’s the usual way for this step.'}`;}],
  ['[data-act="sgres"][data-v="8"]',()=>'Put the song’s pattern on 8 steps a bar.'],
  ['[data-act="sgres"][data-v="16"]',()=>'Put the song’s pattern on 16 steps a bar.'],
  ['[data-act="sgswing"]',()=>'Shuffle feel for this song: the second strum of each pair lands late.'],
@@ -5398,7 +5418,7 @@ const TIPS=[
  ['[data-act="lgexport"]',()=>'Download your whole log as a file.'],
  ['[data-act="lgimport"]',()=>'Merge a log file into this one. Nothing already here is lost.'],
  ['.rstep',el=>{const P=curPat(),k=+el.dataset.i,c=P.steps[k];
-   return `<b>${countLabels(P.res)[k]}</b>, ${k%2?'up':'down'}: ${STEP_NAME[c]}. Click to cycle strum, accent, chuck, ghost${R.pat==='custom'?'':'. This turns the pattern into your own'}.`;}],
+   return `<b>${countLabels(P.res)[k]}</b>, ${stepDown(c,k)?'down':'up'}: ${STEP_NAME[stepKind(c)]}. Click to cycle strum, accent, chuck, ghost. The arrow under it flips the stroke${R.pat==='custom'?'':'. This turns the pattern into your own'}.`;}],
  ['[data-set="rpat"]',()=>{const P=curPat();return `<b>${P.name}</b>: ${counting(P)}. Patterns run from plain 8ths through ghost strums, 16ths, syncopation, and shuffle.`;}],
  ['[data-act="rres"][data-v="8"]',()=>'Put your pattern on 8 steps a bar: 1 & 2 & 3 & 4 &.'],
  ['[data-act="rres"][data-v="16"]',()=>'Put your pattern on 16 steps a bar: 1 e & a, four times.'],
@@ -5900,8 +5920,8 @@ function cpPlay(){ // loop the sketch in the strum pattern at the tempo, without
   const tick=()=>{ if(!CP||!CP.play) return;
     while(CP.play.next<ac.currentTime+0.3){
       const g=G[CP.play.bar], t0=CP.play.next, bi=CP.play.bar;
-      for(let k=0;k<P.res;k++){const c=P.steps[k]; if(c==='.'||c==='m') continue;
-        const slot=CP.bars[g[Math.min(g.length-1,Math.floor(k/P.res*g.length))]], t=t0+k*step+(R.swing&&k%2?step/3:0); strumAt(slot.fr,t,k%2===1);}
+      for(let k=0;k<P.res;k++){const c=P.steps[k]; if(c==='.'||stepKind(c)==='m') continue;
+        const slot=CP.bars[g[Math.min(g.length-1,Math.floor(k/P.res*g.length))]], t=t0+k*step+(R.swing&&k%2?step/3:0); strumAt(slot.fr,t,!stepDown(c,k));}
       setTimeout(()=>{if(!CP||!CP.play) return; cpEl.querySelectorAll('.cpm-bar').forEach(e=>e.classList.toggle('now',+e.dataset.bar===bi));},Math.max(0,(t0-ac.currentTime)*1000));
       CP.play.next+=bar; CP.play.bar=(CP.play.bar+1)%G.length;}
     CP.play.timer=setTimeout(tick,80);};

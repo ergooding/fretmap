@@ -346,6 +346,9 @@ const entries=X=>X.LOG.sessions.flatMap(s=>s.entries);
   mode('songs'); ok(d.querySelector('.sbox [data-act=sgstep]')&&d.querySelectorAll('.sbox [data-act=sgstep]').length===X.R.custom.steps.length,'songs-strum-grid');
   click(d.querySelector('.sbox [data-act=sgstep][data-i="0"]')); const sp2=X.LOG.skills['song:here-pavement'].strum;
   ok(sp2.custom.steps[0]!==stepsNow[0]&&X.R.custom.steps===sp2.custom.steps,'songs-strum-edit',JSON.stringify(sp2));
+  {const before=X.LOG.skills['song:here-pavement'].strum.custom.steps, j=[...before].findIndex((c,k)=>k%2===1&&c==='x'); if(j<0) ok(false,'songs-strum-flip','no & to flip '+before); else {
+   click(d.querySelector(`.sbox [data-act=sgdir][data-i="${j}"]`)); const s3=X.LOG.skills['song:here-pavement'].strum.custom.steps;
+   ok(s3[j]==='X'&&X.R.custom.steps===s3&&d.querySelector(`.sbox [data-act=sgstep][data-i="${j}"] b`).textContent==='↓','songs-strum-flip',s3);}}
   setF('[data-sg=pat]','shuffle'); ok(X.LOG.skills['song:here-pavement'].strum.pat==='shuffle'&&X.R.pat==='shuffle'&&X.R.swing,'songs-strum-menu');
   click(d.querySelector('[data-act=sgswing]')); ok(X.LOG.skills['song:here-pavement'].strum.swing===false&&!X.R.swing,'songs-strum-swing');
   // each song keeps its own "Your pattern", and the general one is left alone

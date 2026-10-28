@@ -152,9 +152,30 @@ const pcOf=(s,f)=>(OPEN[s]+f)%12;
     if(X.R.pat!=='custom'||X.R.custom.steps!=='xxx.x.x.') fail('edit',X.R.pat+' '+X.R.custom.steps);
     if(X.st.seq.filter(e=>e.chord).slice(0,8).map(e=>e.strum).join('')!=='xxx.x.x.') fail('edit-seq','strum bar not rebuilt');
     click(d.querySelector('[data-act=rres][data-v="16"]'));
-    if(X.R.custom.res!==16||X.R.custom.steps!=='x.x.x...x...x...') fail('res16',X.R.custom.steps);
+    if(X.R.custom.res!==16||X.R.custom.steps!=='x.X.x...x...x...') fail('res16',X.R.custom.steps);
     click(d.querySelector('[data-act=rres][data-v="8"]'));
     if(X.R.custom.steps!=='xxx.x.x.') fail('res8',X.R.custom.steps);
+    // any step can be a downstroke or an upstroke: all downstrokes on 8ths, shown, played and kept across grids
+    strum('eighths'); for(const i of [1,3,5,7]) click(d.querySelector(`.rdir[data-i="${i}"]`));
+    if(X.R.pat!=='custom'||X.R.custom.steps!=='xXxXxXxX') fail('flip',X.R.custom.steps);
+    {const ch=X.st.seq.filter(e=>e.chord).slice(0,8); if(!ch.every(e=>e.down===true&&e.strum==='x')) fail('flip-seq',JSON.stringify(ch.map(e=>[e.strum,e.down])));}
+    if([...d.querySelectorAll('#rgrid .rstep b')].map(e=>e.textContent).join('')!=='↓↓↓↓↓↓↓↓') fail('flip-grid',d.getElementById('rgrid').textContent);
+    if(X.strumArrows(X.curPat())!=='↓↓↓↓↓↓↓↓') fail('flip-chip',X.strumArrows(X.curPat()));
+    click(d.querySelector('.rstep[data-i="1"]')); if(X.R.custom.steps[1]!=='A') fail('flip-cycle',X.R.custom.steps); // an accent stays a downstroke
+    click(d.querySelector('.rstep[data-i="1"]')); click(d.querySelector('.rstep[data-i="1"]')); if(X.R.custom.steps[1]!=='.'||!d.querySelector('.rdir[data-i="1"]').disabled) fail('flip-ghost',X.R.custom.steps);
+    click(d.querySelector('[data-act=rres][data-v="16"]')); if(X.R.custom.steps!=='x...x.x.x.x.x.x.') fail('flip-res16',X.R.custom.steps);
+    if(X.st.seq.filter(e=>e.chord).slice(0,16).filter(e=>e.strum!=='.').some(e=>!e.down)) fail('flip-res16-down','');
+    click(d.querySelector('[data-act=rres][data-v="8"]')); if(X.R.custom.steps!=='x.xXxXxX') fail('flip-res8',X.R.custom.steps);
+    click(d.querySelector('.rdir[data-i="0"]')); if(X.R.custom.steps[0]!=='X'||X.st.seq.find(e=>e.chord).down!==false) fail('flip-up-on-1',X.R.custom.steps);
+    // playback strums each step the way the grid shows: low string first for a downstroke
+    {bc('prog','two'); X.saved.bpm=60; Object.assign(X.D,{notes:true}); log.length=0; w.__now=0;
+     X.R.custom={res:8,steps:'xXxXxXxX'}; X.R.pat='custom'; X.regen();
+     click(d.querySelector('[data-act=play]')); w.clearInterval(X.met.timer);
+     const t0=X.met.next+4; while(w.__now<t0+4){w.__now+=0.01; X.pschedule();}
+     click(d.querySelector('[data-act=play]'));
+     const v=X.cur.prog[0].voicing, lowF=v.frets.findIndex(f=>f!==null);
+     for(let k=0;k<8;k++){const ts=t0+k*0.5, hits=log.filter(e=>e.f&&e.t>=ts-1e-6&&e.t<ts+0.1&&e.type==='triangle').sort((a,b)=>a.t-b.t);
+       if(hits.length<3||hits[0].f>hits[hits.length-1].f) fail('flip-sound',`step ${k} not low to high ${hits.length}`);}}
     // the strum pattern is hidden for arpeggio only
     bc('plan','arp');
     if(d.getElementById('rgrid')||d.querySelector('#exhead [data-row=rpat]')) fail('arp-ui','strum grid shown for arpeggio only');
