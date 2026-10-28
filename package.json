@@ -3,12 +3,14 @@
   "private": true,
   "description": "Guitar fretboard trainer: intervals, scales, modes, positions, and chord-aware drills.",
   "scripts": {
-    "test": "node tests/boot.js && node tests/tips.js && node tests/rhythm.js && node tests/log.js && node tests/audit.js",
+    "test": "node tests/smoke.js",
+    "test:smoke": "node tests/smoke.js",
+    "test:regression": "node tests/boot.js && node tests/tips.js && node tests/rhythm.js && node tests/log.js && node tests/audit.js",
+    "test:boot": "node tests/boot.js",
     "test:tips": "node tests/tips.js",
     "test:rhythm": "node tests/rhythm.js",
     "test:log": "node tests/log.js",
-    "test:audit": "node tests/audit.js",
-    "test:boot": "node tests/boot.js"
+    "test:audit": "node tests/audit.js"
   },
   "devDependencies": {
     "jsdom": "^24.0.0"

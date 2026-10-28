@@ -25,7 +25,9 @@ The layout switches between phone and desktop based on the window shape. The ◐
 ## Project layout
 
 - `index.html`: the whole app, with no build step. Edit it and push; GitHub Pages redeploys in about a minute.
-- `tests/`: checks that run the app in a simulated browser (jsdom).
+- `tests/`: checks that run the app in a simulated browser (jsdom). Run `npm install` once.
+  - `npm test` runs the **smoke** tests (`tests/smoke.js`, a few seconds): the page starts from any saved setup, every tab renders in both layouts, and the core actions work. Run it before each commit.
+  - `npm run test:regression` runs the full **regression** suite (boot, tips, rhythm, log and the exhaustive audit, about 15 minutes). It runs on GitHub Actions after each push to main, which is when Pages deploys (`.github/workflows/regression.yml`), and can be started by hand from the Actions tab.
 - `.nojekyll`: tells GitHub Pages to serve the files as-is.
 
 ## Running the tests

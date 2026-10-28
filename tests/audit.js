@@ -146,5 +146,5 @@ setTimeout(async()=>{
  }
  console.log('errors:',errors.length?errors.slice(0,5):'none');
  console.log('failures:',Object.keys(fails).length?fails:'none');
- process.exit();
+ process.exit(errors.length||Object.keys(fails).length?1:0);
 },100);

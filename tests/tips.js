@@ -98,4 +98,4 @@ async function run(wide){
  bc('chord','0'); bc('plan','line');
  for(const sel of ['.cell[data-s="2"][data-f="5"]','.tcol[data-j="0"]','.tcol[data-j="3"]','#selMode','#exhead [data-row=chord]','#exhead [data-row=lpat][data-v=thirds]','#exhead [data-row=tech][data-v=slurs]','.fchip','[data-rn]']){const e=d.querySelector(sel); if(e) console.log('  ',sel,'→',X.tipFor(e).replace(/<[^>]+>/g,''));}
 }
-(async()=>{await run(true); await run(false); console.log('tips checked',count,'bad',bad); process.exit();})();
+(async()=>{await run(true); await run(false); console.log('tips checked',count,'bad',bad); process.exit(bad?1:0);})();
